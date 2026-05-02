@@ -1,0 +1,315 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ─── Light theme — Old Trafford daylight ─────────────────────── */
+:root {
+  /* Base — warm off-white, like a matchday programme */
+  --background:          oklch(0.985 0.004 35);
+  --foreground:          oklch(0.15  0.02  30);
+
+  /* Card / Popover — pure white, surfaces lift cleanly */
+  --card:                oklch(1     0     0);
+  --card-foreground:     oklch(0.15  0.02  30);
+  --popover:             oklch(1     0     0);
+  --popover-foreground:  oklch(0.15  0.02  30);
+
+  /* Primary — Manchester United red (≈ #DA291C, Pantone 186 C) */
+  --primary:             oklch(0.55  0.22  28);
+  --primary-foreground:  oklch(0.99  0     0);
+
+  /* Secondary — soft red wash for chips/badges */
+  --secondary:           oklch(0.94  0.04  28);
+  --secondary-foreground:oklch(0.32  0.16  28);
+
+  /* Muted — warm neutral, doesn't fight the red */
+  --muted:               oklch(0.95  0.008 35);
+  --muted-foreground:    oklch(0.45  0.02  30);
+
+  /* Accent — Man Utd gold (≈ #FBE122) */
+  --accent:              oklch(0.86  0.17  95);
+  --accent-foreground:   oklch(0.20  0.05  60);
+
+  /* Destructive — deeper crimson, distinct from primary red */
+  --destructive:         oklch(0.48  0.22  22);
+  --destructive-foreground: oklch(0.99 0   0);
+
+  /* Success — kept green so confirmations don't read as warnings */
+  --success:             oklch(0.60  0.16  150);
+  --success-foreground:  oklch(0.99  0     0);
+
+  /* Warning — burnt orange, sits between red and gold */
+  --warning:             oklch(0.72  0.18  65);
+  --warning-foreground:  oklch(0.20  0.06  65);
+
+  /* Info — deep blue for callouts/information badges */
+  --info:                oklch(0.55  0.16  245);
+  --info-foreground:     oklch(0.99  0     0);
+
+  /* Form elements */
+  --border:              oklch(0.91  0.01  35);
+  --input:               oklch(0.93  0.008 35);
+  --ring:                oklch(0.55  0.22  28);
+
+  /* Radius scale */
+  --radius: 0.5rem;
+
+  /* Charts — red, gold, black, blue, green: kit + complementary energy */
+  --chart-1:             oklch(0.58  0.22  28);   /* Man Utd red */
+  --chart-2:             oklch(0.80  0.16  92);   /* gold */
+  --chart-3:             oklch(0.35  0.02  30);   /* charcoal/black */
+  --chart-4:             oklch(0.58  0.16  245);  /* deep blue */
+  --chart-5:             oklch(0.62  0.16  155);  /* pitch green */
+
+  /* Sidebar — signature black with red active states (classic Man Utd) */
+  --sidebar:             oklch(0.13  0.012 30);
+  --sidebar-foreground:  oklch(0.94  0.005 35);
+  --sidebar-primary:     oklch(0.62  0.24  28);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent:      oklch(0.20  0.02  30);
+  --sidebar-accent-foreground:  oklch(0.94 0.005 35);
+  --sidebar-border:      oklch(1     0     0 / 8%);
+  --sidebar-ring:        oklch(0.62  0.24  28);
+}
+
+/* ─── Dark theme — Theatre of Dreams at night ─────────────────── */
+.dark {
+  /* Base — deep warm black, like the stadium under floodlights */
+  --background:          oklch(0.12  0.012 30);
+  --foreground:          oklch(0.96  0.005 35);
+
+  /* Card / Popover — slight lift above bg */
+  --card:                oklch(0.16  0.015 30);
+  --card-foreground:     oklch(0.96  0.005 35);
+  --popover:             oklch(0.16  0.015 30);
+  --popover-foreground:  oklch(0.96  0.005 35);
+
+  /* Primary — bright Man Utd red, glowing on dark */
+  --primary:             oklch(0.65  0.24  28);
+  --primary-foreground:  oklch(0.99  0     0);
+
+  /* Secondary */
+  --secondary:           oklch(0.22  0.025 30);
+  --secondary-foreground:oklch(0.96  0.005 35);
+
+  /* Muted */
+  --muted:               oklch(0.20  0.02  30);
+  --muted-foreground:    oklch(0.68  0.02  30);
+
+  /* Accent — bright gold, glowing */
+  --accent:              oklch(0.86  0.17  95);
+  --accent-foreground:   oklch(0.18  0.05  60);
+
+  /* Destructive — distinct deeper red */
+  --destructive:         oklch(0.58  0.24  22);
+  --destructive-foreground: oklch(0.99 0   0);
+
+  /* Success */
+  --success:             oklch(0.68  0.18  150);
+  --success-foreground:  oklch(0.10  0.04  150);
+
+  /* Warning */
+  --warning:             oklch(0.76  0.18  65);
+  --warning-foreground:  oklch(0.15  0.06  65);
+
+  /* Info */
+  --info:                oklch(0.65  0.18  245);
+  --info-foreground:     oklch(0.99  0     0);
+
+  /* Form elements */
+  --border:              oklch(1     0     0 / 10%);
+  --input:               oklch(1     0     0 / 12%);
+  --ring:                oklch(0.65  0.24  28);
+
+  /* Charts — brighter on dark, same hue family */
+  --chart-1:             oklch(0.68  0.24  28);   /* red */
+  --chart-2:             oklch(0.84  0.16  92);   /* gold */
+  --chart-3:             oklch(0.78  0.005 30);   /* light grey (replaces black on dark) */
+  --chart-4:             oklch(0.68  0.18  245);  /* blue */
+  --chart-5:             oklch(0.72  0.18  155);  /* green */
+
+  /* Sidebar — even darker than card, true Old Trafford black */
+  --sidebar:             oklch(0.09  0.01  30);
+  --sidebar-foreground:  oklch(0.94  0.005 35);
+  --sidebar-primary:     oklch(0.65  0.24  28);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent:      oklch(0.18  0.02  30);
+  --sidebar-accent-foreground:  oklch(0.94 0.005 35);
+  --sidebar-border:      oklch(1     0     0 / 6%);
+  --sidebar-ring:        oklch(0.65  0.24  28);
+}
+
+/* ─── Pitch theme — Stadium under floodlights (forest green + gold) ── */
+.pitch {
+  /* Base — deep forest green, like a perfectly cut pitch at night */
+  --background:          oklch(0.24  0.05  150);
+  --foreground:          oklch(0.97  0.01  150);
+
+  /* Card / Popover — subtle lift above bg */
+  --card:                oklch(0.28  0.055 150);
+  --card-foreground:     oklch(0.97  0.01  150);
+  --popover:             oklch(0.28  0.055 150);
+  --popover-foreground:  oklch(0.97  0.01  150);
+
+  /* Primary — match-day gold (≈ #E5BB2E) */
+  --primary:             oklch(0.80  0.15  90);
+  --primary-foreground:  oklch(0.20  0.05  90);
+
+  /* Secondary — muted green chip */
+  --secondary:           oklch(0.32  0.05  150);
+  --secondary-foreground:oklch(0.97  0.01  150);
+
+  /* Muted — slightly elevated green for backgrounds */
+  --muted:               oklch(0.30  0.045 150);
+  --muted-foreground:    oklch(0.74  0.025 150);
+
+  /* Accent — warmer amber/orange-gold for badges, hovers */
+  --accent:              oklch(0.78  0.16  75);
+  --accent-foreground:   oklch(0.20  0.06  75);
+
+  /* Destructive — bright red against green */
+  --destructive:         oklch(0.62  0.22  25);
+  --destructive-foreground: oklch(0.99 0   0);
+
+  /* Success — brighter pitch green so it reads against the bg */
+  --success:             oklch(0.74  0.18  150);
+  --success-foreground:  oklch(0.12  0.04  150);
+
+  /* Warning — amber */
+  --warning:             oklch(0.80  0.17  75);
+  --warning-foreground:  oklch(0.18  0.06  75);
+
+  /* Info — cool blue */
+  --info:                oklch(0.66  0.16  230);
+  --info-foreground:     oklch(0.99  0     0);
+
+  /* Form elements — subtle white-on-green */
+  --border:              oklch(1     0     0 / 12%);
+  --input:               oklch(1     0     0 / 14%);
+  --ring:                oklch(0.80  0.15  90);
+
+  /* Charts — gold, green, amber, blue, mint */
+  --chart-1:             oklch(0.80  0.15  90);   /* gold */
+  --chart-2:             oklch(0.68  0.18  150);  /* pitch green */
+  --chart-3:             oklch(0.72  0.12  75);   /* amber */
+  --chart-4:             oklch(0.66  0.16  230);  /* blue */
+  --chart-5:             oklch(0.85  0.08  150);  /* mint */
+
+  /* Sidebar — even deeper than card, the shadowed end of the pitch */
+  --sidebar:             oklch(0.17  0.04  150);
+  --sidebar-foreground:  oklch(0.95  0.01  150);
+  --sidebar-primary:     oklch(0.80  0.15  90);
+  --sidebar-primary-foreground: oklch(0.18 0.05 90);
+  --sidebar-accent:      oklch(0.24  0.05  150);
+  --sidebar-accent-foreground:  oklch(0.95 0.01 150);
+  --sidebar-border:      oklch(1     0     0 / 8%);
+  --sidebar-ring:        oklch(0.80  0.15  90);
+}
+
+/* ─── Tailwind token bindings ─────────────────────────────────── */
+@theme inline {
+  --color-background:              var(--background);
+  --color-foreground:              var(--foreground);
+  --color-card:                    var(--card);
+  --color-card-foreground:         var(--card-foreground);
+  --color-popover:                 var(--popover);
+  --color-popover-foreground:      var(--popover-foreground);
+  --color-primary:                 var(--primary);
+  --color-primary-foreground:      var(--primary-foreground);
+  --color-secondary:               var(--secondary);
+  --color-secondary-foreground:    var(--secondary-foreground);
+  --color-muted:                   var(--muted);
+  --color-muted-foreground:        var(--muted-foreground);
+  --color-accent:                  var(--accent);
+  --color-accent-foreground:       var(--accent-foreground);
+  --color-destructive:             var(--destructive);
+  --color-destructive-foreground:  var(--destructive-foreground);
+  --color-success:                 var(--success);
+  --color-success-foreground:      var(--success-foreground);
+  --color-warning:                 var(--warning);
+  --color-warning-foreground:      var(--warning-foreground);
+  --color-info:                    var(--info);
+  --color-info-foreground:         var(--info-foreground);
+  --color-border:                  var(--border);
+  --color-input:                   var(--input);
+  --color-ring:                    var(--ring);
+  --color-chart-1:                 var(--chart-1);
+  --color-chart-2:                 var(--chart-2);
+  --color-chart-3:                 var(--chart-3);
+  --color-chart-4:                 var(--chart-4);
+  --color-chart-5:                 var(--chart-5);
+  --radius-sm:  calc(var(--radius) - 2px);
+  --radius-md:  var(--radius);
+  --radius-lg:  calc(var(--radius) + 2px);
+  --radius-xl:  calc(var(--radius) + 6px);
+  --color-sidebar:                      var(--sidebar);
+  --color-sidebar-foreground:           var(--sidebar-foreground);
+  --color-sidebar-primary:              var(--sidebar-primary);
+  --color-sidebar-primary-foreground:   var(--sidebar-primary-foreground);
+  --color-sidebar-accent:               var(--sidebar-accent);
+  --color-sidebar-accent-foreground:    var(--sidebar-accent-foreground);
+  --color-sidebar-border:               var(--sidebar-border);
+  --color-sidebar-ring:                 var(--sidebar-ring);
+}
+
+/* ─── Base layer ──────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* ─── Themed scrollbars ──────────────────────────────────────── */
+/* Generic thin scrollbar — adapts to surrounding background */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(from currentColor l c h / 25%) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: oklch(from currentColor l c h / 22%);
+  border-radius: 9999px;
+  transition: background-color 150ms;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(from currentColor l c h / 45%);
+}
+
+/* Hide scrollbar entirely (auto-hide on idle) — used inside sidebar */
+.scrollbar-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 200ms;
+}
+.scrollbar-hover:hover,
+.scrollbar-hover:focus-within {
+  scrollbar-color: oklch(from currentColor l c h / 30%) transparent;
+}
+.scrollbar-hover::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-hover::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  transition: background-color 200ms;
+}
+.scrollbar-hover:hover::-webkit-scrollbar-thumb,
+.scrollbar-hover:focus-within::-webkit-scrollbar-thumb {
+  background-color: oklch(from currentColor l c h / 25%);
+}
+.scrollbar-hover::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(from currentColor l c h / 50%);
+}

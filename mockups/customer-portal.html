@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Champions Turf — Book a ground</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --pitch:       #0E3D2A;
+    --pitch-2:     #143D2E;
+    --pitch-light: #1B5A3F;
+    --gold:        #E5BB2E;
+    --gold-2:      #C9A21E;
+    --cream:       #FAFAF7;
+    --line:        #E6E3DC;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--cream); }
+  .font-display { font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
+  .text-pitch { color: var(--pitch); }
+  .bg-pitch { background: var(--pitch); }
+  .bg-pitch-light { background: var(--pitch-light); }
+  .text-gold { color: var(--gold); }
+  .bg-gold { background: var(--gold); }
+  .bg-cream { background: var(--cream); }
+  .border-line { border-color: var(--line); }
+  .ring-gold { --tw-ring-color: var(--gold); }
+  .page-label {
+    position: sticky; top: 0; z-index: 30;
+    background: var(--pitch); color: var(--gold);
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 8px 16px; font-weight: 700;
+    border-bottom: 2px solid var(--gold);
+  }
+  .hero-overlay {
+    background: linear-gradient(180deg, rgba(14,61,42,0.55) 0%, rgba(14,61,42,0.88) 100%);
+  }
+  .glass {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(8px);
+  }
+  .slot {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 120ms;
+    background: white;
+  }
+  .slot:hover { border-color: var(--pitch); }
+  .slot.selected {
+    background: var(--pitch); color: white; border-color: var(--pitch);
+  }
+  .slot.unavailable {
+    background: #F5F4EE; color: #B8B5AB; cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  .slot.peak::after {
+    content: "★"; color: var(--gold); font-size: 9px;
+    position: relative; top: -4px; margin-left: 2px;
+  }
+  .date-cell {
+    min-width: 64px;
+    padding: 10px 6px;
+    text-align: center;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    background: white;
+  }
+  .date-cell.active {
+    background: var(--pitch); color: white; border-color: var(--pitch);
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    background: white; border: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .chip.active { background: var(--pitch); color: white; border-color: var(--pitch); }
+  .pill-gold {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    background: var(--gold); color: var(--pitch);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  /* Format badge — bold visual marker on ground cards */
+  .format-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 6px;
+    background: var(--pitch); color: var(--gold);
+    font-size: 11px; font-weight: 800; letter-spacing: 0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .ground-card { transition: transform 200ms, box-shadow 200ms; }
+  .ground-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -8px rgba(14,61,42,0.18); }
+  .step-num {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: var(--gold); color: var(--pitch);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px;
+  }
+  .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge.confirmed { background: #DCEFE2; color: #1F6E3F; }
+  .badge.upcoming { background: #FFF4D1; color: #876300; }
+  .badge.past { background: #ECEAE3; color: #6B6859; }
+  .badge.cancelled { background: #FBE0DD; color: #8A2A1F; }
+  .stat-num {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800; letter-spacing: -0.02em;
+    color: var(--gold);
+  }
+</style>
+</head>
+<body class="text-gray-900">
+
+<!-- ─────────────────────────────────────────────────────────────────────
+  GLOBAL HEADER — single venue, no marketplace nav
+─────────────────────────────────────────────────────────────────────── -->
+<header class="sticky top-0 z-40 bg-pitch text-white border-b border-white/10">
+  <div class="mx-auto max-w-7xl flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-lg bg-gold flex items-center justify-center">
+        <i data-lucide="goal" class="w-5 h-5 text-pitch"></i>
+      </div>
+      <div class="leading-tight">
+        <span class="font-display font-extrabold text-base tracking-tight block">Champions Turf</span>
+        <span class="text-[10px] text-white/60 hidden sm:block">Banani, Dhaka</span>
+      </div>
+    </div>
+    <nav class="hidden md:flex items-center gap-7 text-sm">
+      <a href="#grounds" class="hover:text-gold transition">Our grounds</a>
+      <a href="#how" class="hover:text-gold transition">How it works</a>
+      <a href="#bookings" class="hover:text-gold transition">My bookings</a>
+      <a href="#visit" class="hover:text-gold transition">Visit us</a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <a href="tel:+8801700000000" class="hidden sm:inline-flex items-center gap-1 text-xs text-white/80 hover:text-gold mr-2">
+        <i data-lucide="phone" class="w-3.5 h-3.5"></i> +880 1700 000 000
+      </a>
+      <button class="hidden sm:inline-flex h-9 px-4 rounded-lg text-sm font-medium hover:bg-white/10">Sign in</button>
+      <button class="h-9 px-4 rounded-lg bg-gold text-pitch text-sm font-semibold hover:bg-yellow-300">Book now</button>
+    </div>
+  </div>
+</header>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+  PAGE 1 — LANDING (single-venue homepage)
+─────────────────────────────────────────────────────────────────────── -->
+<div class="page-label">Page 1 — Home</div>
+
+<section class="relative overflow-hidden">
+  <img src="https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1920&q=70" class="absolute inset-0 w-full h-full object-cover" alt="">
+  <div class="absolute inset-0 hero-overlay"></div>
+  <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+    <div class="max-w-2xl text-white">
+      <span class="pill-gold">Book in 60 seconds</span>
+      <h1 class="font-display mt-4 text-4xl sm:text-6xl font-extrabold leading-tight">
+        Welcome to<br>
+        <span class="text-gold">Champions Turf</span>
+      </h1>
+      <p class="mt-4 text-white/85 text-base sm:text-lg max-w-xl">
+        Six fields under one roof — football 5×5 / 6×6 / 7×7, full-size cricket nets and indoor badminton courts. Real-time slot availability, instant confirmation.
+      </p>
+
+      <!-- Venue stat strip -->
+      <div class="flex flex-wrap gap-x-8 gap-y-3 mt-6 text-white/80 text-sm">
+        <div><span class="stat-num text-2xl">6</span> grounds</div>
+        <div><span class="stat-num text-2xl">3</span> sports</div>
+        <div><span class="stat-num text-2xl">06–23</span> daily hours</div>
+        <div class="flex items-center gap-1"><i data-lucide="star" class="w-4 h-4 text-gold fill-current"></i> <span class="stat-num text-2xl">4.9</span> · 312 reviews</div>
+      </div>
+    </div>
+
+    <!-- Search card — no location field, single venue -->
+    <div class="glass mt-10 rounded-2xl p-3 sm:p-4 shadow-2xl max-w-3xl">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3">
+        <div class="sm:col-span-4 px-3 py-2 rounded-xl border border-line bg-white">
+          <p class="text-[11px] uppercase tracking-wider font-semibold text-gray-500">Date</p>
+          <div class="flex items-center gap-2 mt-0.5">
+            <i data-lucide="calendar" class="w-4 h-4 text-pitch"></i>
+            <input class="w-full text-sm font-medium outline-none" value="Fri, 02 May" />
+          </div>
+        </div>
+        <div class="sm:col-span-3 px-3 py-2 rounded-xl border border-line bg-white">
+          <p class="text-[11px] uppercase tracking-wider font-semibold text-gray-500">Sport</p>
+          <div class="flex items-center gap-2 mt-0.5">
+            <i data-lucide="circle-dot" class="w-4 h-4 text-pitch"></i>
+            <select class="w-full text-sm font-medium outline-none bg-transparent">
+              <option>Any sport</option><option>Football</option><option>Cricket</option><option>Badminton</option>
+            </select>
+          </div>
+        </div>
+        <div class="sm:col-span-3 px-3 py-2 rounded-xl border border-line bg-white">
+          <p class="text-[11px] uppercase tracking-wider font-semibold text-gray-500">Format</p>
+          <div class="flex items-center gap-2 mt-0.5">
+            <i data-lucide="grid-3x3" class="w-4 h-4 text-pitch"></i>
+            <select class="w-full text-sm font-medium outline-none bg-transparent">
+              <option>Any size</option><option>5×5</option><option>6×6</option><option>7×7</option><option>11×11</option>
+            </select>
+          </div>
+        </div>
+        <button class="sm:col-span-2 bg-pitch text-white rounded-xl py-3 font-semibold text-sm hover:bg-pitch-light flex items-center justify-center gap-2">
+          <i data-lucide="search" class="w-4 h-4"></i> Find slots
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-white/80 text-sm">
+      <div class="flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-gold"></i> Secure Stripe payments</div>
+      <div class="flex items-center gap-2"><i data-lucide="badge-check" class="w-4 h-4 text-gold"></i> 100% money-back on cancellation</div>
+      <div class="flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-gold"></i> Instant email confirmation</div>
+    </div>
+  </div>
+</section>
+
+<!-- Sport quick filter -->
+<section class="py-10 bg-white border-b border-line">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-6">
+      <h2 class="font-display text-2xl font-bold text-pitch">Browse by sport</h2>
+      <a href="#grounds" class="text-sm text-pitch hover:text-gold font-medium">All grounds →</a>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <button class="chip active"><i data-lucide="goal" class="w-4 h-4"></i> Football <span class="text-[10px] opacity-80">· 4 grounds</span></button>
+      <button class="chip"><i data-lucide="circle-dot" class="w-4 h-4"></i> Cricket <span class="text-[10px] opacity-60">· 1 ground</span></button>
+      <button class="chip"><i data-lucide="zap" class="w-4 h-4"></i> Badminton <span class="text-[10px] opacity-60">· 1 court</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- Our grounds — show ALL grounds since the venue is small -->
+<section id="grounds" class="py-14 bg-cream">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="font-display text-3xl font-bold text-pitch">Our grounds</h2>
+        <p class="text-gray-600 mt-1">Pick the field that fits your match</p>
+      </div>
+      <a href="#listings" class="text-sm text-pitch hover:text-gold font-medium hidden sm:inline">View as list →</a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Pitch A — Football 5×5 -->
+      <article class="ground-card bg-white rounded-2xl overflow-hidden border border-line">
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1486286701208-1d58e9338013?auto=format&fit=crop&w=800&q=70" class="w-full h-48 object-cover" alt="">
+          <span class="absolute top-3 left-3 format-badge"><i data-lucide="grid-3x3" class="w-3 h-3"></i> 5×5</span>
+          <span class="absolute top-3 right-3 inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-white/95 text-pitch">Most booked</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-display font-bold text-lg text-pitch">Pitch A</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Football · 5-a-side · Outdoor</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">From</p>
+              <p class="font-bold text-pitch">৳1,200<span class="text-xs font-normal text-gray-500">/hr</span></p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">FIFA-grade turf</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Floodlights</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">28×18 m</span>
+          </div>
+          <button class="mt-4 w-full bg-pitch text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-pitch-light">View slots</button>
+        </div>
+      </article>
+
+      <!-- Pitch B — Football 6×6 -->
+      <article class="ground-card bg-white rounded-2xl overflow-hidden border border-line">
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&w=800&q=70" class="w-full h-48 object-cover" alt="">
+          <span class="absolute top-3 left-3 format-badge"><i data-lucide="grid-3x3" class="w-3 h-3"></i> 6×6</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-display font-bold text-lg text-pitch">Pitch B</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Football · 6-a-side · Outdoor</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">From</p>
+              <p class="font-bold text-pitch">৳1,500<span class="text-xs font-normal text-gray-500">/hr</span></p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">FIFA-grade turf</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Floodlights</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">36×22 m</span>
+          </div>
+          <button class="mt-4 w-full bg-pitch text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-pitch-light">View slots</button>
+        </div>
+      </article>
+
+      <!-- Pitch C — Football 7×7 -->
+      <article class="ground-card bg-white rounded-2xl overflow-hidden border border-line">
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=70" class="w-full h-48 object-cover" alt="">
+          <span class="absolute top-3 left-3 format-badge"><i data-lucide="grid-3x3" class="w-3 h-3"></i> 7×7</span>
+          <span class="absolute top-3 right-3 inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-white/95 text-pitch">2 slots left</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-display font-bold text-lg text-pitch">Pitch C</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Football · 7-a-side · Outdoor</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">From</p>
+              <p class="font-bold text-pitch">৳1,800<span class="text-xs font-normal text-gray-500">/hr</span></p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">FIFA-grade turf</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Spectator seating</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">50×30 m</span>
+          </div>
+          <button class="mt-4 w-full bg-pitch text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-pitch-light">View slots</button>
+        </div>
+      </article>
+
+      <!-- Pitch D — Football 11×11 -->
+      <article class="ground-card bg-white rounded-2xl overflow-hidden border border-line">
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=800&q=70" class="w-full h-48 object-cover" alt="">
+          <span class="absolute top-3 left-3 format-badge"><i data-lucide="grid-3x3" class="w-3 h-3"></i> 11×11</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-display font-bold text-lg text-pitch">Main Pitch</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Football · Full-size · Outdoor</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">From</p>
+              <p class="font-bold text-pitch">৳3,500<span class="text-xs font-normal text-gray-500">/hr</span></p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Match-grade</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Floodlights</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Dugouts</span>
+          </div>
+          <button class="mt-4 w-full bg-pitch text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-pitch-light">View slots</button>
+        </div>
+      </article>
+
+      <!-- Cricket Net -->
+      <article class="ground-card bg-white rounded-2xl overflow-hidden border border-line">
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=800&q=70" class="w-full h-48 object-cover" alt="">
+          <span class="absolute top-3 left-3 format-badge"><i data-lucide="circle-dot" class="w-3 h-3"></i> CRICKET</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-display font-bold text-lg text-pitch">Cricket Net</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Cricket · Net practice · Covered</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">From</p>
+              <p class="font-bold text-pitch">৳1,200<span class="text-xs font-normal text-gray-500">/hr</span></p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Turf wicket</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Bowling machine</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">2 lanes</span>
+          </div>
+          <button class="mt-4 w-full bg-pitch text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-pitch-light">View slots</button>
+        </div>
+      </article>
+
+      <!-- Badminton Court -->
+      <article class="ground-card bg-white rounded-2xl overflow-hidden border border-line">
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=70" class="w-full h-48 object-cover" alt="">
+          <span class="absolute top-3 left-3 format-badge"><i data-lucide="zap" class="w-3 h-3"></i> BADMINTON</span>
+        </div>
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-display font-bold text-lg text-pitch">Court 1</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Badminton · Singles/Doubles · Indoor</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">From</p>
+              <p class="font-bold text-pitch">৳400<span class="text-xs font-normal text-gray-500">/hr</span></p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Wooden floor</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">AC</span>
+            <span class="text-[10px] bg-cream border border-line rounded px-2 py-1">Racket rental</span>
+          </div>
+          <button class="mt-4 w-full bg-pitch text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-pitch-light">View slots</button>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Venue amenities — once at venue level since all grounds share them -->
+<section class="py-14 bg-white border-y border-line">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-10">
+      <h2 class="font-display text-3xl font-bold text-pitch">More than just a pitch</h2>
+      <p class="text-gray-600 mt-2 text-sm">Everything you need at the venue, included with every booking.</p>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 text-center">
+      <div><i data-lucide="car" class="w-7 h-7 mx-auto text-pitch"></i><p class="text-xs mt-2 font-medium">Free parking</p></div>
+      <div><i data-lucide="droplets" class="w-7 h-7 mx-auto text-pitch"></i><p class="text-xs mt-2 font-medium">Showers</p></div>
+      <div><i data-lucide="lock" class="w-7 h-7 mx-auto text-pitch"></i><p class="text-xs mt-2 font-medium">Locker rooms</p></div>
+      <div><i data-lucide="coffee" class="w-7 h-7 mx-auto text-pitch"></i><p class="text-xs mt-2 font-medium">On-site café</p></div>
+      <div><i data-lucide="wifi" class="w-7 h-7 mx-auto text-pitch"></i><p class="text-xs mt-2 font-medium">Free Wi-Fi</p></div>
+      <div><i data-lucide="first-aid-kit" class="w-7 h-7 mx-auto text-pitch"></i><p class="text-xs mt-2 font-medium">First aid</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how" class="py-16 bg-pitch text-white">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
+    <span class="pill-gold">How it works</span>
+    <h2 class="font-display mt-4 text-3xl sm:text-4xl font-extrabold">Three steps to your match</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-12 text-left">
+      <div>
+        <span class="step-num">1</span>
+        <h3 class="font-bold mt-4 text-lg">Pick a ground</h3>
+        <p class="text-white/70 text-sm mt-1">Choose from our 6 grounds — football 5×5 / 6×6 / 7×7 / 11×11, cricket nets or badminton.</p>
+      </div>
+      <div>
+        <span class="step-num">2</span>
+        <h3 class="font-bold mt-4 text-lg">Pick a slot &amp; pay</h3>
+        <p class="text-white/70 text-sm mt-1">Real-time hourly availability. Pay securely via Stripe — card, Apple Pay, Google Pay.</p>
+      </div>
+      <div>
+        <span class="step-num">3</span>
+        <h3 class="font-bold mt-4 text-lg">Show up &amp; play</h3>
+        <p class="text-white/70 text-sm mt-1">Confirmation lands in your inbox. Free cancellation up to 24h before kickoff.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+  PAGE 2 — ALL GROUNDS (LIST VIEW)
+─────────────────────────────────────────────────────────────────────── -->
+<div class="page-label">Page 2 — All grounds</div>
+
+<section id="listings" class="py-8 bg-cream">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
+
+    <!-- Filters — venue-scoped, no city/distance -->
+    <aside class="bg-white rounded-2xl border border-line p-5 h-fit lg:sticky lg:top-20">
+      <h3 class="font-bold text-pitch text-sm uppercase tracking-wide">Filters</h3>
+
+      <div class="mt-5">
+        <p class="text-xs font-semibold text-gray-500 mb-2">SPORT</p>
+        <div class="space-y-1.5 text-sm">
+          <label class="flex items-center gap-2"><input type="checkbox" checked class="accent-emerald-700"> Football</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="accent-emerald-700"> Cricket</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="accent-emerald-700"> Badminton</label>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <p class="text-xs font-semibold text-gray-500 mb-2">FORMAT</p>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button class="chip active text-center justify-center text-xs">5×5</button>
+          <button class="chip text-center justify-center text-xs">6×6</button>
+          <button class="chip text-center justify-center text-xs">7×7</button>
+          <button class="chip text-center justify-center text-xs">11×11</button>
+          <button class="chip text-center justify-center text-xs">Net</button>
+          <button class="chip text-center justify-center text-xs">Court</button>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <p class="text-xs font-semibold text-gray-500 mb-2">PRICE / HOUR</p>
+        <input type="range" min="400" max="3500" value="1500" class="w-full accent-emerald-700">
+        <div class="flex justify-between text-xs text-gray-500 mt-1">
+          <span>৳400</span><span>৳3,500</span>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <p class="text-xs font-semibold text-gray-500 mb-2">SURFACE</p>
+        <div class="space-y-1.5 text-sm">
+          <label class="flex items-center gap-2"><input type="checkbox" class="accent-emerald-700"> Outdoor turf</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="accent-emerald-700"> Indoor court</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="accent-emerald-700"> Covered net</label>
+        </div>
+      </div>
+
+      <button class="mt-6 w-full text-pitch text-sm font-medium hover:text-gold">Clear all filters</button>
+    </aside>
+
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-sm text-gray-600">Showing <strong class="text-pitch">6 grounds</strong> at Champions Turf</p>
+        <select class="text-sm border border-line rounded-lg px-3 py-2 bg-white">
+          <option>Sort: Recommended</option>
+          <option>Price: Low to high</option>
+          <option>Price: High to low</option>
+          <option>Format: Smallest first</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <article class="ground-card bg-white rounded-xl overflow-hidden border border-line flex">
+          <div class="relative w-32 shrink-0">
+            <img src="https://images.unsplash.com/photo-1486286701208-1d58e9338013?auto=format&fit=crop&w=300&q=70" class="absolute inset-0 w-full h-full object-cover" alt="">
+            <span class="absolute top-2 left-2 format-badge text-[10px]">5×5</span>
+          </div>
+          <div class="p-4 flex-1">
+            <h3 class="font-bold text-pitch">Pitch A</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Football · Outdoor turf</p>
+            <p class="text-[11px] text-gray-500 mt-1">28×18 m · Floodlights</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="font-bold text-pitch">৳1,200<span class="text-xs font-normal text-gray-500">/hr</span></p>
+              <button class="text-xs bg-pitch text-white px-3 py-1.5 rounded-md font-semibold">View slots</button>
+            </div>
+          </div>
+        </article>
+        <article class="ground-card bg-white rounded-xl overflow-hidden border border-line flex">
+          <div class="relative w-32 shrink-0">
+            <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&w=300&q=70" class="absolute inset-0 w-full h-full object-cover" alt="">
+            <span class="absolute top-2 left-2 format-badge text-[10px]">6×6</span>
+          </div>
+          <div class="p-4 flex-1">
+            <h3 class="font-bold text-pitch">Pitch B</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Football · Outdoor turf</p>
+            <p class="text-[11px] text-gray-500 mt-1">36×22 m · Floodlights</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="font-bold text-pitch">৳1,500<span class="text-xs font-normal text-gray-500">/hr</span></p>
+              <button class="text-xs bg-pitch text-white px-3 py-1.5 rounded-md font-semibold">View slots</button>
+            </div>
+          </div>
+        </article>
+        <article class="ground-card bg-white rounded-xl overflow-hidden border border-line flex">
+          <div class="relative w-32 shrink-0">
+            <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=300&q=70" class="absolute inset-0 w-full h-full object-cover" alt="">
+            <span class="absolute top-2 left-2 format-badge text-[10px]">7×7</span>
+          </div>
+          <div class="p-4 flex-1">
+            <h3 class="font-bold text-pitch">Pitch C</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Football · Outdoor turf</p>
+            <p class="text-[11px] text-gray-500 mt-1">50×30 m · Spectator seating</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="font-bold text-pitch">৳1,800<span class="text-xs font-normal text-gray-500">/hr</span></p>
+              <button class="text-xs bg-pitch text-white px-3 py-1.5 rounded-md font-semibold">View slots</button>
+            </div>
+          </div>
+        </article>
+        <article class="ground-card bg-white rounded-xl overflow-hidden border border-line flex">
+          <div class="relative w-32 shrink-0">
+            <img src="https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=300&q=70" class="absolute inset-0 w-full h-full object-cover" alt="">
+            <span class="absolute top-2 left-2 format-badge text-[10px]">11×11</span>
+          </div>
+          <div class="p-4 flex-1">
+            <h3 class="font-bold text-pitch">Main Pitch</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Football · Match-grade</p>
+            <p class="text-[11px] text-gray-500 mt-1">Full-size · Dugouts</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="font-bold text-pitch">৳3,500<span class="text-xs font-normal text-gray-500">/hr</span></p>
+              <button class="text-xs bg-pitch text-white px-3 py-1.5 rounded-md font-semibold">View slots</button>
+            </div>
+          </div>
+        </article>
+        <article class="ground-card bg-white rounded-xl overflow-hidden border border-line flex">
+          <div class="relative w-32 shrink-0">
+            <img src="https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=300&q=70" class="absolute inset-0 w-full h-full object-cover" alt="">
+            <span class="absolute top-2 left-2 format-badge text-[10px]">CRICKET</span>
+          </div>
+          <div class="p-4 flex-1">
+            <h3 class="font-bold text-pitch">Cricket Net</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Cricket · Covered net</p>
+            <p class="text-[11px] text-gray-500 mt-1">2 lanes · Bowling machine</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="font-bold text-pitch">৳1,200<span class="text-xs font-normal text-gray-500">/hr</span></p>
+              <button class="text-xs bg-pitch text-white px-3 py-1.5 rounded-md font-semibold">View slots</button>
+            </div>
+          </div>
+        </article>
+        <article class="ground-card bg-white rounded-xl overflow-hidden border border-line flex">
+          <div class="relative w-32 shrink-0">
+            <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=300&q=70" class="absolute inset-0 w-full h-full object-cover" alt="">
+            <span class="absolute top-2 left-2 format-badge text-[10px]">BADMINTON</span>
+          </div>
+          <div class="p-4 flex-1">
+            <h3 class="font-bold text-pitch">Court 1</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Badminton · Indoor</p>
+            <p class="text-[11px] text-gray-500 mt-1">Wooden floor · AC</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="font-bold text-pitch">৳400<span class="text-xs font-normal text-gray-500">/hr</span></p>
+              <button class="text-xs bg-pitch text-white px-3 py-1.5 rounded-md font-semibold">View slots</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+  PAGE 3 — GROUND DETAIL + SLOT PICKER
+─────────────────────────────────────────────────────────────────────── -->
+<div class="page-label">Page 3 — Ground detail &amp; slot picker</div>
+
+<section class="py-8 bg-white">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <nav class="text-xs text-gray-500 mb-4 flex items-center gap-2">
+      <a href="#" class="hover:text-pitch">Home</a>
+      <i data-lucide="chevron-right" class="w-3 h-3"></i>
+      <a href="#listings" class="hover:text-pitch">Our grounds</a>
+      <i data-lucide="chevron-right" class="w-3 h-3"></i>
+      <span class="text-pitch font-medium">Pitch A</span>
+    </nav>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-2 rounded-2xl overflow-hidden h-[420px]">
+      <img src="https://images.unsplash.com/photo-1486286701208-1d58e9338013?auto=format&fit=crop&w=1200&q=70" class="md:col-span-2 md:row-span-2 w-full h-full object-cover" alt="">
+      <img src="https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=600&q=70" class="hidden md:block w-full h-full object-cover" alt="">
+      <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&w=600&q=70" class="hidden md:block w-full h-full object-cover" alt="">
+      <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600&q=70" class="hidden md:block w-full h-full object-cover" alt="">
+      <div class="hidden md:flex relative bg-pitch items-center justify-center text-white text-sm font-medium">
+        <img src="https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=600&q=70" class="absolute inset-0 w-full h-full object-cover opacity-60" alt="">
+        <span class="relative">+ 8 more</span>
+      </div>
+    </div>
+
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
+      <div>
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="format-badge text-sm"><i data-lucide="grid-3x3" class="w-3.5 h-3.5"></i> 5×5</span>
+              <span class="text-xs text-gray-500">Football · Outdoor</span>
+            </div>
+            <h1 class="font-display text-3xl sm:text-4xl font-extrabold text-pitch">Pitch A</h1>
+            <p class="text-gray-600 mt-1 text-sm">28×18 m FIFA-grade artificial turf · Floodlights · 5-a-side</p>
+            <div class="flex items-center gap-3 mt-3 text-sm">
+              <span class="flex items-center gap-1 font-semibold text-pitch"><i data-lucide="star" class="w-4 h-4 text-gold fill-current"></i> 4.9</span>
+              <span class="text-gray-500">142 bookings this month</span>
+              <span class="text-gray-300">·</span>
+              <span class="text-gray-600">Open today 6:00 — 23:00</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="w-10 h-10 rounded-full border border-line flex items-center justify-center hover:bg-cream"><i data-lucide="share-2" class="w-4 h-4"></i></button>
+            <button class="w-10 h-10 rounded-full border border-line flex items-center justify-center hover:bg-cream"><i data-lucide="heart" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+
+        <section class="mt-8 pb-8 border-b border-line">
+          <h2 class="font-bold text-pitch mb-2">About this ground</h2>
+          <p class="text-gray-700 text-sm leading-relaxed">
+            Our most-booked 5-a-side pitch. FIFA-grade artificial turf with under-soil drainage — playable through monsoon. Full floodlight coverage for evening matches and a rebound wall for warm-ups. Sits at the front of the venue, closest to parking and the locker rooms.
+          </p>
+        </section>
+
+        <!-- Specs grid — replaces vague amenities; ground-specific facts -->
+        <section class="mt-6 pb-8 border-b border-line">
+          <h2 class="font-bold text-pitch mb-3">Specifications</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div class="bg-cream rounded-lg p-3">
+              <p class="text-[11px] text-gray-500 uppercase">Format</p>
+              <p class="font-bold text-pitch mt-0.5">5×5</p>
+            </div>
+            <div class="bg-cream rounded-lg p-3">
+              <p class="text-[11px] text-gray-500 uppercase">Dimensions</p>
+              <p class="font-bold text-pitch mt-0.5">28×18 m</p>
+            </div>
+            <div class="bg-cream rounded-lg p-3">
+              <p class="text-[11px] text-gray-500 uppercase">Surface</p>
+              <p class="font-bold text-pitch mt-0.5">Turf (FIFA)</p>
+            </div>
+            <div class="bg-cream rounded-lg p-3">
+              <p class="text-[11px] text-gray-500 uppercase">Capacity</p>
+              <p class="font-bold text-pitch mt-0.5">10 players</p>
+            </div>
+            <div class="bg-cream rounded-lg p-3">
+              <p class="text-[11px] text-gray-500 uppercase">Lighting</p>
+              <p class="font-bold text-pitch mt-0.5">Floodlights</p>
+            </div>
+            <div class="bg-cream rounded-lg p-3">
+              <p class="text-[11px] text-gray-500 uppercase">Open hours</p>
+              <p class="font-bold text-pitch mt-0.5">06:00–23:00</p>
+            </div>
+            <div class="bg-cream rounded-lg p-3">
+              <p class="text-[11px] text-gray-500 uppercase">Slot length</p>
+              <p class="font-bold text-pitch mt-0.5">1 hour</p>
+            </div>
+            <div class="bg-cream rounded-lg p-3">
+              <p class="text-[11px] text-gray-500 uppercase">Sport</p>
+              <p class="font-bold text-pitch mt-0.5">Football</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reviews -->
+        <section class="mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-bold text-pitch">Reviews</h2>
+            <a href="#" class="text-sm text-pitch hover:text-gold font-medium">See all 142 →</a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="border border-line rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 rounded-full bg-pitch text-white text-xs flex items-center justify-center font-bold">RH</div>
+                <div>
+                  <p class="text-sm font-semibold">Rakib H.</p>
+                  <p class="text-xs text-gray-500 flex items-center gap-1"><i data-lucide="star" class="w-3 h-3 text-gold fill-current"></i> 5.0 · 2 days ago</p>
+                </div>
+              </div>
+              <p class="text-sm text-gray-700">Pitch quality is top-notch. The lights and the locker room make late-night games actually enjoyable.</p>
+            </div>
+            <div class="border border-line rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 rounded-full bg-pitch text-white text-xs flex items-center justify-center font-bold">SA</div>
+                <div>
+                  <p class="text-sm font-semibold">Sadia A.</p>
+                  <p class="text-xs text-gray-500 flex items-center gap-1"><i data-lucide="star" class="w-3 h-3 text-gold fill-current"></i> 4.5 · 1 week ago</p>
+                </div>
+              </div>
+              <p class="text-sm text-gray-700">Booking was instant, confirmation arrived in seconds. Parking gets tight on Friday evenings — book early.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Booking widget -->
+      <aside class="lg:sticky lg:top-20 h-fit">
+        <div class="bg-white rounded-2xl border border-line shadow-sm p-5">
+          <div class="flex items-baseline gap-2 mb-1">
+            <p class="font-bold text-2xl text-pitch">৳1,200</p>
+            <p class="text-sm text-gray-500">/ hour</p>
+          </div>
+          <p class="text-xs text-gray-500 mb-5">Peak ★ slots ৳1,500/hr · 18:00–22:00</p>
+
+          <p class="text-xs font-semibold text-gray-500 mb-2">SELECT DATE</p>
+          <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+            <div class="date-cell"><p class="text-[11px] text-gray-500">THU</p><p class="font-bold text-lg">01</p><p class="text-[10px] text-gray-500">May</p></div>
+            <div class="date-cell active"><p class="text-[11px] opacity-80">FRI</p><p class="font-bold text-lg">02</p><p class="text-[10px] opacity-80">May</p></div>
+            <div class="date-cell"><p class="text-[11px] text-gray-500">SAT</p><p class="font-bold text-lg">03</p><p class="text-[10px] text-gray-500">May</p></div>
+            <div class="date-cell"><p class="text-[11px] text-gray-500">SUN</p><p class="font-bold text-lg">04</p><p class="text-[10px] text-gray-500">May</p></div>
+            <div class="date-cell"><p class="text-[11px] text-gray-500">MON</p><p class="font-bold text-lg">05</p><p class="text-[10px] text-gray-500">May</p></div>
+          </div>
+
+          <p class="text-xs font-semibold text-gray-500 mt-5 mb-2">AVAILABLE HOURS · FRI, 02 MAY</p>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="slot unavailable">06:00</div>
+            <div class="slot">07:00</div>
+            <div class="slot">08:00</div>
+            <div class="slot">09:00</div>
+            <div class="slot unavailable">10:00</div>
+            <div class="slot">11:00</div>
+            <div class="slot">15:00</div>
+            <div class="slot">16:00</div>
+            <div class="slot">17:00</div>
+            <div class="slot peak selected">18:00</div>
+            <div class="slot peak">19:00</div>
+            <div class="slot peak unavailable">20:00</div>
+            <div class="slot peak">21:00</div>
+            <div class="slot">22:00</div>
+            <div class="slot">23:00</div>
+          </div>
+          <div class="flex items-center gap-3 mt-3 text-[11px] text-gray-500">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-pitch"></span> Selected</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-cream border border-line"></span> Available</span>
+            <span class="flex items-center gap-1 text-gold">★ Peak</span>
+          </div>
+
+          <div class="mt-5 border-t border-line pt-4 space-y-1.5 text-sm">
+            <div class="flex justify-between text-gray-700"><span>1 hr × ৳1,500 (peak)</span><span>৳1,500</span></div>
+            <div class="flex justify-between text-gray-700"><span>Service fee</span><span>৳50</span></div>
+            <div class="flex justify-between font-bold text-pitch text-base pt-2 border-t border-line"><span>Total</span><span>৳1,550</span></div>
+          </div>
+
+          <button class="mt-4 w-full bg-gold text-pitch rounded-lg py-3 font-bold text-sm hover:bg-yellow-300 flex items-center justify-center gap-2">
+            Continue to payment <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+          <p class="text-[11px] text-gray-500 text-center mt-3 flex items-center justify-center gap-1">
+            <i data-lucide="shield-check" class="w-3 h-3"></i> Free cancellation up to 24h before
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+  PAGE 4 — CHECKOUT
+─────────────────────────────────────────────────────────────────────── -->
+<div class="page-label">Page 4 — Checkout</div>
+
+<section class="py-12 bg-cream">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+    <div>
+      <h1 class="font-display text-3xl font-extrabold text-pitch">Confirm &amp; pay</h1>
+      <p class="text-gray-600 mt-1 text-sm">Step 2 of 3 — almost there.</p>
+
+      <div class="flex items-center gap-3 mt-6 mb-8">
+        <div class="flex items-center gap-2 text-pitch font-semibold text-sm"><span class="w-7 h-7 rounded-full bg-pitch text-white flex items-center justify-center text-xs">✓</span> Slot</div>
+        <div class="flex-1 h-px bg-pitch"></div>
+        <div class="flex items-center gap-2 text-pitch font-semibold text-sm"><span class="w-7 h-7 rounded-full bg-gold text-pitch flex items-center justify-center text-xs">2</span> Details</div>
+        <div class="flex-1 h-px bg-line"></div>
+        <div class="flex items-center gap-2 text-gray-400 text-sm"><span class="w-7 h-7 rounded-full bg-line flex items-center justify-center text-xs">3</span> Done</div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-line p-6">
+        <h2 class="font-bold text-pitch mb-4">Your details</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-semibold text-gray-500">FULL NAME</label>
+            <input class="mt-1 w-full border border-line rounded-lg px-3 py-2 text-sm" value="Md Ziaul Hoque">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-500">PHONE</label>
+            <input class="mt-1 w-full border border-line rounded-lg px-3 py-2 text-sm" value="+880 1700 000 000">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-semibold text-gray-500">EMAIL</label>
+            <input class="mt-1 w-full border border-line rounded-lg px-3 py-2 text-sm" value="nipon@6amtech.com">
+            <p class="text-[11px] text-gray-500 mt-1">Confirmation will be sent here.</p>
+          </div>
+        </div>
+
+        <h2 class="font-bold text-pitch mt-8 mb-4 flex items-center gap-2"><i data-lucide="credit-card" class="w-4 h-4"></i> Payment</h2>
+        <p class="text-xs text-gray-500 mb-3">Powered by Stripe — your card details never touch our servers.</p>
+        <div class="border border-line rounded-lg p-4 bg-cream">
+          <div class="flex items-center justify-between text-sm">
+            <span class="font-medium text-gray-700">Card · Apple Pay · Google Pay</span>
+            <div class="flex gap-2">
+              <span class="text-[10px] font-bold text-gray-500">VISA</span>
+              <span class="text-[10px] font-bold text-gray-500">MC</span>
+              <span class="text-[10px] font-bold text-gray-500">AMEX</span>
+            </div>
+          </div>
+        </div>
+
+        <label class="flex items-start gap-2 mt-4 text-sm">
+          <input type="checkbox" checked class="mt-0.5 accent-emerald-700">
+          <span class="text-gray-700">I agree to the <a href="#" class="text-pitch underline">terms</a> and free-cancellation policy.</span>
+        </label>
+
+        <button class="mt-6 w-full bg-pitch text-white rounded-lg py-3.5 font-bold text-sm hover:bg-pitch-light flex items-center justify-center gap-2">
+          <i data-lucide="lock" class="w-4 h-4"></i> Pay ৳1,550 securely
+        </button>
+      </div>
+    </div>
+
+    <aside class="lg:sticky lg:top-20 h-fit">
+      <div class="bg-white rounded-2xl border border-line p-5">
+        <h3 class="font-bold text-pitch mb-3">Your booking</h3>
+        <div class="flex gap-3">
+          <img src="https://images.unsplash.com/photo-1486286701208-1d58e9338013?auto=format&fit=crop&w=200&q=70" class="w-20 h-20 rounded-lg object-cover" alt="">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="format-badge text-[10px]">5×5</span>
+            </div>
+            <p class="font-semibold text-pitch mt-1">Pitch A</p>
+            <p class="text-xs text-gray-500">Champions Turf · Banani</p>
+          </div>
+        </div>
+        <div class="mt-4 space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-gray-500">Date</span><span class="font-medium">Fri, 02 May 2026</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Time</span><span class="font-medium">18:00 — 19:00</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Sport</span><span class="font-medium">Football · 5×5</span></div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-line space-y-1.5 text-sm">
+          <div class="flex justify-between text-gray-700"><span>Slot (peak)</span><span>৳1,500</span></div>
+          <div class="flex justify-between text-gray-700"><span>Service fee</span><span>৳50</span></div>
+          <div class="flex justify-between font-bold text-pitch text-base pt-2 border-t border-line"><span>Total</span><span>৳1,550</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+  PAGE 5 — CONFIRMATION
+─────────────────────────────────────────────────────────────────────── -->
+<div class="page-label">Page 5 — Confirmation</div>
+
+<section class="py-16 bg-pitch text-white">
+  <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 text-center">
+    <div class="w-20 h-20 rounded-full bg-gold mx-auto flex items-center justify-center">
+      <i data-lucide="check" class="w-10 h-10 text-pitch"></i>
+    </div>
+    <h1 class="font-display text-4xl font-extrabold mt-6">You're booked!</h1>
+    <p class="text-white/80 mt-2">Confirmation #BK-2026-04830 has been emailed to <strong>nipon@6amtech.com</strong></p>
+
+    <div class="bg-white text-gray-900 rounded-2xl mt-10 p-6 text-left">
+      <div class="flex items-center gap-3 pb-4 border-b border-line">
+        <img src="https://images.unsplash.com/photo-1486286701208-1d58e9338013?auto=format&fit=crop&w=200&q=70" class="w-14 h-14 rounded-lg object-cover" alt="">
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="format-badge text-[10px]">5×5</span>
+          </div>
+          <p class="font-bold text-pitch mt-1">Pitch A · Champions Turf</p>
+          <p class="text-xs text-gray-500">Banani, Dhaka</p>
+        </div>
+        <span class="ml-auto badge confirmed">Confirmed</span>
+      </div>
+      <div class="grid grid-cols-3 gap-4 mt-4 text-sm">
+        <div>
+          <p class="text-xs text-gray-500">DATE</p>
+          <p class="font-semibold mt-1">Fri, 02 May</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500">TIME</p>
+          <p class="font-semibold mt-1">18:00 — 19:00</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500">PAID</p>
+          <p class="font-semibold mt-1 text-pitch">৳1,550</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mt-6">
+        <button class="border border-line rounded-lg py-2.5 text-sm font-semibold hover:bg-cream flex items-center justify-center gap-2"><i data-lucide="calendar-plus" class="w-4 h-4"></i> Add to calendar</button>
+        <button class="border border-line rounded-lg py-2.5 text-sm font-semibold hover:bg-cream flex items-center justify-center gap-2"><i data-lucide="map" class="w-4 h-4"></i> Get directions</button>
+      </div>
+    </div>
+
+    <div class="mt-8 flex items-center justify-center gap-4 text-sm">
+      <a href="#bookings" class="text-gold hover:underline font-semibold">View my bookings →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+  PAGE 6 — MY BOOKINGS
+─────────────────────────────────────────────────────────────────────── -->
+<div class="page-label">Page 6 — My bookings</div>
+
+<section id="bookings" class="py-12 bg-cream">
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h1 class="font-display text-3xl font-extrabold text-pitch">My bookings</h1>
+        <p class="text-gray-600 mt-1 text-sm">Manage upcoming matches and review past games at Champions Turf.</p>
+      </div>
+    </div>
+
+    <div class="flex gap-1 border-b border-line mb-6 overflow-x-auto">
+      <button class="px-4 py-2.5 text-sm font-semibold text-pitch border-b-2 border-pitch whitespace-nowrap">Upcoming (2)</button>
+      <button class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-pitch whitespace-nowrap">Past (8)</button>
+      <button class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-pitch whitespace-nowrap">Cancelled (1)</button>
+    </div>
+
+    <div class="space-y-3">
+      <article class="bg-white rounded-2xl border border-line p-4 sm:p-5 flex flex-col sm:flex-row gap-4">
+        <div class="relative w-full sm:w-28 h-28 shrink-0">
+          <img src="https://images.unsplash.com/photo-1486286701208-1d58e9338013?auto=format&fit=crop&w=300&q=70" class="absolute inset-0 w-full h-full rounded-xl object-cover" alt="">
+          <span class="absolute top-2 left-2 format-badge text-[10px]">5×5</span>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-xs text-gray-500">BK-2026-04830</p>
+              <h3 class="font-bold text-pitch text-lg">Pitch A</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Football · 5×5 · Outdoor</p>
+            </div>
+            <span class="badge confirmed">Confirmed</span>
+          </div>
+          <div class="flex items-center gap-4 mt-3 text-sm">
+            <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-4 h-4 text-pitch"></i> Fri, 02 May</span>
+            <span class="flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4 text-pitch"></i> 18:00 — 19:00</span>
+            <span class="font-bold text-pitch ml-auto">৳1,550</span>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="text-xs border border-line rounded-md px-3 py-1.5 hover:bg-cream">View receipt</button>
+            <button class="text-xs border border-line rounded-md px-3 py-1.5 hover:bg-cream">Get directions</button>
+            <button class="text-xs text-red-600 border border-red-200 rounded-md px-3 py-1.5 hover:bg-red-50 ml-auto">Cancel</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="bg-white rounded-2xl border border-line p-4 sm:p-5 flex flex-col sm:flex-row gap-4">
+        <div class="relative w-full sm:w-28 h-28 shrink-0">
+          <img src="https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=300&q=70" class="absolute inset-0 w-full h-full rounded-xl object-cover" alt="">
+          <span class="absolute top-2 left-2 format-badge text-[10px]">CRICKET</span>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-xs text-gray-500">BK-2026-04822</p>
+              <h3 class="font-bold text-pitch text-lg">Cricket Net</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Cricket · Covered net</p>
+            </div>
+            <span class="badge upcoming">Pending payment</span>
+          </div>
+          <div class="flex items-center gap-4 mt-3 text-sm">
+            <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-4 h-4 text-pitch"></i> Sun, 04 May</span>
+            <span class="flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4 text-pitch"></i> 09:00 — 11:00</span>
+            <span class="font-bold text-pitch ml-auto">৳2,400</span>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="text-xs bg-gold text-pitch font-bold rounded-md px-3 py-1.5 hover:bg-yellow-300">Complete payment</button>
+            <button class="text-xs border border-line rounded-md px-3 py-1.5 hover:bg-cream">View details</button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+  VISIT US — single venue contact section (replaces multi-vendor footer)
+─────────────────────────────────────────────────────────────────────── -->
+<div class="page-label">Page 7 — Visit us</div>
+
+<section id="visit" class="py-14 bg-white border-t border-line">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+    <div>
+      <span class="pill-gold">Visit us</span>
+      <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-pitch mt-4">One venue. Six grounds. Open 18 hours a day.</h2>
+      <div class="mt-6 space-y-4 text-sm">
+        <div class="flex items-start gap-3">
+          <i data-lucide="map-pin" class="w-5 h-5 text-pitch mt-0.5"></i>
+          <div>
+            <p class="font-semibold text-pitch">Address</p>
+            <p class="text-gray-700">Plot 7, Road 11, Banani, Dhaka 1213</p>
+            <a href="#" class="text-pitch underline text-xs">Get directions →</a>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <i data-lucide="clock" class="w-5 h-5 text-pitch mt-0.5"></i>
+          <div>
+            <p class="font-semibold text-pitch">Open hours</p>
+            <p class="text-gray-700">Every day · 06:00 — 23:00</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <i data-lucide="phone" class="w-5 h-5 text-pitch mt-0.5"></i>
+          <div>
+            <p class="font-semibold text-pitch">Reception</p>
+            <p class="text-gray-700">+880 1700 000 000 · hello@championsturf.com</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rounded-2xl overflow-hidden h-72 bg-cream border border-line relative">
+      <img src="https://images.unsplash.com/photo-1486286701208-1d58e9338013?auto=format&fit=crop&w=1200&q=70" class="absolute inset-0 w-full h-full object-cover opacity-90" alt="">
+      <div class="absolute inset-0 bg-pitch/20"></div>
+      <div class="absolute bottom-4 left-4 right-4 bg-white rounded-lg p-3 flex items-center gap-3 text-sm">
+        <i data-lucide="map" class="w-5 h-5 text-pitch"></i>
+        <span class="font-medium">Google Maps preview · click to open</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slim footer -->
+<footer class="bg-pitch text-white/80">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-md bg-gold flex items-center justify-center">
+        <i data-lucide="goal" class="w-4 h-4 text-pitch"></i>
+      </div>
+      <span class="font-display font-extrabold text-base text-white">Champions Turf</span>
+      <span class="text-white/40">·</span>
+      <span class="text-white/60">Banani, Dhaka</span>
+    </div>
+    <div class="flex flex-wrap gap-x-6 gap-y-2">
+      <a href="#" class="hover:text-gold">Cancellation policy</a>
+      <a href="#" class="hover:text-gold">Terms</a>
+      <a href="#" class="hover:text-gold">Privacy</a>
+      <a href="#" class="hover:text-gold">Contact</a>
+    </div>
+    <span class="text-white/40">© 2026 Champions Turf</span>
+  </div>
+</footer>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>
