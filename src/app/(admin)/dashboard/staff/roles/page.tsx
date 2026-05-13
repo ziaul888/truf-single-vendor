@@ -194,7 +194,7 @@ export default function RolesPage() {
               <TableRow className="bg-muted/10 hover:bg-muted/10">
                 <TableCell colSpan={5} className="py-2 px-4">
                   <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-info" />
                     <span className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
                       Managers · {grouped.manager.length}
                     </span>
@@ -209,7 +209,7 @@ export default function RolesPage() {
               <TableRow className="bg-muted/10 hover:bg-muted/10">
                 <TableCell colSpan={5} className="py-2 px-4">
                   <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-success" />
                     <span className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">
                       Attendants · {grouped.attendant.length}
                     </span>

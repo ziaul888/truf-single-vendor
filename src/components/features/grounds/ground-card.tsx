@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
   Users, Clock, CalendarDays, Pencil, LayoutList,
-  CheckCircle2, XCircle, TrendingUp, TrendingDown,
+  CheckCircle2, XCircle, TrendingDown,
 } from "lucide-react";
 import type { Ground } from "@/hooks/useGrounds";
 
@@ -48,32 +48,54 @@ export function GroundCard({ ground, onToggleStatus, isPending }: GroundCardProp
   const gradient   = SPORT_GRADIENT[ground.type] ?? SPORT_GRADIENT.other;
 
   return (
-    <Card className={cn("overflow-hidden p-0 transition-shadow hover:shadow-md", !ground.isActive && "opacity-60")}>
-      {/* Photo / gradient */}
-      <div className="relative h-44 w-full">
+    <Card
+      className={cn(
+        "group overflow-hidden p-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl",
+        !ground.isActive && "opacity-60",
+      )}
+    >
+      {/* Photo / gradient with overlay */}
+      <div className="relative h-52 w-full overflow-hidden">
         {coverPhoto ? (
-          <Image src={coverPhoto} alt={ground.name} fill sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="object-cover" />
+          <Image
+            src={coverPhoto}
+            alt={ground.name}
+            fill
+            sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
         ) : (
-          <div className={cn("flex h-full w-full items-center justify-center bg-gradient-to-br text-5xl", gradient)}>
+          <div className={cn("flex h-full w-full items-center justify-center bg-linear-to-br text-6xl transition-transform duration-500 group-hover:scale-105", gradient)}>
             {SPORT_EMOJI[ground.type] ?? "🏟️"}
           </div>
         )}
-        <span className={cn("absolute left-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize backdrop-blur-sm bg-background/80", SPORT_COLOR[ground.type])}>
+        {/* Bottom gradient for legibility */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
+
+        {/* Top badges */}
+        <span className={cn("absolute left-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize backdrop-blur-md bg-background/80 shadow-sm", SPORT_COLOR[ground.type])}>
           {SPORT_EMOJI[ground.type]} {ground.type}
         </span>
-        <span className={cn("absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm bg-background/85", ground.isActive ? "text-green-600" : "text-destructive")}>
+        <span
+          className={cn(
+            "absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold backdrop-blur-md shadow-sm",
+            ground.isActive
+              ? "bg-green-500/90 text-white"
+              : "bg-destructive/90 text-white",
+          )}
+        >
           {ground.isActive ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
           {ground.isActive ? "Active" : "Inactive"}
         </span>
+
+        {/* Name + ID over image */}
+        <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+          <h3 className="text-lg font-semibold leading-tight drop-shadow-sm">{ground.name}</h3>
+          <span className="font-mono text-[11px] text-white/70">{ground.id} · {ground.size}</span>
+        </div>
       </div>
 
       <CardContent className="space-y-3 p-4">
-        {/* Name + ID */}
-        <div>
-          <h3 className="font-semibold leading-tight">{ground.name}</h3>
-          <span className="font-mono text-[11px] text-muted-foreground">{ground.id} · {ground.size}</span>
-        </div>
-
         {/* Capacity + hours */}
         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{ground.capacity} players</span>
@@ -89,32 +111,23 @@ export function GroundCard({ ground, onToggleStatus, isPending }: GroundCardProp
           </div>
         )}
 
-        {/* Pricing */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="h-3.5 w-3.5 text-amber-600" />
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Peak</span>
-              <span className="rounded-full bg-amber-200/70 dark:bg-amber-800/50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-                {ground.peakPricing.from}–{ground.peakPricing.to}
-              </span>
-            </div>
-            <span className="text-sm font-bold text-amber-700 dark:text-amber-400">{formatCurrency(ground.peakPricing.pricePerHour)}<span className="text-[10px] font-normal">/hr</span></span>
+        {/* Single bold price line */}
+        <div className="flex items-baseline justify-between rounded-lg border bg-muted/30 px-3 py-2">
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl font-bold tracking-tight text-foreground">
+              {formatCurrency(ground.peakPricing.pricePerHour)}
+            </span>
+            <span className="text-[11px] text-muted-foreground">/hr peak</span>
           </div>
-          <div className="flex items-center justify-between rounded-lg bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5">
-            <div className="flex items-center gap-1.5">
-              <TrendingDown className="h-3.5 w-3.5 text-blue-600" />
-              <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Off-peak</span>
-              <span className="rounded-full bg-blue-200/70 dark:bg-blue-800/50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300">
-                {ground.offPeakPricing.from}–{ground.offPeakPricing.to}
-              </span>
-            </div>
-            <span className="text-sm font-bold text-blue-700 dark:text-blue-400">{formatCurrency(ground.offPeakPricing.pricePerHour)}<span className="text-[10px] font-normal">/hr</span></span>
+          <div className="flex items-baseline gap-1 text-muted-foreground">
+            <TrendingDown className="h-3 w-3" />
+            <span className="text-sm font-medium">{formatCurrency(ground.offPeakPricing.pricePerHour)}</span>
+            <span className="text-[10px]">/hr off-peak</span>
           </div>
         </div>
 
         {/* Today's bookings */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground border-t pt-2.5">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <CalendarDays className="h-3.5 w-3.5" />
           <span><span className="font-semibold text-foreground">{ground.todayBookings}</span> booking{ground.todayBookings !== 1 ? "s" : ""} today</span>
         </div>

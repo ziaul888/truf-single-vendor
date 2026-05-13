@@ -21,9 +21,9 @@ export const ROLE_META: Record<Role, {
   manager: {
     label: "Manager",
     icon: "◈",
-    colorClass: "text-blue-700 dark:text-blue-400",
-    badgeClass: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800",
-    dotColor: "#3b82f6",
+    colorClass: "text-info",
+    badgeClass: "bg-info/10 text-info border-info/30",
+    dotColor: "var(--info)",
     permissions: [
       { label: "View Dashboard",            allowed: true  },
       { label: "Manage Bookings & Refunds", allowed: true  },
@@ -37,9 +37,9 @@ export const ROLE_META: Record<Role, {
   attendant: {
     label: "Attendant",
     icon: "◇",
-    colorClass: "text-emerald-700 dark:text-emerald-400",
-    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800",
-    dotColor: "#10b981",
+    colorClass: "text-success",
+    badgeClass: "bg-success/10 text-success border-success/30",
+    dotColor: "var(--success)",
     permissions: [
       { label: "Block Time Slots",          allowed: true  },
       { label: "View Dashboard",            allowed: false },

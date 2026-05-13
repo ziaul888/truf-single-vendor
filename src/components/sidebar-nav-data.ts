@@ -15,21 +15,21 @@ export const NAV: NavGroup[] = [
   {
     label: "Main",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-violet-500" },
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-primary" },
     ],
   },
   {
     label: "Management",
     items: [
       {
-        label: "Grounds", href: "/dashboard/grounds", icon: MapPin, color: "text-emerald-500",
+        label: "Grounds", href: "/dashboard/grounds", icon: MapPin, color: "text-success",
         children: [
           { label: "All Grounds", href: "/dashboard/grounds",     icon: List       },
           { label: "Add Ground",  href: "/dashboard/grounds/new", icon: MapPinPlus },
         ],
       },
       {
-        label: "Bookings", href: "/dashboard/bookings", icon: CalendarDays, color: "text-blue-500",
+        label: "Bookings", href: "/dashboard/bookings", icon: CalendarDays, color: "text-info",
         children: [
           { label: "All Bookings",    href: "/dashboard/bookings",           icon: List          },
           { label: "Calendar View",   href: "/dashboard/bookings/calendar",  icon: CalendarRange },
@@ -37,7 +37,7 @@ export const NAV: NavGroup[] = [
         ],
       },
       {
-        label: "Slots", href: "/dashboard/slots", icon: Clock, color: "text-amber-500",
+        label: "Slots", href: "/dashboard/slots", icon: Clock, color: "text-warning",
         children: [
           { label: "All Slots",     href: "/dashboard/slots",          icon: LayoutGrid        },
           { label: "Blocked Slots", href: "/dashboard/slots/blocked",  icon: Ban               },
@@ -45,7 +45,7 @@ export const NAV: NavGroup[] = [
         ],
       },
       {
-        label: "Customers", href: "/dashboard/customers", icon: Users, color: "text-pink-500",
+        label: "Customers", href: "/dashboard/customers", icon: Users, color: "text-accent",
         children: [
           { label: "All Customers", href: "/dashboard/customers", icon: List },
         ],
@@ -56,14 +56,14 @@ export const NAV: NavGroup[] = [
     label: "Operations",
     items: [
       {
-        label: "Staff", href: "/dashboard/staff", icon: UserCog, color: "text-cyan-500",
+        label: "Staff", href: "/dashboard/staff", icon: UserCog, color: "text-chart-4",
         children: [
           { label: "All Staff",  href: "/dashboard/staff",       icon: List      },
           { label: "Roles",      href: "/dashboard/staff/roles", icon: UserCheck },
         ],
       },
       {
-        label: "Payments", href: "/dashboard/payments", icon: CreditCard, color: "text-orange-500",
+        label: "Payments", href: "/dashboard/payments", icon: CreditCard, color: "text-chart-2",
         children: [
           { label: "All Payments", href: "/dashboard/payments",          icon: List      },
           { label: "Invoices",     href: "/dashboard/payments/invoices", icon: Receipt   },
@@ -76,7 +76,7 @@ export const NAV: NavGroup[] = [
     label: "Analytics",
     items: [
       {
-        label: "Reports", href: "/dashboard/reports", icon: BarChart3, color: "text-rose-500",
+        label: "Reports", href: "/dashboard/reports", icon: BarChart3, color: "text-destructive",
         children: [
           { label: "Revenue",  href: "/dashboard/reports/revenue",  icon: TrendingUp   },
           { label: "Bookings", href: "/dashboard/reports/bookings", icon: CalendarDays },
@@ -89,7 +89,7 @@ export const NAV: NavGroup[] = [
     label: "Settings",
     items: [
       {
-        label: "Settings", href: "/dashboard/settings", icon: Settings, color: "text-slate-500",
+        label: "Settings", href: "/dashboard/settings", icon: Settings, color: "text-muted-foreground",
         children: [
           { label: "General",       href: "/dashboard/settings/general",       icon: Building2   },
           { label: "Booking",       href: "/dashboard/settings/booking",       icon: CalendarCog },

@@ -8,10 +8,33 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { NavItem } from "./sidebar-nav-data";
 
 const ROW_BASE =
-  "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors";
-const ROW_ACTIVE = "bg-sidebar-accent text-sidebar-foreground";
+  "group relative flex w-full items-center gap-3 rounded-2xl px-2.5 py-2 text-sm transition-all duration-200";
+const ROW_ACTIVE = "bg-sidebar-accent/70 backdrop-blur-sm shadow-sm";
 const ROW_IDLE =
-  "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground";
+  "hover:bg-sidebar-accent/30";
+
+function IconChip({
+  Icon, color, isActive,
+}: { Icon: NavItem["icon"]; color: string; isActive: boolean }) {
+  return (
+    <span
+      className={cn(
+        "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200",
+        isActive
+          ? cn("ring-1 ring-current/30 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]", color)
+          : "bg-sidebar-accent/40 group-hover:scale-105",
+      )}
+      style={isActive ? { backgroundColor: "color-mix(in oklab, currentColor 18%, transparent)" } : undefined}
+    >
+      <Icon
+        className={cn(
+          "h-[17px] w-[17px] transition-colors",
+          isActive ? "" : cn("text-sidebar-foreground/70 group-hover:text-current", color),
+        )}
+      />
+    </span>
+  );
+}
 
 export function NavItemRow({ item, collapsed, pathname, onNavClick }: {
   item: NavItem; collapsed: boolean; pathname: string; onNavClick?: () => void;
@@ -27,13 +50,23 @@ export function NavItemRow({ item, collapsed, pathname, onNavClick }: {
           <Link
             href={item.href}
             className={cn(
-              "mx-auto flex h-9 w-9 items-center justify-center rounded-md transition-colors",
+              "relative mx-auto flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-200",
               isActive
-                ? "bg-sidebar-accent text-sidebar-foreground"
-                : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                ? cn("ring-1 ring-current/30 shadow-sm", item.color)
+                : "text-sidebar-foreground/85 hover:bg-sidebar-accent/40 hover:scale-105",
             )}
+            style={isActive ? { backgroundColor: "color-mix(in oklab, currentColor 18%, transparent)" } : undefined}
           >
-            <item.icon className={cn("h-[18px] w-[18px]", isActive && item.color)} />
+            <item.icon className={cn("h-[18px] w-[18px] transition-colors", isActive && item.color)} />
+            {isActive && (
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute -right-1 top-1.5 h-1.5 w-1.5 rounded-full bg-current shadow-[0_0_6px_currentColor]",
+                  item.color,
+                )}
+              />
+            )}
           </Link>
         </TooltipTrigger>
         <TooltipContent side="right" className="font-medium">
@@ -59,13 +92,26 @@ export function NavItemRow({ item, collapsed, pathname, onNavClick }: {
         onClick={onNavClick}
         className={cn(ROW_BASE, isActive ? ROW_ACTIVE : ROW_IDLE)}
       >
-        <item.icon
+        <IconChip Icon={item.icon} color={item.color} isActive={isActive} />
+        <span
           className={cn(
-            "h-4 w-4 shrink-0 transition-colors",
-            isActive ? item.color : "text-sidebar-foreground/75 group-hover:text-sidebar-foreground"
+            "flex-1 truncate transition-colors",
+            isActive
+              ? "font-semibold text-sidebar-foreground"
+              : "font-medium text-sidebar-foreground/80 group-hover:text-sidebar-foreground",
           )}
-        />
-        <span className="truncate">{item.label}</span>
+        >
+          {item.label}
+        </span>
+        {isActive && (
+          <span
+            aria-hidden
+            className={cn(
+              "h-1.5 w-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]",
+              item.color,
+            )}
+          />
+        )}
       </Link>
     );
   }
@@ -76,19 +122,23 @@ export function NavItemRow({ item, collapsed, pathname, onNavClick }: {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className={cn(ROW_BASE, isActive ? ROW_ACTIVE : ROW_IDLE)}
+        className={cn(ROW_BASE, isActive ? ROW_ACTIVE : ROW_IDLE, "text-left")}
       >
-        <item.icon
+        <IconChip Icon={item.icon} color={item.color} isActive={isActive} />
+        <span
           className={cn(
-            "h-4 w-4 shrink-0 transition-colors",
-            isActive ? item.color : "text-sidebar-foreground/75 group-hover:text-sidebar-foreground"
+            "flex-1 truncate transition-colors",
+            isActive
+              ? "font-semibold text-sidebar-foreground"
+              : "font-medium text-sidebar-foreground/80 group-hover:text-sidebar-foreground",
           )}
-        />
-        <span className="flex-1 truncate text-left">{item.label}</span>
+        >
+          {item.label}
+        </span>
         <ChevronRight
           className={cn(
             "h-3.5 w-3.5 shrink-0 text-sidebar-foreground/60 transition-transform duration-200",
-            open && "rotate-90"
+            open && "rotate-90",
           )}
         />
       </button>
@@ -96,11 +146,16 @@ export function NavItemRow({ item, collapsed, pathname, onNavClick }: {
       <div
         className={cn(
           "grid overflow-hidden transition-[grid-template-rows,opacity] duration-200",
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         )}
       >
         <div className="min-h-0">
-          <div className="ml-[18px] mt-0.5 space-y-0.5 border-l border-sidebar-border pl-3 pb-1">
+          <div
+            className={cn(
+              "ml-6 mt-1 space-y-0.5 border-l border-current/25 pl-3.5 pb-1",
+              item.color,
+            )}
+          >
             {item.children!.map((child) => {
               const childActive = pathname === child.href;
               return (
@@ -109,16 +164,22 @@ export function NavItemRow({ item, collapsed, pathname, onNavClick }: {
                   href={child.href}
                   onClick={onNavClick}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+                    "group/sub relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] transition-all duration-150",
                     childActive
-                      ? "bg-sidebar-accent font-medium text-sidebar-foreground"
-                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                      ? "bg-sidebar-accent/60 font-semibold text-sidebar-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground hover:translate-x-0.5",
                   )}
                 >
+                  {childActive && (
+                    <span
+                      aria-hidden
+                      className="absolute -left-[14.5px] top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-current shadow-[0_0_6px_currentColor]"
+                    />
+                  )}
                   <child.icon
                     className={cn(
                       "h-3.5 w-3.5 shrink-0",
-                      childActive ? item.color : "text-sidebar-foreground/65"
+                      childActive ? "" : "text-sidebar-foreground/50 group-hover/sub:text-current",
                     )}
                   />
                   <span className="truncate">{child.label}</span>

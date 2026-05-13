@@ -386,8 +386,8 @@ export default function StaffPage() {
                   <span className={cn(
                     "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize",
                     s.role === "manager"
-                      ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800"
-                      : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
+                      ? "bg-info/10 text-info border-info/30"
+                      : "bg-success/10 text-success border-success/30"
                   )}>
                     {s.role}
                   </span>
