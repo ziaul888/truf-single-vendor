@@ -64,6 +64,7 @@ export default function LoginPage() {
     if (email === creds.email && password === creds.password) {
       setLoading(true);
       setTimeout(() => {
+        document.cookie = `admin_token=demo_${selectedRole}; path=/; max-age=28800; samesite=lax`;
         setLoading(false);
         router.push("/dashboard");
       }, 1800);
