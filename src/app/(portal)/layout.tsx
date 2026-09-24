@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Goal, Phone } from "lucide-react";
+import { cookies } from "next/headers";
+import { Goal, LayoutDashboard, Phone } from "lucide-react";
 import { VENUE } from "@/lib/portal-stub-data";
 
 /**
@@ -17,7 +18,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   );
 }
 
-function PortalHeader() {
+async function PortalHeader() {
+  const isAdmin = Boolean((await cookies()).get("admin_token")?.value);
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-sidebar text-sidebar-foreground">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -45,6 +48,15 @@ function PortalHeader() {
           >
             <Phone className="h-3.5 w-3.5" /> {VENUE.phone}
           </a>
+          {isAdmin && (
+            <Link
+              href="/dashboard"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-accent/40 px-3 text-sm font-semibold text-accent hover:bg-accent hover:text-accent-foreground"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Link>
+          )}
           <Link
             href="/grounds"
             className="inline-flex h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground hover:opacity-90"
