@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { Goal, LayoutDashboard, Phone } from "lucide-react";
-import { VENUE } from "@/lib/portal-stub-data";
+import { Facebook, Goal, Instagram, LayoutDashboard, MessageCircle, Phone } from "lucide-react";
+import { getWebsiteSettings } from "@/services/website-settings";
+import type { WebsiteSettings } from "@/validations/website-settings";
 
 /**
  * The portal locks to the `pitch` theme regardless of the admin theme toggle —
@@ -9,16 +10,17 @@ import { VENUE } from "@/lib/portal-stub-data";
  * globals.css under `.pitch`.
  */
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
+  const { contact, social } = getWebsiteSettings();
   return (
     <div className="pitch flex min-h-screen flex-col bg-background text-foreground">
-      <PortalHeader />
+      <PortalHeader contact={contact} />
       <main className="flex-1">{children}</main>
-      <PortalFooter />
+      <PortalFooter contact={contact} social={social} />
     </div>
   );
 }
 
-async function PortalHeader() {
+async function PortalHeader({ contact }: { contact: WebsiteSettings["contact"] }) {
   const isAdmin = Boolean((await cookies()).get("admin_token")?.value);
 
   return (
@@ -29,8 +31,8 @@ async function PortalHeader() {
             <Goal className="h-5 w-5 text-accent-foreground" />
           </span>
           <span className="leading-tight">
-            <span className="block text-base font-extrabold tracking-tight">{VENUE.name}</span>
-            <span className="hidden text-[10px] opacity-60 sm:block">Banani, Dhaka</span>
+            <span className="block text-base font-extrabold tracking-tight">{contact.venueName}</span>
+            {contact.tagline && <span className="hidden text-[10px] opacity-60 sm:block">{contact.tagline}</span>}
           </span>
         </Link>
 
@@ -43,10 +45,10 @@ async function PortalHeader() {
 
         <div className="flex items-center gap-2">
           <a
-            href={`tel:${VENUE.phone.replace(/\s/g, "")}`}
+            href={`tel:${contact.phone.replace(/\s/g, "")}`}
             className="mr-2 hidden items-center gap-1 text-xs opacity-80 hover:text-accent sm:inline-flex"
           >
-            <Phone className="h-3.5 w-3.5" /> {VENUE.phone}
+            <Phone className="h-3.5 w-3.5" /> {contact.phone}
           </a>
           {isAdmin && (
             <Link
@@ -69,7 +71,18 @@ async function PortalHeader() {
   );
 }
 
-function PortalFooter() {
+const SOCIAL_LINKS = [
+  { key: "facebook", label: "Facebook", Icon: Facebook },
+  { key: "instagram", label: "Instagram", Icon: Instagram },
+  { key: "whatsapp", label: "WhatsApp", Icon: MessageCircle },
+] as const;
+
+function PortalFooter({
+  contact, social,
+}: {
+  contact: WebsiteSettings["contact"]; social: WebsiteSettings["social"];
+}) {
+  const socialLinks = SOCIAL_LINKS.filter(({ key }) => social[key]);
   return (
     <footer className="border-t border-white/10 bg-sidebar text-sidebar-foreground">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 py-10 text-xs sm:flex-row sm:items-center sm:px-6 lg:px-8">
@@ -77,10 +90,23 @@ function PortalFooter() {
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent">
             <Goal className="h-4 w-4 text-accent-foreground" />
           </span>
-          <span className="text-base font-extrabold">{VENUE.name}</span>
-          <span className="opacity-40">·</span>
-          <span className="opacity-60">Banani, Dhaka</span>
+          <span className="text-base font-extrabold">{contact.venueName}</span>
+          {contact.tagline && (
+            <>
+              <span className="opacity-40">·</span>
+              <span className="opacity-60">{contact.tagline}</span>
+            </>
+          )}
         </div>
+        {socialLinks.length > 0 && (
+          <div className="flex items-center gap-3">
+            {socialLinks.map(({ key, label, Icon }) => (
+              <a key={key} href={social[key]} target="_blank" rel="noopener noreferrer" aria-label={label} className="opacity-70 hover:text-accent hover:opacity-100">
+                <Icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap gap-x-6 gap-y-2">
           <Link href="#" className="hover:text-accent">Cancellation policy</Link>
           <Link href="#" className="hover:text-accent">Terms</Link>
@@ -95,7 +121,7 @@ function PortalFooter() {
             </Link>
           )}
         </div>
-        <span className="opacity-40">© 2026 {VENUE.name}</span>
+        <span className="opacity-40">© {new Date().getFullYear()} {contact.venueName}</span>
       </div>
     </footer>
   );

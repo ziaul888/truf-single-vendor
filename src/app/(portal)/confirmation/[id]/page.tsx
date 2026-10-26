@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { CalendarPlus, Check, Map } from "lucide-react";
-import { GROUNDS, VENUE } from "@/lib/portal-stub-data";
+import { GROUNDS } from "@/lib/portal-stub-data";
+import { getWebsiteSettings } from "@/services/website-settings";
 import { FormatBadge } from "@/components/portal/format-badge";
 
 export default async function ConfirmationPage({
@@ -14,6 +15,7 @@ export default async function ConfirmationPage({
   // TODO: const booking = await api.bookings.get(id);
   // For the stub we'll use the first ground as a placeholder.
   const ground = GROUNDS[0]!;
+  const { venueName } = getWebsiteSettings().contact;
 
   return (
     <section className="bg-sidebar py-16 text-sidebar-foreground">
@@ -33,7 +35,7 @@ export default async function ConfirmationPage({
             </div>
             <div>
               <FormatBadge format={ground.format} />
-              <p className="mt-1 font-bold">{ground.name} · {VENUE.name}</p>
+              <p className="mt-1 font-bold">{ground.name} · {venueName}</p>
               <p className="text-xs text-muted-foreground">Banani, Dhaka</p>
             </div>
             <span className="ml-auto rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success">

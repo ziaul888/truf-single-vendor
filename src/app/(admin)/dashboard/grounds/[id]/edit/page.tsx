@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GroundFormFields, type PhotoSlot } from "@/components/features/add-ground/ground-form-fields";
 import { PreviewSidebar } from "@/components/features/add-ground/preview-sidebar";
@@ -52,7 +52,8 @@ export default function EditGroundPage() {
   });
 
   const form = useForm<AddGroundFormData>({
-    resolver: zodResolver(AddGroundSchema),
+    // Fields use z.coerce, so the schema's input type is looser than the form's.
+    resolver: zodResolver(AddGroundSchema) as Resolver<AddGroundFormData>,
     defaultValues: {
       type: "football",
       availableDays: "everyday",

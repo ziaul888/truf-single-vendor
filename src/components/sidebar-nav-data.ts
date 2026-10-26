@@ -3,7 +3,7 @@ import {
   CalendarCheck, CalendarRange, Users, UserCog,
   UserCheck, CreditCard, Receipt, RotateCcw, BarChart3,
   TrendingUp, FileText, Clock, Ban, SlidersHorizontal, LayoutGrid,
-  Settings, Building2, CalendarCog, Wallet, Bell, ShieldCheck, Database,
+  Settings, Building2, CalendarCog, Wallet, Bell, ShieldCheck, Database, Globe,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -92,6 +92,7 @@ export const NAV: NavGroup[] = [
         label: "Settings", href: "/dashboard/settings", icon: Settings, color: "text-muted-foreground",
         children: [
           { label: "General",       href: "/dashboard/settings/general",       icon: Building2   },
+          { label: "Website",       href: "/dashboard/settings/website",       icon: Globe       },
           { label: "Booking",       href: "/dashboard/settings/booking",       icon: CalendarCog },
           { label: "Payments",      href: "/dashboard/settings/payments",      icon: Wallet      },
           { label: "Notifications", href: "/dashboard/settings/notifications", icon: Bell        },

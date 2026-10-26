@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,8 @@ export default function AddBookingPage() {
   const createBooking = useCreateBooking();
 
   const form = useForm<AddBookingFormData>({
-    resolver: zodResolver(AddBookingSchema),
+    // Fields use z.coerce, so the schema's input type is looser than the form's.
+    resolver: zodResolver(AddBookingSchema) as Resolver<AddBookingFormData>,
     defaultValues: {
       groundId: "", date: "", slotId: "",
       customerName: "", customerPhone: "", customerEmail: "",
