@@ -10,6 +10,7 @@ import { Loader2, Smartphone } from "lucide-react";
 import { PortalApiError, sendSignInCode, verifySignInCode } from "@/lib/portal-bookings";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { CUSTOMER_SESSION_KEY } from "./use-customer-session";
+import { ProfileStep } from "./profile-step";
 
 const RESEND_AFTER_S = 60;
 
@@ -39,6 +40,7 @@ export function SignInForm() {
   const [phone, setPhone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [wait, setWait] = useState(0);
+  const [needsProfile, setNeedsProfile] = useState(false);
 
   useEffect(() => {
     if (wait <= 0) return;
@@ -67,16 +69,23 @@ export function SignInForm() {
     try {
       const session = await verifySignInCode(phone, code);
       queryClient.setQueryData(CUSTOMER_SESSION_KEY, session);
-      router.replace(from);
-      router.refresh();
+      if (session.needsProfile) setNeedsProfile(true);
+      else finish();
     } catch (err) {
       setError(messageFor(err));
     }
   }
 
+  function finish() {
+    router.replace(from);
+    router.refresh();
+  }
+
   return (
     <div className="rounded-2xl border bg-card p-6 text-left">
-      {phone === null ? (
+      {needsProfile ? (
+        <ProfileStep onDone={finish} />
+      ) : phone === null ? (
         <form onSubmit={phoneForm.handleSubmit(({ phone: p }) => send(p))} noValidate className="space-y-4">
           <div>
             <label htmlFor="phone" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mobile number</label>

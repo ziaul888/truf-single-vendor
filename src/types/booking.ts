@@ -210,6 +210,8 @@ export interface CustomerSession {
   customerId: string | null;
   name: string | null;
   email: string | null;
+  /** True when the number has no customer record yet — ask for name and email. */
+  needsProfile: boolean;
 }
 
 /** A signed-in customer's booking: the public booking plus its signed link. */

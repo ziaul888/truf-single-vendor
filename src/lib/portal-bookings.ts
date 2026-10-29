@@ -87,6 +87,10 @@ export const sendSignInCode = (phone: string) =>
 export const verifySignInCode = (phone: string, code: string) =>
   call<CustomerSession>("/customer/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) });
 
+/** Creates the customer record for a new number, or updates name and email. */
+export const saveCustomerProfile = (profile: { name: string; email: string }) =>
+  call<CustomerSession>("/customer/auth/profile", { method: "POST", body: JSON.stringify(profile) });
+
 /** The signed-in customer, or null when signed out (401). */
 export async function getCustomerSession(): Promise<CustomerSession | null> {
   try {
