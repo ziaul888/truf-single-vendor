@@ -24,7 +24,7 @@ export function SlotPicker({ slots, value, onChange, loading, error }: SlotPicke
   }
 
   if (slots.length === 0) {
-    return <p className="text-sm text-muted-foreground">No slots available for this ground.</p>;
+    return <p className="text-sm text-muted-foreground">No open slots on this date. Try another date or ground.</p>;
   }
 
   return (

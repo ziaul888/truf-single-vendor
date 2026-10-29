@@ -62,7 +62,7 @@ export interface Payment {
   id: string;
   bookingId: string;
   amount: number;
-  method: "card" | "upi" | "cash" | "bank_transfer";
+  method: "card" | "cash" | "bank_transfer";
   status: "pending" | "completed" | "failed" | "refunded";
   transactionId?: string;
   createdAt: Date;
@@ -105,10 +105,15 @@ export interface CalendarSlot {
   date: string; // "YYYY-MM-DD"
   startTime: string;
   endTime: string;
-  status: "booked" | "partial" | "blocked";
+  /** "partial": booked with an advance paid and a balance due. "held": a customer is paying in Stripe checkout. */
+  status: "booked" | "partial" | "held" | "blocked";
+  /** Booked and held slots. */
+  bookingId?: string;
   customerName?: string;
   customerPhone?: string;
+  /** Whole currency units. */
   amount?: number;
+  /** Whole currency units. */
   advancePaid?: number;
   note?: string;
 }

@@ -1,5 +1,5 @@
 import { Grid3x3 } from "lucide-react";
-import type { Ground } from "@/types/api";
+import type { GroundFormat } from "@/types/api";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +8,7 @@ export function FormatBadge({
   size = "sm",
   className,
 }: {
-  format: Ground["format"];
+  format: GroundFormat;
   size?: "sm" | "md";
   className?: string;
 }) {

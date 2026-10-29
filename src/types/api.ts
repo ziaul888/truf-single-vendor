@@ -1,29 +1,39 @@
 // Mirrors the backend API contract — keep in sync with the separate backend project.
 
-export type Sport = "football" | "cricket" | "badminton";
-export type GroundFormat = "5x5" | "6x6" | "7x7" | "11x11" | "net" | "court";
-export type Surface = "outdoor-turf" | "indoor-court" | "covered-net";
+import type { AvailableDays, GroundFormat, PeakRange, SlotDurationMinutes, Sport, Surface, Weekday } from "./ground";
+
+export type { GroundFormat, Sport, Surface };
 export type SlotStatus = "available" | "booked" | "blocked";
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "refunded";
 
+/**
+ * A ground as the portal renders it. Built from turf-api's public ground
+ * (see src/services/portal-grounds.ts); hourlyRate is in whole currency units.
+ */
 export interface Ground {
   id: string;
   name: string;
-  sport: Sport;
-  format: GroundFormat;
-  surface: Surface;
-  dimensions?: string;
-  capacity: number;
+  description?: string | null;
+  address?: string | null;
   hourlyRate: number;
-  peakRate?: number;
-  peakStartHour?: number;
-  peakEndHour?: number;
   openHour: number;
   closeHour: number;
-  amenities: string[];
-  images: string[];
-  rating?: number;
-  reviewCount?: number;
+  sport?: Sport;
+  format?: GroundFormat;
+  surface?: Surface;
+  dimensions?: string;
+  capacity?: number;
+  amenities?: string[];
+  /** Missing means open every day (demo data). */
+  availableDays?: AvailableDays;
+  customDays?: Weekday[];
+
+  /** Whole currency units; hourlyRate is the off-peak price when this is set. */
+  peakRate?: number;
+  peakRanges?: PeakRange[];
+  /** Missing means 60 (demo data). */
+  slotDurationMinutes?: SlotDurationMinutes;
+  images?: string[];
 }
 
 export interface TimeSlot {

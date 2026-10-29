@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function Trend({ value }: { value: number }) {
+function Trend({ value, label }: { value: number; label: string }) {
   if (value === 0)
     return (
       <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -15,7 +15,7 @@ function Trend({ value }: { value: number }) {
   return (
     <span className={cn("flex items-center gap-1 text-xs font-medium", up ? "text-green-600" : "text-red-500")}>
       {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-      {up ? "+" : ""}{value.toFixed(1)}% vs yesterday
+      {up ? "+" : ""}{value.toFixed(1)}% {label}
     </span>
   );
 }
@@ -25,12 +25,15 @@ export function StatCard({
   value,
   icon: Icon,
   trend,
+  trendLabel = "vs yesterday",
   loading,
 }: {
   title: string;
   value: string;
   icon: React.ElementType;
   trend?: number;
+  /** Shown after the %, e.g. "vs last week". */
+  trendLabel?: string;
   loading?: boolean;
 }) {
   return (
@@ -48,7 +51,7 @@ export function StatCard({
         ) : (
           <>
             <div className="text-2xl font-bold">{value}</div>
-            {trend !== undefined && <Trend value={trend} />}
+            {trend !== undefined && <Trend value={trend} label={trendLabel} />}
           </>
         )}
       </CardContent>

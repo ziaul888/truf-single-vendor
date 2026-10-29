@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { venueToday } from "@/lib/slot-format";
 import type { CalendarSlot } from "@/types";
 
 const HOURS = Array.from({ length: 17 }, (_, i) => `${String(i + 6).padStart(2, "0")}:00`);
@@ -8,6 +9,7 @@ const HOURS = Array.from({ length: 17 }, (_, i) => `${String(i + 6).padStart(2, 
 const STATUS_CELL: Record<CalendarSlot["status"], string> = {
   booked:  "bg-green-100  border-l-2 border-l-green-500  text-green-800  dark:bg-green-900/40  dark:text-green-300",
   partial: "bg-amber-100  border-l-2 border-l-amber-500  text-amber-800  dark:bg-amber-900/40  dark:text-amber-300",
+  held:    "bg-orange-100 border-l-2 border-l-orange-500 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
   blocked: "bg-gray-100   border-l-2 border-l-gray-400   text-gray-500   dark:bg-gray-800      dark:text-gray-400",
 };
 
@@ -34,7 +36,7 @@ interface WeekGridProps {
 
 export function WeekGrid({ slots, selectedDate, currentWeekDate, onSelectDate }: WeekGridProps) {
   const weekDays = getWeekDays(currentWeekDate);
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = venueToday();
 
   const slotMap = new Map<string, CalendarSlot>();
   for (const s of slots) slotMap.set(`${s.date}|${s.startTime}`, s);
@@ -104,7 +106,7 @@ export function WeekGrid({ slots, selectedDate, currentWeekDate, onSelectDate }:
                       STATUS_CELL[slot.status],
                     )}>
                       <div className="font-semibold truncate">
-                        {slot.status === "blocked" ? (slot.note ?? "Blocked") : slot.customerName}
+                        {slot.status === "blocked" ? (slot.note ?? "Blocked") : slot.status === "held" ? "Paying…" : slot.customerName}
                       </div>
                       <div className="opacity-70 text-[10px]">{slot.groundName}</div>
                     </div>

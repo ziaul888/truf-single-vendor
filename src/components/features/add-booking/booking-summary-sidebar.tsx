@@ -2,25 +2,22 @@
 
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency } from "@/lib/utils";
 import { CalendarDays, Clock, ReceiptText, TrendingDown, TrendingUp } from "lucide-react";
 import type { Ground } from "@/hooks/useGrounds";
 import type { TimeSlot } from "@/hooks/useAddBooking";
+import type { AddBookingFormData } from "@/schemas";
+import { PAYMENT_METHOD_LABEL, takaLabel } from "@/components/features/bookings/booking-status-helpers";
+import { PAYMENT_TYPES } from "./payment-section";
 import { cn } from "@/lib/utils";
 
 interface BookingSummarySidebarProps {
   ground?: Ground;
   slot?: TimeSlot;
   date: string;
-  bookingType: "online" | "offline";
-  paymentType: "full" | "partial";
+  paymentType: AddBookingFormData["paymentType"];
+  paymentMethod: AddBookingFormData["paymentMethod"];
   advanceAmount: number;
 }
-
-const TYPE_LABEL: Record<string, string> = {
-  football: "⚽ Football", cricket: "🏏 Cricket", badminton: "🏸 Badminton",
-  tennis: "🎾 Tennis", basketball: "🏀 Basketball", hockey: "🏑 Hockey",
-};
 
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
@@ -32,12 +29,14 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
 }
 
 export function BookingSummarySidebar({
-  ground, slot, date, bookingType, paymentType, advanceAmount,
+  ground, slot, date, paymentType, paymentMethod, advanceAmount,
 }: BookingSummarySidebarProps) {
   const pricePerHour = ground?.pricePerHour ?? 0;
-  const totalAmount = pricePerHour;
+  const slotHours = (ground?.slotDurationMinutes ?? 60) / 60;
+  const totalAmount = slot?.price ?? pricePerHour * slotHours;
   const dueAmount = Math.max(0, totalAmount - advanceAmount);
-  const isPartial = bookingType === "offline" && paymentType === "partial";
+  const isPartial = paymentType === "partial";
+  const typeLabel = PAYMENT_TYPES.find((t) => t.value === paymentType)?.label ?? "";
 
   const formattedDate = date
     ? new Date(date + "T00:00:00").toLocaleDateString("en-US", {
@@ -58,12 +57,11 @@ export function BookingSummarySidebar({
         {ground ? (
           <>
             <h3 className="text-xl font-bold leading-tight">{ground.name}</h3>
-            <p className="mt-1 text-sm opacity-80">
-              {TYPE_LABEL[ground.type] ?? ground.type} · {ground.size}
+            <p className="mt-1 text-sm capitalize opacity-80">
+              {[ground.sport, ground.format?.replace("x", "×"), ground.dimensions].filter(Boolean).join(" · ")}
             </p>
             <div className="mt-3 flex items-center gap-1.5 text-xs opacity-70">
-              <span>Capacity {ground.capacity}</span>
-              <span>·</span>
+              {ground.capacity != null && <><span>Capacity {ground.capacity}</span><span>·</span></>}
               <span>{ground.openingTime} – {ground.closingTime}</span>
             </div>
           </>
@@ -90,7 +88,7 @@ export function BookingSummarySidebar({
           {slot ? (
             <span className="font-medium">
               {slot.startTime} – {slot.endTime}
-              <span className="ml-2 text-xs font-normal text-muted-foreground">1 hour</span>
+              <span className="ml-2 text-xs font-normal text-muted-foreground">{slotHours === 1 ? "1 hour" : `${slotHours} hours`}</span>
             </span>
           ) : (
             <span className="text-muted-foreground italic">No slot selected</span>
@@ -104,8 +102,8 @@ export function BookingSummarySidebar({
           <ReceiptText className="h-3.5 w-3.5" />
           Amount Breakdown
         </div>
-        <Row label="Price / hour" value={ground ? formatCurrency(pricePerHour) : "—"} />
-        <Row label="Duration" value={slot ? "1 hour" : "—"} />
+        <Row label="Price / hour" value={ground ? takaLabel(pricePerHour) : "—"} />
+        <Row label="Duration" value={slot ? (slotHours === 1 ? "1 hour" : `${slotHours} hours`) : "—"} />
         <Separator />
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold">Total</span>
@@ -113,7 +111,7 @@ export function BookingSummarySidebar({
             "text-2xl font-bold transition-all",
             ground ? "text-primary" : "text-muted-foreground"
           )}>
-            {ground ? formatCurrency(totalAmount) : "—"}
+            {ground ? takaLabel(totalAmount) : "—"}
           </span>
         </div>
       </div>
@@ -129,28 +127,26 @@ export function BookingSummarySidebar({
               <TrendingUp className="h-3.5 w-3.5 text-green-600" />
               Advance paid
             </span>
-            <span className="font-semibold text-green-600">{formatCurrency(advanceAmount)}</span>
+            <span className="font-semibold text-green-600">{takaLabel(advanceAmount)}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <TrendingDown className="h-3.5 w-3.5 text-amber-600" />
               Balance due
             </span>
-            <span className="font-semibold text-amber-600">{formatCurrency(dueAmount)}</span>
+            <span className="font-semibold text-amber-600">{takaLabel(dueAmount)}</span>
           </div>
         </div>
       )}
 
-      {/* Booking type chip */}
+      {/* Payment chip */}
       <div className="border-t px-5 py-3 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Booking via</span>
+        <span className="text-xs text-muted-foreground">Payment</span>
         <span className={cn(
           "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-          bookingType === "offline"
-            ? "bg-secondary text-secondary-foreground"
-            : "bg-primary/10 text-primary"
+          paymentType === "none" ? "bg-secondary text-secondary-foreground" : "bg-primary/10 text-primary"
         )}>
-          {bookingType === "offline" ? "Offline / Admin" : "Online · Stripe"}
+          {paymentType === "none" ? typeLabel : `${typeLabel} · ${PAYMENT_METHOD_LABEL[paymentMethod]}`}
         </span>
       </div>
     </Card>

@@ -7,10 +7,14 @@ import { BlockSlotForm }     from "@/components/features/slots/block-slot-form";
 import { Button }            from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody } from "@/components/ui/sheet";
 import { Ban, Zap } from "lucide-react";
+import { useMe } from "@/hooks/useMe";
 
 export default function SlotsPage() {
   const [blockOpen,    setBlockOpen]    = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
+  const { data: me } = useMe();
+  // Managers can block and unblock; only admins generate slots.
+  const canGenerate = me?.role === "admin";
 
   return (
     <div className="space-y-6">
@@ -24,9 +28,11 @@ export default function SlotsPage() {
           <Button variant="outline" onClick={() => setBlockOpen(true)}>
             <Ban className="mr-1.5 h-4 w-4" /> Block slot
           </Button>
-          <Button onClick={() => setGenerateOpen(true)}>
-            <Zap className="mr-1.5 h-4 w-4" /> Generate slots
-          </Button>
+          {canGenerate && (
+            <Button onClick={() => setGenerateOpen(true)}>
+              <Zap className="mr-1.5 h-4 w-4" /> Generate slots
+            </Button>
+          )}
         </div>
       </div>
 

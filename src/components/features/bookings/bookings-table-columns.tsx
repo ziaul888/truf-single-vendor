@@ -4,68 +4,64 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { BookingRow } from "@/hooks/useBookings";
-import { formatCurrency } from "@/lib/utils";
+import type { Booking } from "@/types/booking";
+import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
 import { Phone, XCircle } from "lucide-react";
-import { paymentStatusVariant } from "./booking-status-helpers";
+import { PAYMENT_STATUS_LABEL, isCancellable, paymentStatusVariant } from "./booking-status-helpers";
 import { StatusCell } from "./booking-status-cell";
+import { PayAtVenueBadge } from "./pay-at-venue-badge";
 
-export function getBookingColumns(
-  setCancelTarget: (b: BookingRow) => void
-): ColumnDef<BookingRow>[] {
+export function getBookingColumns(setCancelTarget: (b: Booking) => void): ColumnDef<Booking>[] {
   return [
     {
-      accessorKey: "id",
-      header: "Booking ID",
-      cell: ({ getValue }) => <span className="font-mono text-xs">{getValue<string>()}</span>,
+      id: "bookingNumber",
+      header: "Booking #",
+      cell: ({ row }) => (
+        <Link href={`/dashboard/bookings/${row.original.id}`} className="font-mono text-xs hover:underline">
+          {row.original.bookingNumber}
+        </Link>
+      ),
     },
     {
       id: "customer",
       header: "Customer",
-      accessorFn: (row) => row.customerName,
       cell: ({ row }) => (
         <div>
-          <div className="font-medium">{row.original.customerName}</div>
-          <a href={`tel:${row.original.customerPhone}`} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-            <Phone className="h-3 w-3" />{row.original.customerPhone}
+          <div className="font-medium">{row.original.contact.name}</div>
+          <a href={`tel:${row.original.contact.phone}`} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            <Phone className="h-3 w-3" />{row.original.contact.phone}
           </a>
         </div>
       ),
     },
+    { id: "ground", header: "Ground", cell: ({ row }) => row.original.ground.name },
+    { id: "date", header: "Date", cell: ({ row }) => formatSlotDate(row.original.slot.date) },
+    { id: "time", header: "Time", cell: ({ row }) => slotTimeLabel(row.original.slot) },
+    { id: "total", header: "Total", cell: ({ row }) => slotPriceLabel(row.original.total) },
     {
-      accessorKey: "groundName",
-      header: "Ground",
-      filterFn: "equals",
+      id: "paidDue",
+      header: "Paid / Due",
+      cell: ({ row }) => (
+        <div className="text-xs">
+          <div className="text-green-600 dark:text-green-400">{slotPriceLabel(row.original.paid)}</div>
+          {row.original.due > 0 && <div className="text-amber-600 dark:text-amber-400">{slotPriceLabel(row.original.due)} due</div>}
+        </div>
+      ),
     },
     {
-      accessorKey: "date",
-      header: "Date",
-      cell: ({ getValue }) => new Date(getValue<string>()).toLocaleDateString(),
-    },
-    {
-      id: "time",
-      header: "Time",
-      cell: ({ row }) => `${row.original.startTime} – ${row.original.endTime}`,
-    },
-    {
-      accessorKey: "amount",
-      header: "Amount",
-      cell: ({ getValue }) => formatCurrency(getValue<number>()),
-    },
-    {
-      accessorKey: "status",
+      id: "status",
       header: "Status",
-      filterFn: "equals",
-      cell: ({ row }) => <StatusCell booking={row.original} />,
+      cell: ({ row }) => <StatusCell booking={row.original} onCancel={setCancelTarget} />,
     },
     {
-      accessorKey: "paymentStatus",
+      id: "paymentStatus",
       header: "Payment",
-      filterFn: "equals",
-      cell: ({ getValue }) => {
-        const v = getValue<string>();
-        return <Badge variant={paymentStatusVariant(v)}>{v}</Badge>;
-      },
+      cell: ({ row }) => (
+        <div className="flex flex-col items-start gap-1">
+          <Badge variant={paymentStatusVariant(row.original.paymentStatus)}>{PAYMENT_STATUS_LABEL[row.original.paymentStatus]}</Badge>
+          {row.original.payAtVenue && <PayAtVenueBadge />}
+        </div>
+      ),
     },
     {
       id: "actions",
@@ -77,7 +73,7 @@ export function getBookingColumns(
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
               <Link href={`/dashboard/bookings/${b.id}`}>View</Link>
             </Button>
-            {b.status !== "cancelled" && b.status !== "completed" && (
+            {isCancellable(b) && (
               <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setCancelTarget(b)}>
                 <XCircle className="mr-1 h-3.5 w-3.5" />Cancel
               </Button>

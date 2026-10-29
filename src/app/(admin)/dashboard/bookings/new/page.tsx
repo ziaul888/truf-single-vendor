@@ -3,30 +3,68 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm, Controller, type Resolver } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { SectionCard } from "@/components/features/add-booking/section-card";
-import { SlotPicker } from "@/components/features/add-booking/slot-picker";
+import { GroundSlotSection } from "@/components/features/add-booking/ground-slot-section";
 import { PaymentSection } from "@/components/features/add-booking/payment-section";
 import { BookingSummarySidebar } from "@/components/features/add-booking/booking-summary-sidebar";
-import { CustomerSearchBar } from "@/components/features/add-booking/customer-search-bar";
+import {
+  CustomerSection, samePhone, toApiPhone, type KnownCustomer,
+} from "@/components/features/add-booking/customer-section";
+import { takaLabel } from "@/components/features/bookings/booking-status-helpers";
 import { useGrounds } from "@/hooks/useGrounds";
-import { useAvailableSlots, useCreateBooking } from "@/hooks/useAddBooking";
+import { useAvailableSlots } from "@/hooks/useAddBooking";
+import { useCreateBooking } from "@/hooks/useBookings";
+import { applyApiErrors, toApiFailure, type ApiFailure } from "@/lib/api-error";
+import { toMinorUnits } from "@/lib/ground-format";
 import { AddBookingSchema, type AddBookingFormData } from "@/schemas";
-import { formatCurrency } from "@/lib/utils";
-import { ChevronLeft, CalendarClock } from "lucide-react";
+import type { CreateBookingInput } from "@/types/booking";
+import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
-const today = new Date().toISOString().split("T")[0];
+/** The API reports nested fields ("customer.name"); these are the form fields they belong to. */
+const API_FIELD: Record<string, keyof AddBookingFormData> = {
+  slotId: "slotId",
+  "customer.name": "customerName",
+  "customer.phone": "customerPhone",
+  "customer.email": "customerEmail",
+  "payment.method": "paymentMethod",
+  "payment.amount": "advanceAmount",
+  "payment.dueDate": "dueDate",
+  "payment.note": "partialNote",
+  notes: "notes",
+};
+
+const toFormFailure = (f: ApiFailure): ApiFailure => ({
+  ...f,
+  details: f.details?.map((d) => ({ ...d, field: API_FIELD[d.field] ?? d.field })),
+});
+
+function toCreateInput(data: AddBookingFormData, known: KnownCustomer | null): CreateBookingInput {
+  const phone = toApiPhone(data.customerPhone);
+  const customer = {
+    ...(known && samePhone(known.phone, phone) ? { id: known.id } : {}),
+    name: data.customerName.trim(),
+    phone,
+    email: data.customerEmail.trim(),
+  };
+  const note = data.partialNote?.trim() || undefined;
+  const payment: CreateBookingInput["payment"] =
+    data.paymentType === "none" ? { type: "none" }
+    : data.paymentType === "full" ? { type: "full", method: data.paymentMethod }
+    : { type: "partial", method: data.paymentMethod, amount: toMinorUnits(data.advanceAmount ?? 0), dueDate: data.dueDate || undefined, note };
+  return { slotId: data.slotId, customer, payment, notes: data.notes?.trim() || undefined };
+}
 
 export default function AddBookingPage() {
   const router = useRouter();
   const { data: grounds, isLoading: groundsLoading } = useGrounds();
   const createBooking = useCreateBooking();
+  const [knownCustomer, setKnownCustomer] = useState<KnownCustomer | null>(null);
 
   const form = useForm<AddBookingFormData>({
     // Fields use z.coerce, so the schema's input type is looser than the form's.
@@ -34,63 +72,52 @@ export default function AddBookingPage() {
     defaultValues: {
       groundId: "", date: "", slotId: "",
       customerName: "", customerPhone: "", customerEmail: "",
-      bookingType: "offline", paymentMethod: "cash",
-      paymentType: "full", advanceAmount: 0, dueDate: "", partialNote: "",
+      paymentType: "full", paymentMethod: "cash",
+      advanceAmount: 0, dueDate: "", partialNote: "", notes: "",
     },
   });
 
-  const { register, watch, setValue, clearErrors, control, handleSubmit, formState: { errors, isSubmitting } } = form;
-  const [groundId, date, slotId, bookingType, paymentType, advanceAmount] = [
+  const { register, watch, setValue, setError, handleSubmit, formState: { errors, isSubmitting } } = form;
+  const [groundId, date, slotId, paymentType, paymentMethod, advanceAmount] = [
     watch("groundId"), watch("date"), watch("slotId"),
-    watch("bookingType"), watch("paymentType"), Number(watch("advanceAmount") ?? 0),
+    watch("paymentType"), watch("paymentMethod"), Number(watch("advanceAmount") ?? 0),
   ];
 
-  const { data: slots, isLoading: slotsLoading } = useAvailableSlots(groundId, date);
+  const { data: slots, isLoading: slotsLoading, refetch: refetchSlots } = useAvailableSlots(groundId, date);
   const selectedGround = grounds?.find((g) => g.id === groundId);
   const selectedSlot   = slots?.find((s) => s.id === slotId);
-  const totalAmount    = selectedGround?.pricePerHour ?? 0;
+  // The slot's own price covers slot length and peak hours; fall back to the hourly price.
+  const totalAmount    = selectedSlot?.price ?? selectedGround?.pricePerHour ?? 0;
+  const slotHours      = (selectedGround?.slotDurationMinutes ?? 60) / 60;
 
-  const [phoneSearch,     setPhoneSearch]     = useState("");
-  const [searching,       setSearching]       = useState(false);
-  const [customerStatus,  setCustomerStatus]  = useState<"idle" | "found" | "notfound">("idle");
-  const [foundName,       setFoundName]       = useState("");
-
-  async function handlePhoneSearch() {
-    if (phoneSearch.length < 8) return;
-    setSearching(true);
-    setCustomerStatus("idle");
-    try {
-      const res  = await fetch(`/api/customers/search?phone=${encodeURIComponent(phoneSearch)}`);
-      const json = await res.json();
-      if (json.data) {
-        setValue("customerName",  json.data.name);
-        setValue("customerEmail", json.data.email);
-        setValue("customerPhone", json.data.phone);
-        setFoundName(json.data.name);
-        setCustomerStatus("found");
-      } else {
-        setCustomerStatus("notfound");
-      }
-    } finally {
-      setSearching(false);
+  function handleApiError(err: unknown) {
+    const failure = toApiFailure(err);
+    if (failure.code === "SLOT_NOT_AVAILABLE") {
+      setValue("slotId", "");
+      refetchSlots();
+      toast.error("That slot was just taken. Pick another one.");
+      return;
     }
+    if (failure.code === "CUSTOMER_NOT_FOUND") setKnownCustomer(null);
+    const landed = applyApiErrors(form, toFormFailure(failure), { PAYMENT_EXCEEDS_DUE: "advanceAmount", SLOT_IN_PAST: "slotId" });
+    if (!landed) toast.error(failure.error);
   }
 
   async function onSubmit(data: AddBookingFormData) {
-    if (!selectedGround || !selectedSlot) return;
-    const autoStatus = data.bookingType === "online" ? "pending" : data.paymentType === "partial" ? "partial" : "paid";
+    if (!selectedSlot) return setError("slotId", { message: "Select a time slot" });
+    if (data.paymentType === "partial" && (data.advanceAmount ?? 0) >= totalAmount) {
+      return setError("advanceAmount", { message: `Advance must be less than ${takaLabel(totalAmount)}` });
+    }
     try {
-      await createBooking.mutateAsync({
-        ...data, groundName: selectedGround.name, groundType: selectedGround.type,
-        startTime: selectedSlot.startTime, endTime: selectedSlot.endTime,
-        duration: 1, amount: totalAmount, paymentStatus: autoStatus,
-      });
-      toast.success("Booking created successfully");
-      router.push("/dashboard/bookings");
-    } catch {
-      toast.error("Failed to create booking");
+      const booking = await createBooking.mutateAsync(toCreateInput(data, knownCustomer));
+      toast.success(`Booking ${booking.bookingNumber} created`);
+      router.push(`/dashboard/bookings/${booking.id}`);
+    } catch (err) {
+      handleApiError(err);
     }
   }
+
+  const submitting = isSubmitting || createBooking.isPending;
 
   return (
     <div className="space-y-6">
@@ -100,124 +127,34 @@ export default function AddBookingPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">New Booking</h1>
-          <p className="text-sm text-muted-foreground">Fill in the details to create a booking</p>
+          <p className="text-sm text-muted-foreground">Book a slot for a walk-in or phone customer</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-5">
-            <SectionCard n="1" title="Ground & Slot Selection" desc="Choose the ground, date and available time slot">
-              <div className="space-y-5">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Ground <span className="text-destructive">*</span></Label>
-                    <Controller control={control} name="groundId" render={({ field }) => (
-                      <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue("slotId", ""); }}>
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder={groundsLoading ? "Loading…" : "Select a ground"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {grounds?.filter((g) => g.isActive).map((g) => (
-                            <SelectItem key={g.id} value={g.id}>
-                              <span className="capitalize">{g.type}</span> — {g.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )} />
-                    {errors.groundId && <p className="text-xs text-destructive">{errors.groundId.message}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium" htmlFor="date">Date <span className="text-destructive">*</span></Label>
-                    <Input id="date" type="date" min={today} className="h-10" {...register("date", { onChange: () => setValue("slotId", "") })} />
-                    {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
-                  </div>
-                </div>
-
-                {selectedGround && (
-                  <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-2.5 text-sm">
-                    <span className="font-medium">{selectedGround.name}</span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">{formatCurrency(selectedGround.pricePerHour)}/hr</span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">{selectedGround.openingTime} – {selectedGround.closingTime}</span>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Time Slot <span className="text-destructive">*</span></Label>
-                    {groundId && date && !slotsLoading && <span className="text-xs text-muted-foreground">Grayed = already booked</span>}
-                  </div>
-                  {!groundId || !date ? (
-                    <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed py-10 text-center">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
-                        <CalendarClock className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Select ground & date first</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Available time slots will appear here</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <SlotPicker slots={slots ?? []} value={slotId} onChange={(id) => { setValue("slotId", id); clearErrors("slotId"); }} loading={slotsLoading} error={errors.slotId?.message} />
-                  )}
-                </div>
-              </div>
-            </SectionCard>
-
-            <SectionCard n="2" title="Customer Information" desc="Search by phone to auto-fill, or enter details manually">
-              <div className="space-y-5">
-                <CustomerSearchBar
-                  value={phoneSearch}
-                  onChange={(v) => { setPhoneSearch(v); setCustomerStatus("idle"); }}
-                  onSearch={handlePhoneSearch}
-                  searching={searching}
-                  customerStatus={customerStatus}
-                  foundName={foundName}
-                />
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium" htmlFor="customerName">Full Name <span className="text-destructive">*</span></Label>
-                    <Input id="customerName" className="h-10" placeholder="e.g. Rahim Uddin" {...register("customerName")} />
-                    {errors.customerName && <p className="text-xs text-destructive">{errors.customerName.message}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium" htmlFor="customerPhone">Phone Number <span className="text-destructive">*</span></Label>
-                    <div className="flex">
-                      <span className="flex items-center rounded-l-md border border-r-0 bg-muted px-3 text-sm text-muted-foreground select-none">+880</span>
-                      <Input id="customerPhone" className="h-10 rounded-l-none" placeholder="1711234567" {...register("customerPhone")} />
-                    </div>
-                    {errors.customerPhone && <p className="text-xs text-destructive">{errors.customerPhone.message}</p>}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium" htmlFor="customerEmail">Email Address <span className="text-destructive">*</span></Label>
-                  <Input id="customerEmail" type="email" className="h-10" placeholder="customer@example.com" {...register("customerEmail")} />
-                  {errors.customerEmail && <p className="text-xs text-destructive">{errors.customerEmail.message}</p>}
-                </div>
-              </div>
-            </SectionCard>
+          <div className="space-y-5 lg:col-span-2">
+            <GroundSlotSection form={form} grounds={grounds} groundsLoading={groundsLoading} slots={slots} slotsLoading={slotsLoading} />
+            <CustomerSection form={form} onCustomerFound={setKnownCustomer} />
 
             {selectedGround && (
               <div className="rounded-xl border border-primary/20 bg-primary/5 px-6 py-4">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-primary/70">Booking Summary</p>
-                <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-8">
                     <div>
                       <p className="text-xs text-muted-foreground">Price / Hour</p>
-                      <p className="text-lg font-semibold mt-0.5">{formatCurrency(selectedGround.pricePerHour)}</p>
+                      <p className="mt-0.5 text-lg font-semibold">{takaLabel(selectedGround.pricePerHour)}</p>
                     </div>
                     <div className="h-8 w-px bg-border" />
                     <div>
                       <p className="text-xs text-muted-foreground">Duration</p>
-                      <p className="text-lg font-semibold mt-0.5">{selectedSlot ? "1 hour" : "—"}</p>
+                      <p className="mt-0.5 text-lg font-semibold">{selectedSlot ? (slotHours === 1 ? "1 hour" : `${slotHours} hours`) : "—"}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">Total Amount</p>
-                    <p className="text-3xl font-bold text-primary mt-0.5">{formatCurrency(totalAmount)}</p>
+                    <p className="mt-0.5 text-3xl font-bold text-primary">{takaLabel(totalAmount)}</p>
                   </div>
                 </div>
               </div>
@@ -225,19 +162,28 @@ export default function AddBookingPage() {
 
             <PaymentSection form={form} totalAmount={totalAmount} />
 
+            <SectionCard n="4" title="Notes" desc="Optional note for staff; the customer doesn't see it">
+              <div className="space-y-2">
+                <Label htmlFor="notes" className="sr-only">Notes</Label>
+                <Textarea id="notes" rows={3} className="resize-none text-sm" placeholder="e.g. Bringing their own ball" {...register("notes")} />
+                {errors.notes && <p className="text-xs text-destructive">{errors.notes.message}</p>}
+              </div>
+            </SectionCard>
+
             <div className="flex items-center justify-end gap-3 pb-4">
               <Button variant="outline" className="h-10 px-6" asChild>
                 <Link href="/dashboard/bookings">Cancel</Link>
               </Button>
-              <Button type="submit" className="h-10 px-8" disabled={isSubmitting || createBooking.isPending}>
-                {isSubmitting || createBooking.isPending ? "Creating…" : "Create Booking"}
+              <Button type="submit" className="h-10 px-8" disabled={submitting}>
+                {submitting ? "Creating…" : "Create Booking"}
               </Button>
             </div>
           </div>
 
-          <div className="hidden lg:block lg:col-span-1">
+          <div className="hidden lg:col-span-1 lg:block">
             <div className="sticky top-6">
-              <BookingSummarySidebar ground={selectedGround} slot={selectedSlot} date={date} bookingType={bookingType} paymentType={paymentType} advanceAmount={advanceAmount} />
+              <BookingSummarySidebar ground={selectedGround} slot={selectedSlot} date={date}
+                paymentType={paymentType} paymentMethod={paymentMethod} advanceAmount={advanceAmount} />
             </div>
           </div>
         </div>

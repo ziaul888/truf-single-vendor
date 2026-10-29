@@ -2,18 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  X, LogOut, PanelLeftClose, PanelLeftOpen, ChevronsUpDown, User, Settings,
-  ChevronRight,
-} from "lucide-react";
+import { X, PanelLeftClose, PanelLeftOpen, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { NAV } from "./sidebar-nav-data";
+import { navForRole } from "./sidebar-nav-data";
+import { useMe } from "@/hooks/useMe";
+import { SidebarUserMenu } from "./sidebar-user-menu";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -21,12 +15,13 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
-const USER = { name: "Nipon", email: "nipon@6amtech.com", initial: "N" };
-
 export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
   const pathname = usePathname();
 
-  const allItems = NAV.flatMap((g) => g.items.map((i) => ({ ...i, group: g.label })));
+  const { data: me } = useMe();
+  const nav = navForRole(me?.role);
+
+  const allItems = nav.flatMap((g) => g.items.map((i) => ({ ...i, group: g.label })));
   const activeItem =
     allItems
       .filter((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
@@ -61,7 +56,7 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
 
           {/* Rail nav */}
           <nav className="scrollbar-hover flex-1 w-full space-y-1.5 overflow-y-auto px-2.5">
-            {NAV.map((group, gi) => (
+            {nav.map((group, gi) => (
               <div key={group.label}>
                 {gi > 0 && <div className="my-2 mx-1 h-px bg-sidebar-border/50" />}
                 <div className="space-y-1">
@@ -252,67 +247,7 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
               )}
             </nav>
 
-            {/* User card */}
-            <div className="shrink-0 border-t border-sidebar-border/70 p-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className="group flex w-full items-center gap-3 rounded-2xl border border-sidebar-border/60 bg-sidebar-accent/30 p-2.5 text-left transition-all hover:bg-sidebar-accent/60 hover:border-sidebar-border focus:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-sidebar-accent/70"
-                    aria-label="Account menu"
-                  >
-                    <div className="relative shrink-0">
-                      <Avatar className="h-9 w-9 ring-2 ring-primary/30">
-                        <AvatarFallback className="bg-linear-to-br from-primary to-primary/60 text-xs font-bold text-primary-foreground">
-                          {USER.initial}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span
-                        aria-hidden
-                        className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success shadow-[0_0_6px_var(--color-success)] ring-2 ring-sidebar"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate text-[13px] font-semibold text-sidebar-foreground">
-                          {USER.name}
-                        </p>
-                        <span className="rounded-full bg-success/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-success">
-                          Admin
-                        </span>
-                      </div>
-                      <p className="truncate text-[10px] text-sidebar-foreground/60">{USER.email}</p>
-                    </div>
-                    <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="end" sideOffset={8} className="w-56">
-                  <DropdownMenuLabel className="flex items-center gap-2.5 py-2">
-                    <Avatar className="h-7 w-7">
-                      <AvatarFallback className="bg-primary/10 text-[11px] font-semibold text-primary">
-                        {USER.initial}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold">{USER.name}</p>
-                      <p className="truncate text-[10px] font-normal text-muted-foreground">
-                        {USER.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="gap-2">
-                    <User className="h-4 w-4" /> Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="gap-2">
-                    <Settings className="h-4 w-4" /> Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive">
-                    <LogOut className="h-4 w-4" /> Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <SidebarUserMenu />
           </div>
         )}
       </aside>

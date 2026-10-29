@@ -37,7 +37,8 @@ function SecretInput({ label, defaultValue, hint }: { label: string; defaultValu
 }
 
 export default function PaymentsSettingsPage() {
-  const [gateway, setGateway] = useState<"stripe" | "razorpay">("stripe");
+  // v1 takes card payments through Stripe only (no UPI or other gateways).
+  const [gateway, setGateway] = useState<"stripe">("stripe");
   const [saving, setSaving] = useState(false);
   function save() { setSaving(true); setTimeout(() => { setSaving(false); toast.success("Settings saved"); }, 500); }
 
@@ -59,7 +60,7 @@ export default function PaymentsSettingsPage() {
         <CardContent className="space-y-5">
           {/* Gateway selector */}
           <div className="grid grid-cols-2 gap-3">
-            {(["stripe", "razorpay"] as const).map((gw) => (
+            {(["stripe"] as const).map((gw) => (
               <button
                 key={gw}
                 type="button"
@@ -69,12 +70,12 @@ export default function PaymentsSettingsPage() {
                   gateway === gw ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/30"
                 )}
               >
-                <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold text-white", gw === "stripe" ? "bg-[#635bff]" : "bg-[#2d81f7]")}>
-                  {gw === "stripe" ? "S" : "R"}
+                <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold text-white", "bg-[#635bff]")}>
+                  S
                 </div>
                 <div>
                   <p className="font-semibold text-sm capitalize">{gw}</p>
-                  <p className="text-xs text-muted-foreground">{gw === "stripe" ? "Cards, wallets" : "UPI, cards"}</p>
+                  <p className="text-xs text-muted-foreground">Cards</p>
                 </div>
                 {gateway === gw && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-primary" />}
               </button>

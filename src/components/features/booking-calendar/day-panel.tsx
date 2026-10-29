@@ -1,15 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/utils";
 import type { CalendarSlot, CalendarGround } from "@/types";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Clock, User, Banknote, Wrench } from "lucide-react";
+import { CalendarDays, Clock, User, Banknote, Wrench, Hourglass } from "lucide-react";
 
 const LEGEND = [
-  { status: "booked",    label: "Booked",          color: "bg-green-500",  text: "Confirmed & paid" },
+  { status: "booked",    label: "Booked",          color: "bg-green-500",  text: "Booked by a customer" },
   { status: "partial",   label: "Partial Payment",  color: "bg-amber-400",  text: "Advance paid, balance due" },
+  { status: "held",      label: "Held",             color: "bg-orange-400", text: "Customer paying now" },
   { status: "blocked",   label: "Blocked",          color: "bg-gray-400",   text: "Maintenance / cleaning" },
   { status: "available", label: "Available",        color: "bg-blue-400",   text: "Free to book" },
 ] as const;
@@ -24,21 +24,27 @@ const GROUND_COLOR_CLASSES: Record<CalendarGround["color"], string> = {
 const STATUS_BADGE: Record<CalendarSlot["status"], string> = {
   booked:  "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
   partial: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  held:    "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
   blocked: "bg-gray-100  text-gray-600  dark:bg-gray-800     dark:text-gray-400",
 };
 
 const STATUS_ICON = {
   booked:  User,
   partial: Banknote,
+  held:    Hourglass,
   blocked: Wrench,
 };
+
+/** Amount in whole ৳. */
+const taka = (amount: number) => `৳ ${amount.toLocaleString("en-IN")}`;
 
 interface DayPanelProps {
   slots: CalendarSlot[];
   selectedDate: string;
   grounds: CalendarGround[];
   groundFilter: string;
-  totalDailySlots: number;
+  /** Slots that exist on a date (from turf-api's calendar totals). */
+  totalSlotsFor: (date: string) => number;
   onGroundFilter: (id: string) => void;
 }
 
@@ -48,12 +54,12 @@ function formatDay(dateStr: string) {
   return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 }
 
-export function DayPanel({ slots, selectedDate, grounds, groundFilter, totalDailySlots, onGroundFilter }: DayPanelProps) {
+export function DayPanel({ slots, selectedDate, grounds, groundFilter, totalSlotsFor, onGroundFilter }: DayPanelProps) {
   const daySlots = slots
     .filter((s) => s.date === selectedDate)
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  const availCount = Math.max(0, totalDailySlots - daySlots.length);
+  const availCount = Math.max(0, totalSlotsFor(selectedDate) - daySlots.length);
 
   return (
     <div className="flex flex-col gap-4">
@@ -124,39 +130,7 @@ export function DayPanel({ slots, selectedDate, grounds, groundFilter, totalDail
           </div>
         ) : (
           <div className="space-y-2">
-            {daySlots.map((s) => {
-              const Icon = STATUS_ICON[s.status];
-              return (
-                <div key={s.id} className={cn("rounded-lg px-3 py-2.5 text-sm", STATUS_BADGE[s.status])}>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-1.5 font-semibold">
-                      <Clock className="h-3 w-3 opacity-70" />
-                      {s.startTime} – {s.endTime}
-                    </div>
-                    <span className="text-[10px] font-bold uppercase opacity-60">{s.status}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs opacity-80">
-                    <Icon className="h-3 w-3 shrink-0" />
-                    <span className="truncate">
-                      {s.status === "blocked"
-                        ? (s.note ?? "Blocked")
-                        : s.customerName}
-                    </span>
-                  </div>
-                  {s.status !== "blocked" && s.amount && (
-                    <div className="mt-1 text-[11px] opacity-70">
-                      {s.groundName} · {formatCurrency(s.amount)}
-                      {s.status === "partial" && s.advancePaid
-                        ? ` (${formatCurrency(s.advancePaid)} paid)`
-                        : ""}
-                    </div>
-                  )}
-                  {s.status === "blocked" && (
-                    <div className="mt-0.5 text-[11px] opacity-70">{s.groundName}</div>
-                  )}
-                </div>
-              );
-            })}
+            {daySlots.map((s) => <DaySlotItem key={s.id} slot={s} />)}
 
             <Separator />
             <div className="flex items-center gap-1.5 pt-1 text-xs text-muted-foreground">
@@ -167,5 +141,41 @@ export function DayPanel({ slots, selectedDate, grounds, groundFilter, totalDail
         )}
       </div>
     </div>
+  );
+}
+
+/** One slot in the day list. Booked and held slots link to their booking. */
+function DaySlotItem({ slot: s }: { slot: CalendarSlot }) {
+  const Icon = STATUS_ICON[s.status];
+  const body = (
+    <>
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center gap-1.5 font-semibold">
+          <Clock className="h-3 w-3 opacity-70" />
+          {s.startTime} – {s.endTime}
+        </div>
+        <span className="text-[10px] font-bold uppercase opacity-60">{s.status}</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs opacity-80">
+        <Icon className="h-3 w-3 shrink-0" />
+        <span className="truncate">
+          {s.status === "blocked" ? (s.note ?? "Blocked") : s.customerName}
+          {s.status === "held" && " · paying…"}
+        </span>
+      </div>
+      {s.status !== "blocked" && s.amount !== undefined && (
+        <div className="mt-1 text-[11px] opacity-70">
+          {s.groundName} · {taka(s.amount)}
+          {s.status === "partial" && s.advancePaid ? ` (${taka(s.advancePaid)} paid)` : ""}
+        </div>
+      )}
+      {s.status === "blocked" && <div className="mt-0.5 text-[11px] opacity-70">{s.groundName}</div>}
+    </>
+  );
+  const cls = cn("block rounded-lg px-3 py-2.5 text-sm", STATUS_BADGE[s.status]);
+  return s.bookingId ? (
+    <Link href={`/dashboard/bookings/${s.bookingId}`} className={cn(cls, "transition-opacity hover:opacity-80")}>{body}</Link>
+  ) : (
+    <div className={cls}>{body}</div>
   );
 }

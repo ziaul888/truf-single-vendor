@@ -2,36 +2,46 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useUpdateBookingStatus, type BookingRow } from "@/hooks/useBookings";
+import { useConfirmBooking } from "@/hooks/useBookings";
+import { toApiFailure } from "@/lib/api-error";
+import type { Booking } from "@/types/booking";
 import { toast } from "sonner";
-import { bookingStatusVariant } from "./booking-status-helpers";
+import { BOOKING_STATUS_LABEL, bookingStatusVariant, isAwaitingCardPayment, isCancellable } from "./booking-status-helpers";
 
-export function StatusCell({ booking }: { booking: BookingRow }) {
-  const update = useUpdateBookingStatus();
+/**
+ * Inline status: there is no generic status update, so "Confirmed" calls confirm
+ * and "Cancelled" opens the cancel dialog (which asks about the refund).
+ */
+export function StatusCell({ booking, onCancel }: { booking: Booking; onCancel: (b: Booking) => void }) {
+  const confirm = useConfirmBooking();
 
-  if (booking.status === "cancelled" || booking.status === "completed") {
-    return <Badge variant={bookingStatusVariant(booking.status)}>{booking.status}</Badge>;
+  if (!isCancellable(booking)) {
+    return <Badge variant={bookingStatusVariant(booking.status)}>{BOOKING_STATUS_LABEL[booking.status]}</Badge>;
+  }
+
+  const canConfirm = booking.status === "pending" && !isAwaitingCardPayment(booking);
+
+  function handleChange(value: string) {
+    if (value === "cancelled") return onCancel(booking);
+    if (value !== "confirmed" || booking.status === "confirmed") return;
+    confirm.mutate(
+      { id: booking.id, notifyCustomer: true },
+      {
+        onSuccess: () => toast.success(`Booking ${booking.bookingNumber} confirmed`),
+        onError: (err) => toast.error(toApiFailure(err).error),
+      },
+    );
   }
 
   return (
-    <Select
-      value={booking.status}
-      onValueChange={(value) => {
-        update.mutate(
-          { id: booking.id, status: value },
-          {
-            onSuccess: () => toast.success(`Booking ${booking.id} marked as ${value}`),
-            onError: () => toast.error("Failed to update status"),
-          }
-        );
-      }}
-    >
+    <Select value={booking.status} onValueChange={handleChange} disabled={confirm.isPending}>
       <SelectTrigger className="h-7 w-32 text-xs">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="pending">Pending</SelectItem>
-        <SelectItem value="confirmed">Confirmed</SelectItem>
+        {booking.status === "pending" && <SelectItem value="pending">Pending</SelectItem>}
+        {(canConfirm || booking.status === "confirmed") && <SelectItem value="confirmed">Confirmed</SelectItem>}
+        <SelectItem value="cancelled">Cancelled</SelectItem>
       </SelectContent>
     </Select>
   );

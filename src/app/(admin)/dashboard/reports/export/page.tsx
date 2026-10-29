@@ -7,12 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, FileSpreadsheet, Download, CheckCircle2, CalendarDays, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useBookings, type BookingRow } from "@/hooks/useBookings";
+import { useBookings, type Booking } from "@/hooks/useBookings";
 import { useCustomers, type Customer } from "@/hooks/useCustomers";
+import { fromMinorUnits, hourToTime } from "@/lib/ground-format";
 import * as XLSX from "xlsx";
 
 type DataType     = "bookings" | "customers";
 type ExportFormat = "csv" | "xlsx";
+type ExportRow    = Record<string, string | number>;
+
+/** The API returns at most this many rows per request; the export covers the most recent ones. */
+const EXPORT_LIMIT = 100;
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -21,20 +26,43 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function exportBookingsCSV(rows: BookingRow[]): string {
-  const header = "ID,Customer,Ground,Date,Start,End,Duration,Amount,Status,Payment Status,Created";
-  const lines  = rows.map((b) =>
-    `${b.id},"${b.customerName}","${b.groundName}",${b.date},${b.startTime},${b.endTime},${b.duration},${b.amount},${b.status},${b.paymentStatus},${b.createdAt}`
-  );
-  return [header, ...lines].join("\n");
+const bookingRow = (b: Booking): ExportRow => ({
+  "Booking #": b.bookingNumber, Customer: b.contact.name || b.customer.name, Phone: b.contact.phone || b.customer.phone,
+  Ground: b.ground.name, Date: b.slot.date, Start: hourToTime(b.slot.startHour), End: hourToTime(b.slot.endHour),
+  Amount: fromMinorUnits(b.amount), "Service fee": fromMinorUnits(b.serviceFee), Total: fromMinorUnits(b.total),
+  Paid: fromMinorUnits(b.paid), Due: fromMinorUnits(b.due), Status: b.status, "Payment status": b.paymentStatus,
+  Source: b.source, Created: b.createdAt,
+});
+
+const TAG_LABEL: Record<Customer["tag"], string> = { vip: "VIP", regular: "Regular", new: "New" };
+
+const customerRow = (c: Customer): ExportRow => ({
+  Name: c.name, Phone: c.phone, Email: c.email, "Customer since": c.createdAt.slice(0, 10), Bookings: c.bookings,
+  "Total spent": fromMinorUnits(c.totalSpent), "Last booking": c.lastBooking ?? "",
+  "Due amount": fromMinorUnits(c.dueAmount), Tag: TAG_LABEL[c.tag],
+});
+
+const BOOKING_HEADER = [
+  "Booking #", "Customer", "Phone", "Ground", "Date", "Start", "End", "Amount", "Service fee", "Total",
+  "Paid", "Due", "Status", "Payment status", "Source", "Created",
+];
+const CUSTOMER_HEADER = [
+  "Name", "Phone", "Email", "Customer since", "Bookings", "Total spent", "Last booking", "Due amount", "Tag",
+];
+
+function toCSV(rows: ExportRow[], header: string[]): string {
+  const cell = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+  return [header.map(cell).join(","), ...rows.map((r) => header.map((h) => cell(r[h] ?? "")).join(","))].join("\n");
 }
 
-function exportCustomersCSV(rows: Customer[]): string {
-  const header = "ID,Name,Phone,Email,Since,Bookings,Total Spent,Last Booking,Due Amount,Tag";
-  const lines  = rows.map((c) =>
-    `${c.id},"${c.name}",${c.phone},${c.email},${c.since},${c.bookings},${c.totalSpent},${c.lastBooking},${c.dueAmount},${c.tag}`
-  );
-  return [header, ...lines].join("\n");
+function writeFile(rows: ExportRow[], header: string[], format: ExportFormat, sheet: string, slug: string) {
+  if (format === "csv") {
+    downloadBlob(new Blob([toCSV(rows, header)], { type: "text/csv" }), `${slug}.csv`);
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows, { header }), sheet);
+  XLSX.writeFile(wb, `${slug}.xlsx`);
 }
 
 const DATA_OPTIONS = [
@@ -54,47 +82,27 @@ export default function ExportPage() {
   const [endDate,    setEndDate]    = useState("");
   const [downloaded, setDownloaded] = useState(false);
 
-  const bookings  = useBookings();
-  const customers = useCustomers();
+  const hasRange  = !!startDate && !!endDate;
+  const badRange  = (!!startDate !== !!endDate) || (hasRange && startDate > endDate);
+  const bookings  = useBookings(
+    { limit: EXPORT_LIMIT, ...(hasRange && !badRange ? { from: startDate, to: endDate } : {}) },
+    { enabled: dataType === "bookings" },
+  );
+  const customers = useCustomers({ limit: EXPORT_LIMIT }, { enabled: dataType === "customers" });
 
-  const isLoading = dataType === "bookings" ? bookings.isLoading : customers.isLoading;
+  const active    = dataType === "bookings" ? bookings : customers;
+  const total     = active.data?.total ?? 0;
+  const isLoading = active.isLoading || active.isFetching;
 
   function handleExport() {
-    const slug     = `${dataType}-${new Date().toISOString().split("T")[0]}`;
-
+    const slug = `${dataType}-${new Date().toISOString().split("T")[0]}`;
     if (dataType === "bookings") {
-      let rows = bookings.data ?? [];
-      if (startDate) rows = rows.filter((b) => b.date >= startDate);
-      if (endDate)   rows = rows.filter((b) => b.date <= endDate);
-
-      if (format === "csv") {
-        downloadBlob(new Blob([exportBookingsCSV(rows)], { type: "text/csv" }), `${slug}.csv`);
-      } else {
-        const ws = XLSX.utils.json_to_sheet(rows.map((b) => ({
-          ID: b.id, Customer: b.customerName, Ground: b.groundName, Date: b.date,
-          Start: b.startTime, End: b.endTime, "Duration (h)": b.duration, Amount: b.amount,
-          Status: b.status, "Payment Status": b.paymentStatus,
-        })));
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Bookings");
-        XLSX.writeFile(wb, `${slug}.xlsx`);
-      }
+      const rows = (bookings.data?.data ?? []).map(bookingRow);
+      writeFile(rows, BOOKING_HEADER, format, "Bookings", slug);
     } else {
-      const rows = customers.data?.customers ?? [];
-      if (format === "csv") {
-        downloadBlob(new Blob([exportCustomersCSV(rows)], { type: "text/csv" }), `${slug}.csv`);
-      } else {
-        const ws = XLSX.utils.json_to_sheet(rows.map((c) => ({
-          ID: c.id, Name: c.name, Phone: c.phone, Email: c.email, Since: c.since,
-          Bookings: c.bookings, "Total Spent": c.totalSpent, "Last Booking": c.lastBooking,
-          "Due Amount": c.dueAmount, Tag: c.tag,
-        })));
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Customers");
-        XLSX.writeFile(wb, `${slug}.xlsx`);
-      }
+      const rows = (customers.data?.data ?? []).map(customerRow);
+      writeFile(rows, CUSTOMER_HEADER, format, "Customers", slug);
     }
-
     setDownloaded(true);
     setTimeout(() => setDownloaded(false), 3000);
   }
@@ -136,6 +144,9 @@ export default function ExportPage() {
                   <span className="shrink-0 text-sm text-muted-foreground">to</span>
                   <Input type="date" value={endDate}   onChange={(e) => setEndDate(e.target.value)}   className="h-9" />
                 </div>
+                {badRange
+                  ? <p className="text-xs text-destructive">Pick both a start and an end date, with the start first.</p>
+                  : <p className="text-xs text-muted-foreground">Filters by slot date.</p>}
               </div>
             )}
 
@@ -154,7 +165,12 @@ export default function ExportPage() {
               </div>
             </div>
 
-            <Button onClick={handleExport} disabled={isLoading || downloaded} className="w-full">
+            <p className="text-xs text-muted-foreground">
+              Exports up to the {EXPORT_LIMIT} most recent {dataType}
+              {!isLoading && total > EXPORT_LIMIT ? ` (${total} match — only the first ${EXPORT_LIMIT} are included)` : ""}.
+            </p>
+
+            <Button onClick={handleExport} disabled={isLoading || downloaded || total === 0 || (dataType === "bookings" && badRange)} className="w-full">
               {downloaded
                 ? <><CheckCircle2 className="mr-2 h-4 w-4" /> Downloaded!</>
                 : <><Download className="mr-2 h-4 w-4" /> Download {format.toUpperCase()}</>}
@@ -170,16 +186,16 @@ export default function ExportPage() {
             <div>
               <p className="mb-1.5 font-medium">Bookings export</p>
               <ul className="list-inside list-disc space-y-1 text-muted-foreground">
-                <li>Booking ID and date</li>
-                <li>Customer name and ground</li>
-                <li>Duration and amount</li>
-                <li>Booking and payment status</li>
+                <li>Booking number and slot date/time</li>
+                <li>Customer name, phone and ground</li>
+                <li>Amount, fee, total, paid and due</li>
+                <li>Booking and payment status, source</li>
               </ul>
             </div>
             <div>
               <p className="mb-1.5 font-medium">Customers export</p>
               <ul className="list-inside list-disc space-y-1 text-muted-foreground">
-                <li>Customer ID, name, and contacts</li>
+                <li>Name, phone and email</li>
                 <li>Total bookings and spending</li>
                 <li>Last booking date</li>
                 <li>Due amounts and tier tag</li>

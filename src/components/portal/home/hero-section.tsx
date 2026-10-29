@@ -1,12 +1,21 @@
 import Image from "next/image";
 import {
-  BadgeCheck, Calendar, CircleDot, Grid3x3, Search, ShieldCheck, Star, Zap,
+  BadgeCheck, Calendar, CircleDot, Grid3x3, Search, ShieldCheck, Zap,
 } from "lucide-react";
-import { VENUE } from "@/lib/portal-stub-data";
+import { listPublicGrounds } from "@/services/portal-grounds";
+import { SPORT_META, SPORTS } from "@/components/portal/sports";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import { isUploadedImage } from "./is-uploaded-image";
 
-export function HeroSection({ hero, venueName }: { hero: WebsiteSettings["hero"]; venueName: string }) {
+const pad = (n: number) => String(n).padStart(2, "0");
+
+export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["hero"]; venueName: string }) {
+  const grounds = await listPublicGrounds();
+  const sports = new Set(grounds.map((g) => g.sport)).size;
+  const hours = grounds.length
+    ? `${pad(Math.min(...grounds.map((g) => g.openHour)))}–${pad(Math.max(...grounds.map((g) => g.closeHour)))}`
+    : "—";
+
   return (
     <section className="relative overflow-hidden">
       <Image
@@ -38,13 +47,9 @@ export function HeroSection({ hero, venueName }: { hero: WebsiteSettings["hero"]
           )}
 
           <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm opacity-90">
-            <Stat n="6" label="grounds" />
-            <Stat n="3" label="sports" />
-            <Stat n="06–23" label="daily hours" />
-            <span className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-accent text-accent" />
-              <Stat n={String(VENUE.rating)} label={`${VENUE.reviewCount} reviews`} />
-            </span>
+            <Stat n={String(grounds.length)} label={grounds.length === 1 ? "ground" : "grounds"} />
+            <Stat n={String(sports)} label={sports === 1 ? "sport" : "sports"} />
+            <Stat n={hours} label="daily hours" />
           </div>
         </div>
 
@@ -100,17 +105,20 @@ function SearchBox() {
         <Field colSpan={3} icon={CircleDot} label="Sport">
           <select name="sport" className="w-full bg-transparent text-sm font-medium outline-none">
             <option value="">Any sport</option>
-            <option value="football">Football</option>
-            <option value="cricket">Cricket</option>
-            <option value="badminton">Badminton</option>
+            {SPORTS.map((s) => (
+              <option key={s} value={s}>{SPORT_META[s].label}</option>
+            ))}
           </select>
         </Field>
         <Field colSpan={3} icon={Grid3x3} label="Format">
           <select name="format" className="w-full bg-transparent text-sm font-medium outline-none">
             <option value="">Any size</option>
+            <option value="4x4">4×4</option>
             <option value="5x5">5×5</option>
             <option value="6x6">6×6</option>
             <option value="7x7">7×7</option>
+            <option value="8x8">8×8</option>
+            <option value="9x9">9×9</option>
             <option value="11x11">11×11</option>
           </select>
         </Field>

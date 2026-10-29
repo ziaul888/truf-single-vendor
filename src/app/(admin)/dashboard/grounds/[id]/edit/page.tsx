@@ -3,53 +3,69 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GroundFormFields, type PhotoSlot } from "@/components/features/add-ground/ground-form-fields";
 import { PreviewSidebar } from "@/components/features/add-ground/preview-sidebar";
-import { AddGroundSchema, type AddGroundFormData } from "@/schemas/ground";
-import type { Ground } from "@/hooks/useGrounds";
+import { AddGroundSchema, toGroundWriteInput, type AddGroundFormData } from "@/schemas/ground";
+import { showGroundApiError } from "@/components/features/add-ground/ground-api-errors";
+import { slotSyncMessage, useGround, useUpdateGround, type Ground } from "@/hooks/useGrounds";
+import { hourToTime } from "@/lib/ground-format";
+import { movePhotoSlot, syncGroundPhotos } from "@/lib/ground-photos";
+import { emptyPhotoSlots, photoSlotsFrom } from "@/components/features/add-ground/photos-section";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { AdminOnly } from "@/components/features/admin-only";
+
+const toTimeInput = (hour: number) => (hour === 24 ? "00:00" : hourToTime(hour));
 
 function groundToFormData(g: Ground): AddGroundFormData {
   return {
     name:          g.name,
-    type:          g.type,
-    capacity:      g.capacity,
-    description:   "",
+    type:          g.sport,
+    capacity:      g.capacity ?? undefined,
+    format:        g.format ?? undefined,
+    surface:       g.surface ?? undefined,
+    dimensions:    g.dimensions ?? "",
+    description:   g.description ?? "",
+    address:       g.address ?? "",
     openingTime:   g.openingTime,
-    closingTime:   g.closingTime,
-    availableDays: "everyday",
-    slotDuration:  "60",
-    peakPrice:     g.peakPricing.pricePerHour,
-    peakRanges:    [{ from: g.peakPricing.from, to: g.peakPricing.to }],
-    offPeakPrice:  g.offPeakPricing.pricePerHour,
-    amenities:     g.amenities,
+    // A time picker can't show 24:00; 00:00 means midnight.
+    closingTime:   g.closingHour === 24 ? "00:00" : g.closingTime,
+    offPeakPrice:  g.pricePerHour,
     isActive:      g.isActive,
-    showOnPortal:  true,
-    internalNotes: "",
+    availableDays: g.availableDays,
+    customDays:    g.customDays,
+    amenities:     g.amenities,
+    showOnPortal:  g.showOnPortal,
+    internalNotes: g.internalNotes ?? "",
+    slotDuration:  g.slotDurationMinutes === 120 ? "120" : "60",
+    peakPrice:     g.peakPricePerHour ?? undefined,
+    peakRanges:    g.peakRanges.length
+      ? g.peakRanges.map((r) => ({ from: hourToTime(r.fromHour), to: toTimeInput(r.toHour) }))
+      : [{ from: "", to: "" }],
   };
 }
 
 export default function EditGroundPage() {
+  return (
+    <AdminOnly reason="Only admins can edit grounds.">
+      <EditGroundForm />
+    </AdminOnly>
+  );
+}
+
+function EditGroundForm() {
   const router      = useRouter();
   const { id }      = useParams<{ id: string }>();
+  const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>(emptyPhotoSlots);
+  const update = useUpdateGround();
   const queryClient = useQueryClient();
-  const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>([null, null]);
-  const [isPending,  setIsPending]  = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const { data: ground, isLoading, isError } = useQuery<Ground>({
-    queryKey: ["grounds", id],
-    queryFn: async () => {
-      const res  = await fetch(`/api/grounds/${id}`);
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error ?? "Not found");
-      return json.data;
-    },
-  });
+  const { data: ground, isLoading, isError } = useGround(id);
 
   const form = useForm<AddGroundFormData>({
     // Fields use z.coerce, so the schema's input type is looser than the form's.
@@ -57,6 +73,7 @@ export default function EditGroundPage() {
     defaultValues: {
       type: "football",
       availableDays: "everyday",
+      customDays: [],
       slotDuration: "60",
       peakRanges: [{ from: "", to: "" }],
       amenities: [],
@@ -68,34 +85,39 @@ export default function EditGroundPage() {
   useEffect(() => {
     if (!ground) return;
     form.reset(groundToFormData(ground));
-    setPhotoSlots([
-      ground.photos[0] ?? null,
-      ground.photos[1] ?? null,
-    ]);
+    setPhotoSlots(photoSlotsFrom(ground.photos));
   }, [ground, form]);
 
   function handlePhotoChange(idx: number, file: File | null) {
     setPhotoSlots((prev) => { const next = [...prev]; next[idx] = file; return next; });
   }
 
-  async function submitUpdate(data: AddGroundFormData) {
-    setIsPending(true);
+  function handlePhotoMove(from: number, to: number) {
+    setPhotoSlots((prev) => movePhotoSlot(prev, from, to));
+  }
+
+  // PATCH leaves fields the form doesn't have (e.g. address) untouched.
+  async function submitUpdate(data: AddGroundFormData, isDraft = false) {
+    if (!ground) return;
+    setSaving(true);
     try {
-      const res  = await fetch(`/api/grounds/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error ?? "Failed");
-      queryClient.invalidateQueries({ queryKey: ["grounds"] });
-      toast.success(`${data.name} updated successfully`);
+      const changes = toGroundWriteInput(data);
+      const updated = await update.mutateAsync({ id, changes: isDraft ? { ...changes, isActive: false } : changes });
+      await syncGroundPhotos(id, ground.photos, photoSlots);
+      toast.success(isDraft ? `${data.name} saved as draft (inactive)` : `${data.name} updated successfully`, {
+        description: updated.slotSync ? slotSyncMessage(updated.slotSync) : undefined,
+      });
       router.push("/dashboard/grounds");
-    } catch {
-      toast.error("Failed to update ground");
+    } catch (err) {
+      showGroundApiError(form, err);
     } finally {
-      setIsPending(false);
+      queryClient.invalidateQueries({ queryKey: ["grounds"] });
+      setSaving(false);
     }
   }
 
-  const onSave  = form.handleSubmit(submitUpdate);
-  const onDraft = form.handleSubmit(submitUpdate, () => submitUpdate(form.getValues()));
+  const onSave  = form.handleSubmit((d) => submitUpdate(d));
+  const onDraft = form.handleSubmit((d) => submitUpdate(d, true));
 
   if (isLoading) {
     return (
@@ -132,7 +154,6 @@ export default function EditGroundPage() {
           <h1 className="text-3xl font-bold tracking-tight">Edit ground</h1>
           <p className="text-muted-foreground text-sm">
             Editing <span className="font-medium text-foreground">{ground.name}</span>
-            <span className="ml-2 font-mono text-xs">{ground.id}</span>
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -146,12 +167,12 @@ export default function EditGroundPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px] items-start">
-        <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} />
+        <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} onPhotoMove={handlePhotoMove} />
         <div className="sticky top-6">
           <PreviewSidebar
             control={form.control}
             photoCount={photoSlots.filter(Boolean).length}
-            isPending={isPending}
+            isPending={saving}
             saveLabel="Save changes"
             onSave={onSave}
             onDraft={onDraft}

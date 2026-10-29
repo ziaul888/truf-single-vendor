@@ -7,24 +7,49 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GroundFormFields, type PhotoSlot } from "@/components/features/add-ground/ground-form-fields";
 import { PreviewSidebar } from "@/components/features/add-ground/preview-sidebar";
-import { AddGroundSchema, type AddGroundFormData } from "@/schemas/ground";
+import { AddGroundSchema, toGroundWriteInput, type AddGroundFormData } from "@/schemas/ground";
+import { showGroundApiError } from "@/components/features/add-ground/ground-api-errors";
+import { useCreateGround, type Ground } from "@/hooks/useGrounds";
+import { movePhotoSlot, syncGroundPhotos } from "@/lib/ground-photos";
+import { emptyPhotoSlots, photoSlotsFrom } from "@/components/features/add-ground/photos-section";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+import { AdminOnly } from "@/components/features/admin-only";
 
 export default function AddGroundPage() {
+  return (
+    <AdminOnly reason="Only admins can add grounds.">
+      <AddGroundForm />
+    </AdminOnly>
+  );
+}
+
+function AddGroundForm() {
   const router = useRouter();
-  const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>([null, null]);
-  const [isPending, setIsPending] = useState(false);
+  const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>(emptyPhotoSlots);
+  const create = useCreateGround();
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
 
   const form = useForm<AddGroundFormData>({
     // Fields use z.coerce, so the schema's input type is looser than the form's.
     resolver: zodResolver(AddGroundSchema) as Resolver<AddGroundFormData>,
     defaultValues: {
+      name: "",
+      description: "",
+      address: "",
+      openingTime: "",
+      closingTime: "",
       type: "football",
       availableDays: "everyday",
+      customDays: [],
       slotDuration: "60",
       peakRanges: [{ from: "", to: "" }],
+      format: undefined,
+      surface: undefined,
+      dimensions: "",
       amenities: [],
       isActive: true,
       showOnPortal: true,
@@ -35,23 +60,34 @@ export default function AddGroundPage() {
     setPhotoSlots((prev) => { const next = [...prev]; next[idx] = file; return next; });
   }
 
+  function handlePhotoMove(from: number, to: number) {
+    setPhotoSlots((prev) => movePhotoSlot(prev, from, to));
+  }
+
+  // turf-api has no draft status, so a draft is saved as an inactive ground (hidden from the portal).
+  // Photos need the ground's id, so they're uploaded after it's created.
   async function submitGround(data: AddGroundFormData, isDraft: boolean) {
-    setIsPending(true);
+    setSaving(true);
+    let created: Ground | undefined;
     try {
-      const res  = await fetch("/api/grounds", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...data, status: isDraft ? "draft" : "active" }) });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error ?? "Failed");
-      toast.success(isDraft ? "Ground saved as draft" : `${data.name} added successfully`);
+      const body = toGroundWriteInput(data);
+      created = await create.mutateAsync(isDraft ? { ...body, isActive: false } : body);
+      await syncGroundPhotos(created.id, [], photoSlots);
+      toast.success(isDraft ? "Ground saved as draft (inactive)" : `${data.name} added successfully`);
       router.push("/dashboard/grounds");
-    } catch {
-      toast.error("Failed to save ground");
+    } catch (err) {
+      showGroundApiError(form, err);
+      // The ground exists even if a photo failed; continue on its edit page so nothing is created twice.
+      if (created) router.push(`/dashboard/grounds/${created.id}/edit`);
     } finally {
-      setIsPending(false);
+      queryClient.invalidateQueries({ queryKey: ["grounds"] });
+      setSaving(false);
     }
   }
 
   const onSave  = form.handleSubmit((d) => submitGround(d, false));
-  const onDraft = form.handleSubmit((d) => submitGround(d, true), () => submitGround(form.getValues(), true));
+  // Drafts still need the fields turf-api requires (name, hours, price).
+  const onDraft = form.handleSubmit((d) => submitGround(d, true));
 
   return (
     <div className="space-y-5">
@@ -69,12 +105,12 @@ export default function AddGroundPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px] items-start">
-        <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} />
+        <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} onPhotoMove={handlePhotoMove} />
         <div className="sticky top-6">
           <PreviewSidebar
             control={form.control}
             photoCount={photoSlots.filter(Boolean).length}
-            isPending={isPending}
+            isPending={saving}
             saveLabel="Save ground"
             onSave={onSave}
             onDraft={onDraft}

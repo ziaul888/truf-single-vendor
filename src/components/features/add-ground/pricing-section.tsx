@@ -1,12 +1,18 @@
 "use client";
 
-import { useFieldArray, type Control, type UseFormRegister, type FieldErrors } from "react-hook-form";
+import {
+  useFieldArray,
+  type Control,
+  type UseFormRegister,
+  type FieldErrors,
+} from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Plus, X, TrendingUp, TrendingDown } from "lucide-react";
 import type { AddGroundFormData } from "@/schemas/ground";
+import { HourSelect } from "./hour-select";
 
 interface PricingSectionProps {
   control: Control<AddGroundFormData>;
@@ -21,20 +27,22 @@ export function PricingSection({ control, register, errors }: PricingSectionProp
     <div className="space-y-4">
       {/* Section labels */}
       <div className="flex items-center gap-2">
-        <span className="flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+        <span className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
           <TrendingUp className="h-3 w-3" /> Peak hours
         </span>
-        <span className="flex items-center gap-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">
+        <span className="flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
           <TrendingDown className="h-3 w-3" /> Off-peak hours
         </span>
       </div>
 
-      {/* Peak pricing block */}
-      <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-4 space-y-4">
+      {/* Peak pricing block — optional; leave the price empty for one fixed price */}
+      <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/20">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-amber-600" />
-          <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">Peak hour pricing</span>
-          {errors.peakPrice && <span className="text-xs text-destructive ml-auto">●</span>}
+          <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+            Peak hour pricing
+          </span>
+          {errors.peakPrice && <span className="text-destructive ml-auto text-xs">●</span>}
         </div>
 
         <div className="space-y-1.5">
@@ -42,25 +50,35 @@ export function PricingSection({ control, register, errors }: PricingSectionProp
             type="number"
             min={1}
             placeholder="e.g. 1500"
-            className={cn("max-w-[160px] bg-background", errors.peakPrice && "border-destructive")}
+            className={cn("bg-background max-w-[160px]", errors.peakPrice && "border-destructive")}
             {...register("peakPrice")}
           />
-          {errors.peakPrice && <p className="text-xs text-destructive">{errors.peakPrice.message}</p>}
-          <p className="text-xs text-muted-foreground">Charged during peak time ranges below.</p>
+          {errors.peakPrice && (
+            <p className="text-destructive text-xs">{errors.peakPrice.message}</p>
+          )}
+          <p className="text-muted-foreground text-xs">Charged during peak time ranges below.</p>
         </div>
 
         <div className="space-y-2">
           {fields.map((field, i) => (
-            <div key={field.id} className="flex items-center gap-2 flex-wrap">
-              <Input type="time" className="w-32 bg-background" {...register(`peakRanges.${i}.from`)} />
-              <span className="text-sm text-muted-foreground">to</span>
-              <Input type="time" className="w-32 bg-background" {...register(`peakRanges.${i}.to`)} />
+            <div key={field.id} className="flex flex-wrap items-center gap-2">
+              <HourSelect
+                control={control}
+                name={`peakRanges.${i}.from`}
+                className="bg-background w-32"
+              />
+              <span className="text-muted-foreground text-sm">to</span>
+              <HourSelect
+                control={control}
+                name={`peakRanges.${i}.to`}
+                className="bg-background w-32"
+              />
               {fields.length > 1 && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground hover:text-destructive h-8 w-8 shrink-0"
                   onClick={() => remove(i)}
                 >
                   <X className="h-4 w-4" />
@@ -73,23 +91,25 @@ export function PricingSection({ control, register, errors }: PricingSectionProp
         <button
           type="button"
           onClick={() => append({ from: "", to: "" })}
-          className="flex items-center gap-1.5 text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 transition-colors"
+          className="flex items-center gap-1.5 text-sm font-medium text-amber-600 transition-colors hover:text-amber-700 dark:text-amber-400"
         >
           <Plus className="h-4 w-4" />
           Add another peak range
         </button>
 
-        <p className="text-xs italic text-muted-foreground">
+        <p className="text-muted-foreground text-xs italic">
           All other hours within operating time are off-peak.
         </p>
       </div>
 
       {/* Off-peak pricing block */}
-      <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-4 space-y-3">
+      <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
         <div className="flex items-center gap-2">
           <TrendingDown className="h-4 w-4 text-blue-600" />
-          <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">Off-peak hour pricing</span>
-          {errors.offPeakPrice && <span className="text-xs text-destructive ml-auto">●</span>}
+          <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">
+            Off-peak hour pricing
+          </span>
+          {errors.offPeakPrice && <span className="text-destructive ml-auto text-xs">●</span>}
         </div>
 
         <div className="space-y-1.5">
@@ -97,11 +117,18 @@ export function PricingSection({ control, register, errors }: PricingSectionProp
             type="number"
             min={1}
             placeholder="e.g. 1000"
-            className={cn("max-w-[160px] bg-background", errors.offPeakPrice && "border-destructive")}
+            className={cn(
+              "bg-background max-w-[160px]",
+              errors.offPeakPrice && "border-destructive"
+            )}
             {...register("offPeakPrice")}
           />
-          {errors.offPeakPrice && <p className="text-xs text-destructive">{errors.offPeakPrice.message}</p>}
-          <p className="text-xs italic text-muted-foreground">Applied automatically to all non-peak slots.</p>
+          {errors.offPeakPrice && (
+            <p className="text-destructive text-xs">{errors.offPeakPrice.message}</p>
+          )}
+          <p className="text-muted-foreground text-xs italic">
+            Applied automatically to all non-peak slots.
+          </p>
         </div>
       </div>
     </div>

@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { GroundCard } from "@/components/portal/ground-card";
-import { GROUNDS } from "@/lib/portal-stub-data";
+import { listPublicGrounds } from "@/services/portal-grounds";
 import type { WebsiteSections } from "@/validations/website-settings";
 
-export function FeaturedGroundsSection({ content }: { content: WebsiteSections["featuredGrounds"] }) {
+const FEATURED_COUNT = 6;
+
+export async function FeaturedGroundsSection({ content }: { content: WebsiteSections["featuredGrounds"] }) {
+  const grounds = (await listPublicGrounds()).slice(0, FEATURED_COUNT);
+
   return (
     <section id="grounds" className="bg-muted/30 py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -17,12 +21,8 @@ export function FeaturedGroundsSection({ content }: { content: WebsiteSections["
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {GROUNDS.map((g, i) => (
-            <GroundCard
-              key={g.id}
-              ground={g}
-              badge={i === 0 ? "Most booked" : i === 2 ? "2 slots left" : undefined}
-            />
+          {grounds.map((g) => (
+            <GroundCard key={g.id} ground={g} />
           ))}
         </div>
       </div>

@@ -11,6 +11,11 @@ import {
 import { GroundCard } from "@/components/features/grounds/ground-card";
 import { GroundTable } from "@/components/features/grounds/ground-table";
 import { useGrounds, useToggleGroundStatus, type Ground } from "@/hooks/useGrounds";
+import { useMe } from "@/hooks/useMe";
+import { useDashboardStats } from "@/hooks/useDashboard";
+import { toApiFailure } from "@/lib/api-error";
+import { ConfirmDialog } from "@/components/features/confirm-dialog";
+import { SPORTS } from "@/types/ground";
 import {
   MapPin, CheckCircle2, XCircle, CalendarDays, PlusCircle,
   Search, LayoutGrid, List, AlertCircle,
@@ -18,8 +23,6 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ElementType } from "react";
-
-const SPORT_TYPES = ["football", "cricket", "badminton", "tennis", "hockey", "basketball", "other"];
 
 function StatCard({ icon: Icon, label, value, iconClass, bgClass }: {
   icon: ElementType; label: string; value: string | number;
@@ -44,7 +47,11 @@ const SKELETON_WIDTHS = ["w-32", "w-20", "w-48", "w-40"] as const;
 
 export default function GroundsPage() {
   const { data: grounds, isLoading, isError } = useGrounds();
+  const { data: stats } = useDashboardStats();
+  const bookedToday = stats?.bookingsTodayByGround.reduce((sum, b) => sum + b.bookings, 0);
   const toggle = useToggleGroundStatus();
+  const { data: me } = useMe();
+  const canEdit = me?.role === "admin";
 
   const [search,      setSearch]      = useState("");
   const [typeFilter,  setTypeFilter]  = useState("all");
@@ -55,7 +62,7 @@ export default function GroundsPage() {
     return (grounds ?? []).filter((g) => {
       const q = search.toLowerCase();
       const matchSearch = !search || g.name.toLowerCase().includes(q) || g.id.toLowerCase().includes(q);
-      const matchType   = typeFilter === "all"    || g.type === typeFilter;
+      const matchType   = typeFilter === "all"    || g.sport === typeFilter;
       const matchStatus = statusFilter === "all"  || (statusFilter === "active" ? g.isActive : !g.isActive);
       return matchSearch && matchType && matchStatus;
     });
@@ -64,20 +71,27 @@ export default function GroundsPage() {
   const total    = grounds?.length ?? 0;
   const active   = grounds?.filter((g) => g.isActive).length ?? 0;
   const inactive = total - active;
-  const bookedToday = grounds?.reduce((s, g) => s + g.todayBookings, 0) ?? 0;
 
   const activeFilters =
     (search ? 1 : 0) + (typeFilter !== "all" ? 1 : 0) + (statusFilter !== "all" ? 1 : 0);
   const hasFilters = activeFilters > 0;
   const clearFilters = () => { setSearch(""); setTypeFilter("all"); setStatusFilter("all"); };
 
+  const [deactivating, setDeactivating] = useState<Ground | null>(null);
+
+  // Deactivating hides a ground from the portal, so it asks first; activating doesn't.
   function handleToggle(ground: Ground) {
+    if (ground.isActive) setDeactivating(ground);
+    else setActive(ground);
+  }
+
+  function setActive(ground: Ground) {
     const next = !ground.isActive;
     toggle.mutate(
       { id: ground.id, isActive: next },
       {
         onSuccess: () => toast.success(`${ground.name} ${next ? "activated" : "deactivated"}`),
-        onError:   () => toast.error("Failed to update ground status"),
+        onError:   (err) => toast.error(toApiFailure(err).error),
       }
     );
   }
@@ -90,12 +104,14 @@ export default function GroundsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Grounds</h1>
           <p className="text-muted-foreground">Manage all sport grounds and pricing</p>
         </div>
-        <Button className="gap-2" asChild>
-          <Link href="/dashboard/grounds/new">
-            <PlusCircle className="h-4 w-4" />
-            Add Ground
-          </Link>
-        </Button>
+        {canEdit && (
+          <Button className="gap-2" asChild>
+            <Link href="/dashboard/grounds/new">
+              <PlusCircle className="h-4 w-4" />
+              Add Ground
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Stats row */}
@@ -103,7 +119,7 @@ export default function GroundsPage() {
         <StatCard icon={MapPin}        label="Total Grounds"   value={isLoading ? "—" : total}        iconClass="text-primary"              bgClass="bg-primary/10" />
         <StatCard icon={CheckCircle2}  label="Active"          value={isLoading ? "—" : active}       iconClass="text-green-600 dark:text-green-400"  bgClass="bg-green-100 dark:bg-green-900/30" />
         <StatCard icon={XCircle}       label="Inactive"        value={isLoading ? "—" : inactive}     iconClass="text-destructive"          bgClass="bg-destructive/10" />
-        <StatCard icon={CalendarDays}  label="Booked Today"    value={isLoading ? "—" : bookedToday}  iconClass="text-blue-600 dark:text-blue-400"    bgClass="bg-blue-100 dark:bg-blue-900/30" />
+        <StatCard icon={CalendarDays}  label="Booked Today"    value={bookedToday ?? "—"}  iconClass="text-blue-600 dark:text-blue-400"    bgClass="bg-blue-100 dark:bg-blue-900/30" />
       </div>
 
       {/* Filters + view toggle */}
@@ -123,7 +139,7 @@ export default function GroundsPage() {
             <SelectTrigger className="w-36"><SelectValue placeholder="Sport type" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Sports</SelectItem>
-              {SPORT_TYPES.map((t) => (
+              {SPORTS.map((t) => (
                 <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>
               ))}
             </SelectContent>
@@ -216,21 +232,21 @@ export default function GroundsPage() {
           <div className="mt-4">
             {hasFilters ? (
               <Button variant="outline" size="sm" onClick={clearFilters}>Clear filters</Button>
-            ) : (
+            ) : canEdit ? (
               <Button size="sm" className="gap-2" asChild>
                 <Link href="/dashboard/grounds/new"><PlusCircle className="h-4 w-4" />Add Ground</Link>
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       ) : view === "grid" ? (
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((g) => (
-            <GroundCard key={g.id} ground={g} onToggleStatus={handleToggle} isPending={toggle.isPending} />
+            <GroundCard key={g.id} ground={g} onToggleStatus={handleToggle} isPending={toggle.isPending} canEdit={canEdit} />
           ))}
         </div>
       ) : (
-        <GroundTable grounds={filtered} onToggleStatus={handleToggle} isPending={toggle.isPending} />
+        <GroundTable grounds={filtered} onToggleStatus={handleToggle} isPending={toggle.isPending} canEdit={canEdit} />
       )}
 
       {!isLoading && !isError && filtered.length > 0 && (
@@ -240,6 +256,15 @@ export default function GroundsPage() {
           </span>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deactivating}
+        title={`Deactivate ${deactivating?.name ?? "ground"}?`}
+        description="It disappears from the portal and can't be booked. It stays in the dashboard and past bookings, and you can activate it again."
+        confirmLabel="Deactivate"
+        onCancel={() => setDeactivating(null)}
+        onConfirm={() => { if (deactivating) setActive(deactivating); setDeactivating(null); }}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { venueToday } from "@/lib/slot-format";
 import type { CalendarSlot } from "@/types";
 
 const DAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -8,6 +9,7 @@ const DAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const STATUS_PILL: Record<CalendarSlot["status"], string> = {
   booked:  "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300",
   partial: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300",
+  held:    "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300",
   blocked: "bg-gray-100  text-gray-500  dark:bg-gray-800    dark:text-gray-400 italic",
 };
 
@@ -35,15 +37,16 @@ interface MonthGridProps {
   slots: CalendarSlot[];
   selectedDate: string;
   currentMonth: Date;
-  totalDailySlots: number;
+  /** Slots that exist on a date (from turf-api's calendar totals). */
+  totalSlotsFor: (date: string) => number;
   onSelectDate: (date: string) => void;
 }
 
-export function MonthGrid({ slots, selectedDate, currentMonth, totalDailySlots, onSelectDate }: MonthGridProps) {
+export function MonthGrid({ slots, selectedDate, currentMonth, totalSlotsFor, onSelectDate }: MonthGridProps) {
   const year  = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const cells = getCalendarCells(year, month);
-  const todayStr = toDateStr(new Date());
+  const todayStr = venueToday();
 
   const slotsByDate = new Map<string, CalendarSlot[]>();
   for (const s of slots) {
@@ -71,7 +74,7 @@ export function MonthGrid({ slots, selectedDate, currentMonth, totalDailySlots, 
           const isToday      = dateStr === todayStr;
           const isSelected   = dateStr === selectedDate;
           const occupied     = daySlots.length;
-          const availCount   = isCurrentMonth ? Math.max(0, totalDailySlots - occupied) : 0;
+          const availCount   = isCurrentMonth ? Math.max(0, totalSlotsFor(dateStr) - occupied) : 0;
           const visible      = daySlots.slice(0, 2);
           const overflow     = daySlots.length - visible.length;
           const hasRightBorder = i % 7 !== 6;
@@ -113,12 +116,12 @@ export function MonthGrid({ slots, selectedDate, currentMonth, totalDailySlots, 
                   <div
                     key={s.id}
                     className={cn("truncate rounded px-1.5 py-[2px] text-[11px] font-medium leading-tight", STATUS_PILL[s.status])}
-                    title={s.customerName ?? s.note ?? s.status}
+                    title={s.status === "held" ? `${s.customerName ?? "Customer"} paying…` : s.customerName ?? s.note ?? s.status}
                   >
                     {s.startTime}{" "}
                     {s.status === "blocked"
                       ? (s.note ?? "Blocked")
-                      : (s.customerName ?? s.status)}
+                      : s.status === "held" ? "Paying…" : (s.customerName ?? s.status)}
                   </div>
                 ))}
                 {overflow > 0 && (

@@ -7,7 +7,8 @@ export function GroundCard({ ground, badge }: { ground: Ground; badge?: string }
   return (
     <article className="group overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative h-48 w-full">
-        {ground.images[0] && (
+        {/* turf-api v1 has no photos: show the neutral pitch-coloured cover instead */}
+        {ground.images?.[0] ? (
           <Image
             src={ground.images[0]}
             alt={ground.name}
@@ -15,8 +16,10 @@ export function GroundCard({ ground, badge }: { ground: Ground; badge?: string }
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover"
           />
+        ) : (
+          <div className="h-full w-full bg-linear-to-br from-primary/80 to-primary/40" />
         )}
-        <FormatBadge format={ground.format} className="absolute left-3 top-3" />
+        {ground.format && <FormatBadge format={ground.format} className="absolute left-3 top-3" />}
         {badge && (
           <span className="absolute right-3 top-3 inline-block rounded-full bg-card/95 px-2 py-0.5 text-[11px] font-bold">
             {badge}
@@ -28,7 +31,7 @@ export function GroundCard({ ground, badge }: { ground: Ground; badge?: string }
           <div>
             <h3 className="text-lg font-bold">{ground.name}</h3>
             <p className="mt-0.5 text-xs capitalize text-muted-foreground">
-              {ground.sport} · {ground.surface.replace("-", " ")}
+              {[ground.sport, ground.surface?.replace("-", " ")].filter(Boolean).join(" · ")}
             </p>
           </div>
           <div className="text-right">
@@ -40,7 +43,7 @@ export function GroundCard({ ground, badge }: { ground: Ground; badge?: string }
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-1.5">
-          {ground.amenities.slice(0, 3).map((a) => (
+          {(ground.amenities ?? []).slice(0, 3).map((a) => (
             <span key={a} className="rounded border bg-muted/50 px-2 py-1 text-[10px]">
               {a}
             </span>

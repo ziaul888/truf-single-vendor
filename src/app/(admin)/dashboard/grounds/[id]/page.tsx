@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useSlots } from "@/hooks/useSlots";
+import { venueToday } from "@/lib/slot-format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +12,10 @@ import {
   SPORT_GRADIENT,
   SPORT_EMOJI,
 } from "@/components/features/grounds/ground-card";
-import type { Ground } from "@/hooks/useGrounds";
+import { useGround } from "@/hooks/useGrounds";
+import { useMe } from "@/hooks/useMe";
+import { useDashboardStats } from "@/hooks/useDashboard";
+import { formatPeakRanges, hourToTime } from "@/lib/ground-format";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
   AlertCircle,
@@ -21,6 +25,7 @@ import {
   Clock,
   LayoutList,
   Pencil,
+  MapPin,
   TrendingDown,
   TrendingUp,
   Users,
@@ -37,26 +42,22 @@ interface TimeSlot {
 export default function GroundDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const ground = useQuery<Ground>({
-    queryKey: ["grounds", id],
-    queryFn: async () => {
-      const res = await fetch(`/api/grounds/${id}`);
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error ?? "Not found");
-      return json.data;
-    },
-  });
+  const ground = useGround(id);
+  const { data: me } = useMe();
+  const { data: stats } = useDashboardStats();
+  const todayBookings = stats ? stats.bookingsTodayByGround.find((b) => b.groundId === id)?.bookings ?? 0 : undefined;
 
-  const slots = useQuery<TimeSlot[]>({
-    queryKey: ["grounds", id, "slots"],
-    queryFn: async () => {
-      const res = await fetch(`/api/grounds/${id}/slots`);
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error ?? "Failed");
-      return json.data;
-    },
-    enabled: !!id,
-  });
+  // Today's real slots at the venue; booked and blocked both count as taken here.
+  const daySlots = useSlots({ groundId: id, date: venueToday(), limit: 100 }, { enabled: !!id });
+  const slots = {
+    ...daySlots,
+    data: daySlots.data?.data.map((s): TimeSlot => ({
+      id: s.id,
+      startTime: hourToTime(s.startHour),
+      endTime: hourToTime(s.endHour),
+      status: s.status === "available" ? "available" : "taken",
+    })),
+  };
 
   if (ground.isLoading) {
     return (
@@ -86,9 +87,10 @@ export default function GroundDetailPage() {
   }
 
   const g = ground.data;
-  const cover = g.photos?.[0];
-  const gradient = SPORT_GRADIENT[g.type] ?? SPORT_GRADIENT.other;
-  const emoji = SPORT_EMOJI[g.type] ?? "🏟️";
+  // The first photo is the cover; without photos, the sport's gradient.
+  const gradient = SPORT_GRADIENT[g.sport] ?? SPORT_GRADIENT.other;
+  const emoji = SPORT_EMOJI[g.sport] ?? SPORT_EMOJI.other;
+  const size = [g.format?.replace("x", "×"), g.dimensions].filter(Boolean).join(" · ");
 
   const availableCount = slots.data?.filter((s) => s.status === "available").length ?? 0;
   const takenCount = slots.data?.filter((s) => s.status === "taken").length ?? 0;
@@ -122,22 +124,27 @@ export default function GroundDetailPage() {
               {g.isActive ? "Active" : "Inactive"}
             </span>
           </div>
-          <p className="mt-1 font-mono text-xs text-muted-foreground">
-            {g.id} · {g.size}
-          </p>
+          {size && <p className="mt-1 text-xs text-muted-foreground">{size}</p>}
+          {g.address && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5" /> {g.address}
+            </p>
+          )}
         </div>
-        <Button asChild className="gap-2">
-          <Link href={`/dashboard/grounds/${g.id}/edit`}>
-            <Pencil className="h-4 w-4" /> Edit ground
-          </Link>
-        </Button>
+        {me?.role === "admin" && (
+          <Button asChild className="gap-2">
+            <Link href={`/dashboard/grounds/${g.id}/edit`}>
+              <Pencil className="h-4 w-4" /> Edit ground
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Hero / cover */}
       <div className="relative h-64 w-full overflow-hidden rounded-xl">
-        {cover ? (
+        {g.photos[0] ? (
           <Image
-            src={cover}
+            src={g.photos[0]}
             alt={g.name}
             fill
             sizes="(max-width:1024px) 100vw, 1024px"
@@ -155,7 +162,7 @@ export default function GroundDetailPage() {
           </div>
         )}
         <span className="absolute left-4 top-4 rounded-full bg-background/85 px-3 py-1 text-xs font-semibold capitalize backdrop-blur-sm">
-          {emoji} {g.type}
+          {emoji} {g.sport}
         </span>
       </div>
 
@@ -165,7 +172,7 @@ export default function GroundDetailPage() {
           icon={<Users className="h-5 w-5 text-primary" />}
           bg="bg-primary/10"
           label="Capacity"
-          value={`${g.capacity} players`}
+          value={g.capacity != null ? `${g.capacity} players` : "—"}
         />
         <StatCard
           icon={<Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
@@ -177,7 +184,7 @@ export default function GroundDetailPage() {
           icon={<CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />}
           bg="bg-green-100 dark:bg-green-900/30"
           label="Today's bookings"
-          value={g.todayBookings}
+          value={todayBookings ?? "—"}
         />
         <StatCard
           icon={<LayoutList className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
@@ -194,33 +201,35 @@ export default function GroundDetailPage() {
             Pricing
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex items-center justify-between rounded-lg bg-amber-50 px-4 py-3 dark:bg-amber-900/20">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                  Peak
-                </span>
-                <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-800/50 dark:text-amber-300">
-                  {g.peakPricing.from}–{g.peakPricing.to}
+            {g.peakPricePerHour !== null && (
+              <div className="flex items-center justify-between rounded-lg bg-amber-50 px-4 py-3 dark:bg-amber-900/20">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                    Peak
+                  </span>
+                  <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-800/50 dark:text-amber-300">
+                    {formatPeakRanges(g.peakRanges)}
+                  </span>
+                </div>
+                <span className="text-lg font-bold text-amber-700 dark:text-amber-400">
+                  {formatCurrency(g.peakPricePerHour)}
+                  <span className="text-xs font-normal">/hr</span>
                 </span>
               </div>
-              <span className="text-lg font-bold text-amber-700 dark:text-amber-400">
-                {formatCurrency(g.peakPricing.pricePerHour)}
-                <span className="text-xs font-normal">/hr</span>
-              </span>
-            </div>
+            )}
             <div className="flex items-center justify-between rounded-lg bg-blue-50 px-4 py-3 dark:bg-blue-900/20">
               <div className="flex items-center gap-2">
                 <TrendingDown className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
-                  Off-peak
+                  {g.peakPricePerHour !== null ? "Off-peak" : "Hourly"}
                 </span>
                 <span className="rounded-full bg-blue-200/70 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-800/50 dark:text-blue-300">
-                  {g.offPeakPricing.from}–{g.offPeakPricing.to}
+                  {g.slotDurationMinutes === 120 ? "2-hour slots" : "1-hour slots"}
                 </span>
               </div>
               <span className="text-lg font-bold text-blue-700 dark:text-blue-400">
-                {formatCurrency(g.offPeakPricing.pricePerHour)}
+                {formatCurrency(g.pricePerHour)}
                 <span className="text-xs font-normal">/hr</span>
               </span>
             </div>

@@ -3,12 +3,16 @@ import {
   CalendarCheck, CalendarRange, Users, UserCog,
   UserCheck, CreditCard, Receipt, RotateCcw, BarChart3,
   TrendingUp, FileText, Clock, Ban, SlidersHorizontal, LayoutGrid,
-  Settings, Building2, CalendarCog, Wallet, Bell, ShieldCheck, Database, Globe,
+  Settings, Building2, CalendarCog, Wallet, Bell, ShieldCheck, Database, Globe, CalendarOff, History,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface SubItem { label: string; href: string; icon: LucideIcon }
-export interface NavItem  { label: string; href: string; icon: LucideIcon; color: string; children?: SubItem[] }
+export interface NavItem  {
+  label: string; href: string; icon: LucideIcon; color: string; children?: SubItem[];
+  /** Hidden for managers — the API rejects them anyway. */
+  adminOnly?: boolean;
+}
 export interface NavGroup { label: string; items: NavItem[] }
 
 export const NAV: NavGroup[] = [
@@ -41,6 +45,8 @@ export const NAV: NavGroup[] = [
         children: [
           { label: "All Slots",     href: "/dashboard/slots",          icon: LayoutGrid        },
           { label: "Blocked Slots", href: "/dashboard/slots/blocked",  icon: Ban               },
+          { label: "Closures",      href: "/dashboard/slots/closures", icon: CalendarOff       },
+          { label: "Activity",      href: "/dashboard/slots/activity", icon: History           },
           { label: "Settings",      href: "/dashboard/slots/settings", icon: SlidersHorizontal },
         ],
       },
@@ -56,7 +62,7 @@ export const NAV: NavGroup[] = [
     label: "Operations",
     items: [
       {
-        label: "Staff", href: "/dashboard/staff", icon: UserCog, color: "text-chart-4",
+        label: "Staff", href: "/dashboard/staff", icon: UserCog, color: "text-chart-4", adminOnly: true,
         children: [
           { label: "All Staff",  href: "/dashboard/staff",       icon: List      },
           { label: "Roles",      href: "/dashboard/staff/roles", icon: UserCheck },
@@ -103,3 +109,11 @@ export const NAV: NavGroup[] = [
     ],
   },
 ];
+
+/** NAV without admin-only items unless the signed-in user is an admin. */
+export function navForRole(role: string | undefined): NavGroup[] {
+  if (role === "admin") return NAV;
+  return NAV
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.adminOnly) }))
+    .filter((g) => g.items.length > 0);
+}

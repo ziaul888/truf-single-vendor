@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { Facebook, Goal, Instagram, LayoutDashboard, MessageCircle, Phone } from "lucide-react";
 import { getWebsiteSettings } from "@/services/website-settings";
 import type { WebsiteSettings } from "@/validations/website-settings";
+import { CustomerNav } from "@/components/portal/account/customer-nav";
 
 /**
  * The portal locks to the `pitch` theme regardless of the admin theme toggle —
@@ -59,6 +60,7 @@ async function PortalHeader({ contact }: { contact: WebsiteSettings["contact"] }
               <span className="hidden sm:inline">Dashboard</span>
             </Link>
           )}
+          <CustomerNav />
           <Link
             href="/grounds"
             className="inline-flex h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground hover:opacity-90"

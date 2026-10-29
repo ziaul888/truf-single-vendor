@@ -2,13 +2,17 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useDashboardStats, useUpcomingBookings, useActiveGrounds } from "@/hooks/useDashboard";
-import { formatCurrency } from "@/lib/utils";
+import { useMemo } from "react";
+import { useDashboardStats, useUpcomingBookings } from "@/hooks/useDashboard";
+import { useGrounds } from "@/hooks/useGrounds";
+import { slotPriceLabel } from "@/lib/slot-format";
 import { DollarSign, CalendarDays, Clock, MapPin, Users, CalendarPlus, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "@/components/features/dashboard/stat-card";
 import { WeeklyRevenueChart, BookingsByStatusChart } from "@/components/features/dashboard/dashboard-charts";
-import { DashboardDataTable, bookingColumns, groundColumns } from "@/components/features/dashboard/dashboard-data-table";
+import {
+  DashboardDataTable, bookingColumns, groundColumns, type DashboardGroundRow,
+} from "@/components/features/dashboard/dashboard-data-table";
 
 const quickActions = [
   { label: "New Booking",  icon: CalendarPlus, href: "/dashboard/bookings/new"    },
@@ -19,8 +23,16 @@ const quickActions = [
 
 export default function DashboardPage() {
   const stats    = useDashboardStats();
-  const upcoming = useUpcomingBookings();
-  const grounds  = useActiveGrounds();
+  const upcoming = useUpcomingBookings(5);
+  const grounds  = useGrounds();
+
+  // Active grounds with today's bookings from the stats (null until the stats load).
+  const groundRows = useMemo<DashboardGroundRow[]>(() => {
+    const byGround = new Map(stats.data?.bookingsTodayByGround.map((b) => [b.groundId, b.bookings]));
+    return (grounds.data ?? [])
+      .filter((g) => g.isActive)
+      .map((g) => ({ ...g, todayBookings: stats.data ? byGround.get(g.id) ?? 0 : null }));
+  }, [grounds.data, stats.data]);
 
   return (
     <div className="space-y-6">
@@ -38,10 +50,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Today's Revenue"  value={stats.data ? formatCurrency(stats.data.todayRevenue)  : "—"} icon={DollarSign}  trend={stats.data?.todayRevenueTrend}   loading={stats.isLoading} />
-        <StatCard title="Today's Bookings" value={stats.data ? String(stats.data.todayBookings)         : "—"} icon={CalendarDays} trend={stats.data?.todayBookingsTrend}  loading={stats.isLoading} />
-        <StatCard title="Total Customers"  value={stats.data ? String(stats.data.totalCustomers)        : "—"} icon={Users}        trend={stats.data?.totalCustomersTrend} loading={stats.isLoading} />
-        <StatCard title="Active Grounds"   value={stats.data ? String(stats.data.activeGrounds)         : "—"} icon={MapPin}       trend={stats.data?.activeGroundsTrend}  loading={stats.isLoading} />
+        <StatCard title="Today's Revenue"  value={stats.data ? slotPriceLabel(stats.data.todayRevenue) : "—"} icon={DollarSign}  trend={stats.data?.todayRevenueTrend}   trendLabel="vs last week" loading={stats.isLoading} />
+        <StatCard title="Today's Bookings" value={stats.data ? String(stats.data.todayBookings)         : "—"} icon={CalendarDays} trend={stats.data?.todayBookingsTrend}  trendLabel="vs last week" loading={stats.isLoading} />
+        <StatCard title="Total Customers"  value={stats.data ? String(stats.data.totalCustomers)        : "—"} icon={Users}        trend={stats.data?.totalCustomersTrend} trendLabel="vs last week" loading={stats.isLoading} />
+        <StatCard title="Active Grounds"   value={stats.data ? String(stats.data.activeGrounds)         : "—"} icon={MapPin}       trend={stats.data?.activeGroundsTrend}  trendLabel="vs last week" loading={stats.isLoading} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -52,7 +64,7 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />Upcoming Bookings (Next 24 Hours)
+            <Clock className="h-5 w-5" />Upcoming Bookings
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -61,7 +73,7 @@ export default function DashboardPage() {
           ) : upcoming.isError ? (
             <p className="text-sm text-destructive">Failed to load upcoming bookings.</p>
           ) : !upcoming.data?.length ? (
-            <p className="text-sm text-muted-foreground">No upcoming bookings in the next 24 hours.</p>
+            <p className="text-sm text-muted-foreground">No upcoming bookings.</p>
           ) : (
             <DashboardDataTable columns={bookingColumns} data={upcoming.data} />
           )}
@@ -79,10 +91,10 @@ export default function DashboardPage() {
             <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="h-10 animate-pulse rounded bg-muted" />)}</div>
           ) : grounds.isError ? (
             <p className="text-sm text-destructive">Failed to load grounds.</p>
-          ) : !grounds.data?.length ? (
+          ) : !groundRows.length ? (
             <p className="text-sm text-muted-foreground">No active grounds found.</p>
           ) : (
-            <DashboardDataTable columns={groundColumns} data={grounds.data} />
+            <DashboardDataTable columns={groundColumns} data={groundRows} />
           )}
         </CardContent>
       </Card>

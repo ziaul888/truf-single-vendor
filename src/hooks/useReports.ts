@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { mockApi as api } from "@/lib/api";
 
 export type DateRange = "7d" | "30d" | "90d" | "1y";
 
