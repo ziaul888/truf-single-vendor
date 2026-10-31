@@ -110,9 +110,13 @@ export function useSlotSettings() {
 export function useUpdateSlotSettings() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Partial<SlotSettings>) =>
+    mutationFn: async (body: Partial<Omit<SlotSettings, "updatedAt" | "updatedBy">>) =>
       (await api.put("/admin/settings/slots", body)).data.data as SlotSettings,
-    onSuccess: (data) => qc.setQueryData(SETTINGS_KEY, data),
+    onSuccess: (data) => {
+      qc.setQueryData(SETTINGS_KEY, data);
+      // portalCashEnabled also shows on the Payments page's status.
+      qc.invalidateQueries({ queryKey: ["settings", "payments-status"] });
+    },
   });
 }
 

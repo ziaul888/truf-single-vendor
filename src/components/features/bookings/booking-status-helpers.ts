@@ -61,6 +61,13 @@ export const EVENT_DOT_CLASS: Record<BookingEventType, string> = {
   completed: "bg-gray-400",
 };
 
+/**
+ * Event details are stored with amounts in the smallest unit ("Received 50000 by cash");
+ * this shows them in taka ("Received ৳ 500 by cash").
+ */
+export const eventDetailLabel = (detail: string) =>
+  detail.replace(/\b(Received|Paid|Refunded) (\d+)\b/g, (_, verb: string, minor: string) => `${verb} ${slotPriceLabel(Number(minor))}`);
+
 /** "৳ 1,500" from whole currency units (form values). */
 export const takaLabel = (major: number) => slotPriceLabel(toMinorUnits(major));
 

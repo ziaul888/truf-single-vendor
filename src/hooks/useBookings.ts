@@ -6,6 +6,9 @@ import type {
 
 export type { Booking, BookingDetail };
 
+export const DUE_FILTERS = ["any", "overdue", "today"] as const;
+export type DueFilter = (typeof DUE_FILTERS)[number];
+
 export interface BookingFilters {
   status?: BookingStatus;
   paymentStatus?: PaymentStatus;
@@ -16,6 +19,8 @@ export interface BookingFilters {
   to?: string;
   /** Booking number, name or phone. */
   search?: string;
+  /** Money still owed: overdue, due today, or any. */
+  due?: DueFilter;
   sort?: "created" | "slot";
   page?: number;
   limit?: number;

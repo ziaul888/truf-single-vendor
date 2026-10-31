@@ -4,13 +4,14 @@ import Image from "next/image";
 import { Calendar, MapPin, Phone } from "lucide-react";
 import { AMENITY_ICONS } from "@/components/portal/amenity-icons";
 import {
-  isWebsiteImageSrc, type WebsiteSectionKey, type WebsiteSections, type WebsiteSettings,
+  isWebsiteImageSrc, type WebsiteSectionKey, type WebsiteSections,
 } from "@/validations/website-settings";
+import type { PublicVenue } from "@/types/settings";
 
 const SECTION_COUNT = 5;
 
 /** Compact, read-only rendering of the home page sections for the live preview. */
-export function PreviewSections({ sections, contact }: { sections: WebsiteSections; contact: WebsiteSettings["contact"] }) {
+export function PreviewSections({ sections, venue }: { sections: WebsiteSections; venue: PublicVenue }) {
   const hiddenCount = (Object.keys(sections) as WebsiteSectionKey[]).filter((k) => !sections[k]?.enabled).length;
   return (
     <div className="space-y-px bg-white/5">
@@ -18,7 +19,7 @@ export function PreviewSections({ sections, contact }: { sections: WebsiteSectio
       {sections.featuredGrounds?.enabled && <PreviewGrounds content={sections.featuredGrounds} />}
       {sections.amenities?.enabled && <PreviewAmenities content={sections.amenities} />}
       {sections.howItWorks?.enabled && <PreviewHowItWorks content={sections.howItWorks} />}
-      {sections.visitUs?.enabled && <PreviewVisit content={sections.visitUs} contact={contact} />}
+      {sections.visitUs?.enabled && <PreviewVisit content={sections.visitUs} venue={venue} />}
       {hiddenCount > 0 && (
         <p className="bg-card py-2 text-center text-[9px] text-muted-foreground">
           {hiddenCount} of {SECTION_COUNT} sections hidden
@@ -96,15 +97,15 @@ function PreviewHowItWorks({ content }: { content: WebsiteSections["howItWorks"]
   );
 }
 
-function PreviewVisit({ content, contact }: { content: WebsiteSections["visitUs"]; contact: WebsiteSettings["contact"] }) {
+function PreviewVisit({ content, venue }: { content: WebsiteSections["visitUs"]; venue: PublicVenue }) {
   return (
     <div className="grid grid-cols-2 gap-2 bg-card px-3 py-3 text-[8px]">
       <div className="min-w-0 space-y-1">
         {content.badge && <span className="rounded-full bg-accent px-2 py-0.5 text-[7px] font-bold text-accent-foreground">{content.badge}</span>}
         <p className="text-[10px] font-extrabold leading-tight">{content.title}</p>
-        <p className="flex gap-1"><MapPin className="h-2.5 w-2.5 shrink-0 text-primary" /><span className="wrap-break-word">{contact.address}</span></p>
-        <p className="flex gap-1"><Calendar className="h-2.5 w-2.5 shrink-0 text-primary" />{contact.openHours}</p>
-        <p className="flex gap-1"><Phone className="h-2.5 w-2.5 shrink-0 text-primary" /><span className="break-all">{contact.phone}</span></p>
+        <p className="flex gap-1"><MapPin className="h-2.5 w-2.5 shrink-0 text-primary" /><span className="wrap-break-word">{venue.address}</span></p>
+        <p className="flex gap-1"><Calendar className="h-2.5 w-2.5 shrink-0 text-primary" />{venue.openHours}</p>
+        <p className="flex gap-1"><Phone className="h-2.5 w-2.5 shrink-0 text-primary" /><span className="break-all">{venue.phone}</span></p>
       </div>
       <div className="relative min-h-20 overflow-hidden rounded border">
         {isWebsiteImageSrc(content.imageUrl)

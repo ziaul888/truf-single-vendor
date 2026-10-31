@@ -12,11 +12,4 @@ api.interceptors.response.use(undefined, (err) => {
   return Promise.reject(err);
 });
 
-// Legacy mock Express server (server/) for endpoints turf-api doesn't have yet.
-// Remove once bookings, dashboard and reports move to the real API.
-export const mockApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_MOCK_API_URL ?? "http://localhost:5001/api",
-  headers: { "Content-Type": "application/json" },
-});
-
 export default api;

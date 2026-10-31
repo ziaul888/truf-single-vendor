@@ -1,10 +1,17 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function Trend({ value, label }: { value: number; label: string }) {
+function Trend({ value, label }: { value: number | null; label: string }) {
+  // null: nothing in the previous period to compare against.
+  if (value === null)
+    return (
+      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+        <Sparkles className="h-3 w-3" /> New
+      </span>
+    );
   if (value === 0)
     return (
       <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -31,7 +38,8 @@ export function StatCard({
   title: string;
   value: string;
   icon: React.ElementType;
-  trend?: number;
+  /** % change; null shows "New" (nothing to compare against). */
+  trend?: number | null;
   /** Shown after the %, e.g. "vs last week". */
   trendLabel?: string;
   loading?: boolean;

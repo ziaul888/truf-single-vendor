@@ -1,4 +1,4 @@
-import { getWebsiteSettings } from "@/services/website-settings";
+import { getPublicVenue } from "@/services/website-settings";
 import { ConfirmationView } from "@/components/portal/confirmation/confirmation-view";
 
 export default async function ConfirmationPage({
@@ -8,8 +8,7 @@ export default async function ConfirmationPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ token?: string }>;
 }) {
-  const [{ id }, { token }] = await Promise.all([params, searchParams]);
-  const { venueName } = getWebsiteSettings().contact;
+  const [{ id }, { token }, venue] = await Promise.all([params, searchParams, getPublicVenue()]);
 
-  return <ConfirmationView id={id} token={token} venueName={venueName} />;
+  return <ConfirmationView id={id} token={token} venueName={venue.name} />;
 }

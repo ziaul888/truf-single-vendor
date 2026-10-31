@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { Facebook, Goal, Instagram, LayoutDashboard, MessageCircle, Phone } from "lucide-react";
-import { getWebsiteSettings } from "@/services/website-settings";
+import { Facebook, Instagram, LayoutDashboard, MessageCircle, Phone } from "lucide-react";
+import { getPublicWebsite } from "@/services/website-settings";
 import type { WebsiteSettings } from "@/validations/website-settings";
+import type { PublicVenue } from "@/types/settings";
+import { VenueMark } from "@/components/portal/venue-mark";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
 
 /**
@@ -10,30 +12,28 @@ import { CustomerNav } from "@/components/portal/account/customer-nav";
  * every Tailwind token below resolves to the green/gold palette defined in
  * globals.css under `.pitch`.
  */
-export default function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { contact, social } = getWebsiteSettings();
+export default async function PortalLayout({ children }: { children: React.ReactNode }) {
+  const { venue, social } = await getPublicWebsite();
   return (
     <div className="pitch flex min-h-screen flex-col bg-background text-foreground">
-      <PortalHeader contact={contact} />
+      <PortalHeader venue={venue} />
       <main className="flex-1">{children}</main>
-      <PortalFooter contact={contact} social={social} />
+      <PortalFooter venue={venue} social={social} />
     </div>
   );
 }
 
-async function PortalHeader({ contact }: { contact: WebsiteSettings["contact"] }) {
+async function PortalHeader({ venue }: { venue: PublicVenue }) {
   const isAdmin = Boolean((await cookies()).get("admin_token")?.value);
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-sidebar text-sidebar-foreground">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent">
-            <Goal className="h-5 w-5 text-accent-foreground" />
-          </span>
+          <VenueMark logoUrl={venue.logoUrl} name={venue.name} />
           <span className="leading-tight">
-            <span className="block text-base font-extrabold tracking-tight">{contact.venueName}</span>
-            {contact.tagline && <span className="hidden text-[10px] opacity-60 sm:block">{contact.tagline}</span>}
+            <span className="block text-base font-extrabold tracking-tight">{venue.name}</span>
+            {venue.tagline && <span className="hidden text-[10px] opacity-60 sm:block">{venue.tagline}</span>}
           </span>
         </Link>
 
@@ -46,10 +46,10 @@ async function PortalHeader({ contact }: { contact: WebsiteSettings["contact"] }
 
         <div className="flex items-center gap-2">
           <a
-            href={`tel:${contact.phone.replace(/\s/g, "")}`}
+            href={`tel:${venue.phone.replace(/\s/g, "")}`}
             className="mr-2 hidden items-center gap-1 text-xs opacity-80 hover:text-accent sm:inline-flex"
           >
-            <Phone className="h-3.5 w-3.5" /> {contact.phone}
+            <Phone className="h-3.5 w-3.5" /> {venue.phone}
           </a>
           {isAdmin && (
             <Link
@@ -80,23 +80,21 @@ const SOCIAL_LINKS = [
 ] as const;
 
 function PortalFooter({
-  contact, social,
+  venue, social,
 }: {
-  contact: WebsiteSettings["contact"]; social: WebsiteSettings["social"];
+  venue: PublicVenue; social: WebsiteSettings["social"];
 }) {
   const socialLinks = SOCIAL_LINKS.filter(({ key }) => social[key]);
   return (
     <footer className="border-t border-white/10 bg-sidebar text-sidebar-foreground">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 py-10 text-xs sm:flex-row sm:items-center sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent">
-            <Goal className="h-4 w-4 text-accent-foreground" />
-          </span>
-          <span className="text-base font-extrabold">{contact.venueName}</span>
-          {contact.tagline && (
+          <VenueMark logoUrl={venue.logoUrl} name={venue.name} size="sm" />
+          <span className="text-base font-extrabold">{venue.name}</span>
+          {venue.tagline && (
             <>
               <span className="opacity-40">·</span>
-              <span className="opacity-60">{contact.tagline}</span>
+              <span className="opacity-60">{venue.tagline}</span>
             </>
           )}
         </div>
@@ -123,7 +121,7 @@ function PortalFooter({
             </Link>
           )}
         </div>
-        <span className="opacity-40">© {new Date().getFullYear()} {contact.venueName}</span>
+        <span className="opacity-40">© {new Date().getFullYear()} {venue.name}</span>
       </div>
     </footer>
   );

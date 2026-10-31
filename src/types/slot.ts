@@ -127,6 +127,8 @@ export interface SlotSettings {
   serviceFee: number;
   /** Lets portal customers choose "pay at venue". */
   portalCashEnabled: boolean;
+  updatedAt: string | null;
+  updatedBy: StaffRef | null;
 }
 
 /** Returned by PATCH /admin/grounds/:id when the change touched slots. */

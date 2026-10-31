@@ -1,12 +1,13 @@
 import Image from "next/image";
 import { Calendar, MapPin, ShieldCheck } from "lucide-react";
-import type { WebsiteSections, WebsiteSettings } from "@/validations/website-settings";
+import type { WebsiteSections } from "@/validations/website-settings";
+import type { PublicVenue } from "@/types/settings";
 import { isUploadedImage } from "./is-uploaded-image";
 
 export function VisitUsSection({
-  content, contact,
+  content, venue,
 }: {
-  content: WebsiteSections["visitUs"]; contact: WebsiteSettings["contact"];
+  content: WebsiteSections["visitUs"]; venue: PublicVenue;
 }) {
   return (
     <section id="visit" className="bg-card py-14">
@@ -18,28 +19,28 @@ export function VisitUsSection({
             </span>
           )}
           <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{content.title}</h2>
-          <ContactDetails contact={contact} />
+          <ContactDetails venue={venue} />
         </div>
-        <VenueImage src={content.imageUrl} mapUrl={contact.mapUrl} />
+        <VenueImage src={content.imageUrl} mapUrl={venue.mapUrl} />
       </div>
     </section>
   );
 }
 
-function ContactDetails({ contact }: { contact: WebsiteSettings["contact"] }) {
+function ContactDetails({ venue }: { venue: PublicVenue }) {
   return (
     <dl className="mt-6 space-y-4 text-sm">
       <Detail Icon={MapPin} label="Address">
-        {contact.address}
-        {contact.mapUrl && (
-          <a href={contact.mapUrl} target="_blank" rel="noopener noreferrer" className="ml-1 text-xs text-primary underline">
+        {venue.address}
+        {venue.mapUrl && (
+          <a href={venue.mapUrl} target="_blank" rel="noopener noreferrer" className="ml-1 text-xs text-primary underline">
             Get directions →
           </a>
         )}
       </Detail>
-      <Detail Icon={Calendar} label="Open hours">Every day · {contact.openHours}</Detail>
+      <Detail Icon={Calendar} label="Open hours">Every day · {venue.openHours}</Detail>
       <Detail Icon={ShieldCheck} label="Reception">
-        {contact.phone} · {contact.email}
+        {venue.phone} · {venue.email}
       </Detail>
     </dl>
   );

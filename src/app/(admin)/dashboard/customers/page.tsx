@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,13 +51,21 @@ function StatCards({ stats, isLoading }: { stats: CustomerStats | undefined; isL
   );
 }
 
+// useSearchParams needs a Suspense boundary on a client page.
 export default function CustomersPage() {
+  return <Suspense><CustomersView /></Suspense>;
+}
+
+function CustomersView() {
+  const router = useRouter();
+  // ?add=1 (the dashboard's "Add Customer" quick action) opens the add drawer straight away.
+  const openOnLoad = useSearchParams().get("add") === "1";
   const [search,     setSearch]     = useState("");
   const [tagF,       setTagF]       = useState<CustomerTag | "all">("all");
   const [payF,       setPayF]       = useState<PayFilter>("all");
   const [sort,       setSort]       = useState<CustomerSort>("lastBooking");
   const [page,       setPage]       = useState(1);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(openOnLoad);
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
 
   const filters: CustomerFilters = {
@@ -140,7 +149,13 @@ export default function CustomersPage() {
         )}
       </Card>
 
-      <AddCustomerDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
+      <AddCustomerDrawer
+        open={drawerOpen}
+        onOpenChange={(v) => {
+          setDrawerOpen(v);
+          if (!v && openOnLoad) router.replace("/dashboard/customers");
+        }}
+      />
     </div>
   );
 }

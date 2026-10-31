@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { X, PanelLeftClose, PanelLeftOpen, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { navForRole } from "./sidebar-nav-data";
 import { useMe } from "@/hooks/useMe";
 import { SidebarUserMenu } from "./sidebar-user-menu";
+import { RailNavItem } from "./rail-nav-item";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -26,10 +28,14 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
     allItems
       .filter((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
       .sort((a, b) => b.href.length - a.href.length)[0] ?? allItems[0];
+  // Hovering a rail icon previews that section in the panel; leaving the sidebar goes back.
+  const [hoveredHref, setHoveredHref] = useState<string | null>(null);
+  const panelItem = allItems.find((i) => i.href === hoveredHref) ?? activeItem;
 
   return (
     <TooltipProvider delayDuration={0}>
       <aside
+        onMouseLeave={() => setHoveredHref(null)}
         className={cn(
           "relative flex h-screen overflow-hidden bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out border-r border-sidebar-border",
           collapsed ? "w-18" : "w-72",
@@ -60,44 +66,16 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
               <div key={group.label}>
                 {gi > 0 && <div className="my-2 mx-1 h-px bg-sidebar-border/50" />}
                 <div className="space-y-1">
-                  {group.items.map((item) => {
-                    const isActive =
-                      pathname === item.href || pathname.startsWith(item.href + "/");
-                    return (
-                      <Tooltip key={item.href}>
-                        <TooltipTrigger asChild>
-                          <Link
-                            href={item.href}
-                            className={cn(
-                              "relative flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-200",
-                              isActive
-                                ? cn("ring-1 ring-current/30 shadow-sm", item.color)
-                                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:scale-105 hover:text-sidebar-foreground",
-                            )}
-                            style={
-                              isActive
-                                ? { backgroundColor: "color-mix(in oklab, currentColor 18%, transparent)" }
-                                : undefined
-                            }
-                          >
-                            <item.icon className={cn("h-[18px] w-[18px]", isActive && item.color)} />
-                            {isActive && (
-                              <span
-                                aria-hidden
-                                className={cn(
-                                  "absolute -left-[11px] top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-current shadow-[0_0_10px_currentColor]",
-                                  item.color,
-                                )}
-                              />
-                            )}
-                          </Link>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="font-medium">
-                          {item.label}
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
+                  {group.items.map((item) => (
+                    <RailNavItem
+                      key={item.href}
+                      item={item}
+                      pathname={pathname}
+                      showMenu={collapsed}
+                      onHover={() => setHoveredHref(item.href)}
+                      onNavClick={onClose}
+                    />
+                  ))}
                 </div>
               </div>
             ))}
@@ -123,29 +101,29 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
           <div className="flex min-w-0 flex-1 flex-col">
             {/* Section header */}
             <div
-              key={`hdr-${activeItem.href}`}
+              key={`hdr-${panelItem.href}`}
               className="relative flex h-16 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/70 px-4 animate-in fade-in slide-in-from-left-1 duration-300"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/45">
-                  <span className={cn("h-1 w-1 rounded-full bg-current", activeItem.color)} />
-                  <span className="truncate">{activeItem.group}</span>
+                  <span className={cn("h-1 w-1 rounded-full bg-current", panelItem.color)} />
+                  <span className="truncate">{panelItem.group}</span>
                 </div>
                 <div className="mt-0.5 flex items-baseline gap-2">
-                  <p className={cn("truncate text-[17px] font-bold tracking-tight leading-tight", activeItem.color)}>
-                    {activeItem.label}
+                  <p className={cn("truncate text-[17px] font-bold tracking-tight leading-tight", panelItem.color)}>
+                    {panelItem.label}
                   </p>
-                  {activeItem.children && activeItem.children.length > 0 && (
+                  {panelItem.children && panelItem.children.length > 0 && (
                     <span
                       className={cn(
                         "shrink-0 rounded-full px-1.5 py-px text-[10px] font-bold tracking-wider",
-                        activeItem.color,
+                        panelItem.color,
                       )}
                       style={{
                         backgroundColor: "color-mix(in oklab, currentColor 15%, transparent)",
                       }}
                     >
-                      {activeItem.children.length}
+                      {panelItem.children.length}
                     </span>
                   )}
                 </div>
@@ -164,19 +142,19 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
                 aria-hidden
                 className={cn(
                   "pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-linear-to-r from-current via-current/40 to-transparent",
-                  activeItem.color,
+                  panelItem.color,
                 )}
               />
             </div>
 
             {/* Section children */}
             <nav
-              key={`body-${activeItem.href}`}
+              key={`body-${panelItem.href}`}
               className="scrollbar-hover flex-1 overflow-y-auto px-3 py-4 animate-in fade-in slide-in-from-left-2 duration-300"
             >
-              {activeItem.children && activeItem.children.length > 0 ? (
+              {panelItem.children && panelItem.children.length > 0 ? (
                 <ul className="space-y-1">
-                  {activeItem.children.map((child) => {
+                  {panelItem.children.map((child) => {
                     const childActive = pathname === child.href;
                     return (
                       <li key={child.href}>
@@ -186,7 +164,7 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
                           className={cn(
                             "group/sub relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
                             childActive
-                              ? cn("font-semibold shadow-sm ring-1 ring-current/20", activeItem.color)
+                              ? cn("font-semibold shadow-sm ring-1 ring-current/20", panelItem.color)
                               : "font-medium text-sidebar-foreground/75 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground hover:translate-x-0.5",
                           )}
                           style={
@@ -231,14 +209,14 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
                   <div
                     className={cn(
                       "mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ring-1 ring-current/30",
-                      activeItem.color,
+                      panelItem.color,
                     )}
                     style={{ backgroundColor: "color-mix(in oklab, currentColor 14%, transparent)" }}
                   >
-                    <activeItem.icon className="h-6 w-6" />
+                    <panelItem.icon className="h-6 w-6" />
                   </div>
                   <p className="text-sm font-semibold text-sidebar-foreground">
-                    {activeItem.label}
+                    {panelItem.label}
                   </p>
                   <p className="mt-1 text-[11px] text-sidebar-foreground/55">
                     Single page · no subsections

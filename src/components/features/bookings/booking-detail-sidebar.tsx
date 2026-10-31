@@ -11,7 +11,7 @@ import { formatEventTime } from "@/lib/slot-format";
 import type { BookingDetail } from "@/types/booking";
 import { Banknote, ExternalLink, History, Layers, Mail, MapPin, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { EVENT_DOT_CLASS, EVENT_LABEL, isCancellable } from "./booking-status-helpers";
+import { EVENT_DOT_CLASS, EVENT_LABEL, eventDetailLabel, isCancellable } from "./booking-status-helpers";
 
 interface BookingDetailSidebarProps {
   booking: BookingDetail;
@@ -79,7 +79,7 @@ function ActivityCard({ events }: { events: BookingDetail["events"] }) {
                 </div>
                 <div className="pb-4">
                   <p className="text-sm font-medium leading-none">{EVENT_LABEL[item.type] ?? item.type}</p>
-                  {item.detail && <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>}
+                  {item.detail && <p className="mt-1 text-xs text-muted-foreground">{eventDetailLabel(item.detail)}</p>}
                   <p className="mt-1 text-xs text-muted-foreground">
                     {formatEventTime(item.createdAt)}{item.user ? ` · ${item.user.name}` : ""}
                   </p>

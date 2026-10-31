@@ -8,22 +8,22 @@ const text = (max: number, required?: string) =>
 
 /* ---------- Uploaded images ---------- */
 
+/** turf-api's upload slots: the hero background and the "Visit us" photo. */
 export const WEBSITE_IMAGE_SLOTS = ["hero", "visit"] as const;
 export type WebsiteImageSlot = (typeof WEBSITE_IMAGE_SLOTS)[number];
 export const WEBSITE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 /** Limit for the file the admin picks, before it's resized in the browser. */
 export const WEBSITE_IMAGE_MAX_PICK_BYTES = 10 * 1024 * 1024;
-/** Limit for the resized file the server accepts. */
+/** Limit for the resized file turf-api accepts. */
 export const WEBSITE_IMAGE_MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 
-export function websiteImagePath(slot: WebsiteImageSlot) {
-  return `/api/settings/website/images/${slot}`;
-}
+/** Uploaded website images are served by turf-api through the /api/v1 proxy. */
+export const isUploadedWebsiteImage = (value: string | undefined) => !!value?.startsWith("/api/v1/uploads/");
 
-/** An image uploaded through our API, or any https image link. */
+/** An image uploaded through turf-api, or any https image link. */
 export function isWebsiteImageSrc(value: string | undefined): boolean {
   if (!value) return false;
-  if (WEBSITE_IMAGE_SLOTS.some((slot) => value.startsWith(`${websiteImagePath(slot)}?v=`))) return true;
+  if (isUploadedWebsiteImage(value)) return true;
   try { return new URL(value).protocol === "https:"; } catch { return false; }
 }
 
@@ -43,16 +43,6 @@ export const WebsiteHeroSchema = z.object({
   headline: text(60, "Add a headline"),
   description: text(280),
   imageUrl: imageSrc,
-});
-
-export const WebsiteContactSchema = z.object({
-  venueName: z.string().trim().min(2, "Add the venue name").max(60),
-  tagline: text(40),
-  address: z.string().trim().min(5, "Add the full address").max(160),
-  phone: z.string().trim().min(10, "Enter a valid phone number").max(20),
-  email: z.email("Enter a valid email"),
-  openHours: text(40, "Add opening hours"),
-  mapUrl: optionalUrl,
 });
 
 export const WebsiteSectionsSchema = z.object({
@@ -99,11 +89,11 @@ export const WebsiteSocialSchema = z.object({
 
 export const WebsiteSettingsSchema = z.object({
   hero: WebsiteHeroSchema,
-  contact: WebsiteContactSchema,
   sections: WebsiteSectionsSchema,
   social: WebsiteSocialSchema,
 });
 
+/** The editable website content. Venue contact details live in the venue profile (General). */
 export type WebsiteSettings = z.infer<typeof WebsiteSettingsSchema>;
 export type WebsiteSections = WebsiteSettings["sections"];
 export type WebsiteSectionKey = keyof WebsiteSections;

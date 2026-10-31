@@ -22,6 +22,10 @@ export const SlotSettingsSchema = z.object({
 });
 export type SlotSettingsForm = z.infer<typeof SlotSettingsSchema>;
 
-export const toSlotSettingsForm = (s: SlotSettings): SlotSettingsForm => ({ ...s, serviceFee: fromMinorUnits(s.serviceFee) });
+/** The editable fields only; the audit fields stay out of the form (and out of the PUT). */
+export type SlotSettingsInput = Omit<SlotSettings, "updatedAt" | "updatedBy">;
 
-export const fromSlotSettingsForm = (f: SlotSettingsForm): SlotSettings => ({ ...f, serviceFee: toMinorUnits(f.serviceFee) });
+export const toSlotSettingsForm = ({ updatedAt: _a, updatedBy: _b, ...s }: SlotSettings): SlotSettingsForm =>
+  ({ ...s, serviceFee: fromMinorUnits(s.serviceFee) });
+
+export const fromSlotSettingsForm = (f: SlotSettingsForm): SlotSettingsInput => ({ ...f, serviceFee: toMinorUnits(f.serviceFee) });

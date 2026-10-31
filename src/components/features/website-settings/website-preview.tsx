@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isWebsiteImageSrc, type WebsiteSettings } from "@/validations/website-settings";
+import type { PublicVenue } from "@/types/settings";
 import { PreviewSections } from "./preview-sections";
 
 type Device = "desktop" | "mobile";
@@ -17,10 +18,14 @@ function isHttpsUrl(value: string | undefined) {
   try { return new URL(value).protocol === "https:"; } catch { return false; }
 }
 
-export function WebsitePreview({ control, isDirty }: { control: Control<WebsiteSettings>; isDirty: boolean }) {
+export function WebsitePreview({
+  control, isDirty, venue,
+}: {
+  control: Control<WebsiteSettings>; isDirty: boolean; venue: PublicVenue | undefined;
+}) {
   const values = useWatch({ control }) as WebsiteSettings;
   const [device, setDevice] = useState<Device>("desktop");
-  if (!values?.hero || !values.contact || !values.sections) return null;
+  if (!values?.hero || !values.sections || !venue) return null;
 
   return (
     <div className="space-y-2">
@@ -34,10 +39,10 @@ export function WebsitePreview({ control, isDirty }: { control: Control<WebsiteS
       <div className={cn("mx-auto overflow-hidden rounded-xl border shadow-sm transition-[max-width]", device === "mobile" ? "max-w-[300px]" : "max-w-full")}>
         <BrowserBar />
         <div className="pitch max-h-[70vh] overflow-y-auto bg-background text-foreground">
-          <PreviewHeader contact={values.contact} mobile={device === "mobile"} />
-          <PreviewHero hero={values.hero} venueName={values.contact.venueName} mobile={device === "mobile"} />
-          <PreviewSections sections={values.sections} contact={values.contact} />
-          <PreviewFooter contact={values.contact} social={values.social} />
+          <PreviewHeader venue={venue} mobile={device === "mobile"} />
+          <PreviewHero hero={values.hero} venueName={venue.name} mobile={device === "mobile"} />
+          <PreviewSections sections={values.sections} venue={venue} />
+          <PreviewFooter venue={venue} social={values.social} />
         </div>
       </div>
       <p className="text-center text-[11px] text-muted-foreground">Updates as you type. Customers see changes after you save.</p>
@@ -79,21 +84,27 @@ function BrowserBar() {
   );
 }
 
-function PreviewHeader({ contact, mobile }: { contact: WebsiteSettings["contact"]; mobile: boolean }) {
+function PreviewHeader({ venue, mobile }: { venue: PublicVenue; mobile: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-sidebar px-3 py-2 text-sidebar-foreground">
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-accent">
-          <Goal className="h-3.5 w-3.5 text-accent-foreground" />
-        </span>
+        {venue.logoUrl ? (
+          <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded bg-white">
+            <Image src={venue.logoUrl} alt="" fill unoptimized sizes="24px" className="object-contain" />
+          </span>
+        ) : (
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-accent">
+            <Goal className="h-3.5 w-3.5 text-accent-foreground" />
+          </span>
+        )}
         <span className="min-w-0 leading-tight">
-          <span className="block truncate text-[11px] font-extrabold">{contact.venueName || "Venue name"}</span>
-          {contact.tagline && <span className="block truncate text-[8px] opacity-60">{contact.tagline}</span>}
+          <span className="block truncate text-[11px] font-extrabold">{venue.name || "Venue name"}</span>
+          {venue.tagline && <span className="block truncate text-[8px] opacity-60">{venue.tagline}</span>}
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {!mobile && contact.phone && (
-          <span className="flex items-center gap-1 text-[9px] opacity-80"><Phone className="h-2.5 w-2.5" />{contact.phone}</span>
+        {!mobile && venue.phone && (
+          <span className="flex items-center gap-1 text-[9px] opacity-80"><Phone className="h-2.5 w-2.5" />{venue.phone}</span>
         )}
         <span className="rounded bg-accent px-2 py-1 text-[9px] font-semibold text-accent-foreground">Book now</span>
       </div>
@@ -130,13 +141,13 @@ const SOCIAL_ICONS = [
   { key: "whatsapp", Icon: MessageCircle },
 ] as const;
 
-function PreviewFooter({ contact, social }: { contact: WebsiteSettings["contact"]; social: WebsiteSettings["social"] }) {
+function PreviewFooter({ venue, social }: { venue: PublicVenue; social: WebsiteSettings["social"] }) {
   const icons = SOCIAL_ICONS.filter(({ key }) => isHttpsUrl(social?.[key]));
   return (
     <div className="flex items-center justify-between gap-2 border-t border-white/10 bg-sidebar px-3 py-3 text-[9px] text-sidebar-foreground">
       <span className="min-w-0 truncate">
-        <span className="font-extrabold">{contact.venueName}</span>
-        {contact.tagline && <span className="opacity-60"> · {contact.tagline}</span>}
+        <span className="font-extrabold">{venue.name}</span>
+        {venue.tagline && <span className="opacity-60"> · {venue.tagline}</span>}
       </span>
       {icons.length > 0 && (
         <span className="flex shrink-0 gap-1.5 opacity-80">

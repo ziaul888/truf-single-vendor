@@ -4,7 +4,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { Footprints, LayoutGrid, MapPinned, Trophy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { DEFAULT_WEBSITE_SETTINGS } from "@/services/website-settings";
+import { DEFAULT_WEBSITE_SETTINGS } from "@/lib/website-defaults";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import { FormField } from "./form-primitives";
 import { SectionCard } from "./section-card";

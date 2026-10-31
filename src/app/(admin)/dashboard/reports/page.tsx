@@ -4,23 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, CalendarDays, FileText, DollarSign, CheckCircle } from "lucide-react";
-import { useReportSummary, useMonthlyRevenue, type DateRange } from "@/hooks/useReports";
+import { TrendingUp, CalendarDays, FileText, Banknote, CheckCircle, Receipt } from "lucide-react";
+import { periodFor, useReportSummary, useRevenueSeries, type DateRange } from "@/hooks/useReports";
 import { StatCard } from "@/components/features/dashboard/stat-card";
-import { MonthlyRevenueChart } from "@/components/features/reports/report-charts";
-import { formatCurrency } from "@/lib/utils";
+import { RevenueTrendChart } from "@/components/features/reports/report-charts";
+import { ReportHeader } from "@/components/features/reports/report-header";
+import { slotPriceLabel } from "@/lib/slot-format";
 
-const RANGES: { label: string; value: DateRange }[] = [
-  { label: "7 days",  value: "7d"  },
-  { label: "30 days", value: "30d" },
-  { label: "90 days", value: "90d" },
-  { label: "1 year",  value: "1y"  },
-];
+const TREND_LABEL = "vs previous period";
 
 const SUB_PAGES = [
   {
     label: "Revenue Report",
-    description: "Monthly revenue trends, ground performance, and income breakdown.",
+    description: "Revenue over time, ground performance and payment methods.",
     href: "/dashboard/reports/revenue",
     icon: TrendingUp,
     iconCls: "text-violet-500",
@@ -28,7 +24,7 @@ const SUB_PAGES = [
   },
   {
     label: "Bookings Report",
-    description: "Booking volume, status distribution, and ground utilization over time.",
+    description: "Booking volume, status breakdown and how full each ground is.",
     href: "/dashboard/reports/bookings",
     icon: CalendarDays,
     iconCls: "text-blue-500",
@@ -36,7 +32,7 @@ const SUB_PAGES = [
   },
   {
     label: "Export Data",
-    description: "Download bookings or customer data as CSV or Excel spreadsheet.",
+    description: "Download revenue, bookings or customers as CSV or Excel.",
     href: "/dashboard/reports/export",
     icon: FileText,
     iconCls: "text-rose-500",
@@ -46,55 +42,24 @@ const SUB_PAGES = [
 
 export default function ReportsPage() {
   const [range, setRange] = useState<DateRange>("30d");
-  const summary = useReportSummary(range);
-  const revenue = useMonthlyRevenue(range);
+  const period = periodFor(range);
+  const summary = useReportSummary(period);
+  const revenue = useRevenueSeries(period);
+  const s = summary.data;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-          <p className="text-muted-foreground">Analytics and insights for your turf business</p>
-        </div>
-        <div className="flex gap-1 rounded-lg border p-1">
-          {RANGES.map(({ label, value }) => (
-            <Button key={value} variant={range === value ? "default" : "ghost"}
-              size="sm" className="h-7 text-xs" onClick={() => setRange(value)}>
-              {label}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <ReportHeader title="Reports" subtitle="How the business is doing" range={range} period={period} onRange={setRange} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Revenue"
-          value={summary.data ? formatCurrency(summary.data.totalRevenue) : "—"}
-          icon={DollarSign}
-          trend={summary.data?.revenueTrend}
-          loading={summary.isLoading}
-        />
-        <StatCard
-          title="Total Bookings"
-          value={summary.data ? String(summary.data.totalBookings) : "—"}
-          icon={CalendarDays}
-          trend={summary.data?.bookingsTrend}
-          loading={summary.isLoading}
-        />
-        <StatCard
-          title="Avg Booking Value"
-          value={summary.data ? formatCurrency(summary.data.avgBookingValue) : "—"}
-          icon={DollarSign}
-          trend={summary.data?.avgValueTrend}
-          loading={summary.isLoading}
-        />
-        <StatCard
-          title="Completion Rate"
-          value={summary.data ? `${summary.data.completionRate.toFixed(1)}%` : "—"}
-          icon={CheckCircle}
-          trend={summary.data?.completionTrend}
-          loading={summary.isLoading}
-        />
+        <StatCard title="Revenue" value={s ? slotPriceLabel(s.revenue) : "—"} icon={Banknote}
+          trend={s?.revenueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
+        <StatCard title="Bookings" value={s ? String(s.bookings) : "—"} icon={CalendarDays}
+          trend={s?.bookingsTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
+        <StatCard title="Avg Booking Value" value={s ? slotPriceLabel(s.avgBookingValue) : "—"} icon={Receipt}
+          trend={s?.avgBookingValueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
+        <StatCard title="Completion Rate" value={s?.completionRate != null ? `${s.completionRate.toFixed(1)}%` : "—"} icon={CheckCircle}
+          trend={s?.completionRate != null ? s.completionRateTrend : undefined} trendLabel={TREND_LABEL} loading={summary.isLoading} />
       </div>
 
       <Card>
@@ -102,7 +67,7 @@ export default function ReportsPage() {
           <CardTitle className="text-base font-medium">Revenue Trend</CardTitle>
         </CardHeader>
         <CardContent>
-          <MonthlyRevenueChart data={revenue.data} loading={revenue.isLoading} />
+          <RevenueTrendChart data={revenue.data?.points} loading={revenue.isLoading} />
         </CardContent>
       </Card>
 

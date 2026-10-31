@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import type { UseFormReturn } from "react-hook-form";
-import { Image as ImageIcon, MapPin, Share2 } from "lucide-react";
+import { Image as ImageIcon, MapPin, Pencil, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { DEFAULT_WEBSITE_SETTINGS } from "@/services/website-settings";
+import { DEFAULT_WEBSITE_SETTINGS } from "@/lib/website-defaults";
 import type { WebsiteSettings } from "@/validations/website-settings";
+import type { PublicVenue } from "@/types/settings";
 import { FormField, SettingsSection } from "./form-primitives";
 import { ImageUploadField } from "./image-upload-field";
 
@@ -39,35 +42,35 @@ export function HeroFields({ form }: { form: Form }) {
   );
 }
 
-export function ContactFields({ form }: { form: Form }) {
-  const { register, formState: { errors } } = form;
-  const e = errors.contact;
+/** Venue details now live in the venue profile (General); the website shows them read-only. */
+export function VenueSummary({ venue }: { venue: PublicVenue | undefined }) {
   return (
     <SettingsSection title="Venue & contact" icon={MapPin} description="Used in the header, the Visit us section and the footer.">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField id="contact-name" label="Venue name" error={e?.venueName?.message}>
-          <Input id="contact-name" {...register("contact.venueName")} />
-        </FormField>
-        <FormField id="contact-tagline" label="Location tagline" hint="Shown under the name in the header." error={e?.tagline?.message}>
-          <Input id="contact-tagline" {...register("contact.tagline")} />
-        </FormField>
-        <FormField id="contact-phone" label="Phone" error={e?.phone?.message}>
-          <Input id="contact-phone" type="tel" {...register("contact.phone")} />
-        </FormField>
-        <FormField id="contact-email" label="Email" error={e?.email?.message}>
-          <Input id="contact-email" type="email" {...register("contact.email")} />
-        </FormField>
-        <FormField id="contact-hours" label="Opening hours" error={e?.openHours?.message}>
-          <Input id="contact-hours" {...register("contact.openHours")} />
-        </FormField>
-        <FormField id="contact-map" label="Google Maps link" hint="Powers the “Get directions” link." error={e?.mapUrl?.message}>
-          <Input id="contact-map" type="url" placeholder="https://maps.app.goo.gl/…" {...register("contact.mapUrl")} />
-        </FormField>
-      </div>
-      <FormField id="contact-address" label="Address" error={e?.address?.message}>
-        <Input id="contact-address" {...register("contact.address")} />
-      </FormField>
+      {venue ? (
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+          <SummaryRow label="Venue name" value={venue.name} />
+          <SummaryRow label="Tagline" value={venue.tagline} />
+          <SummaryRow label="Phone" value={venue.phone} />
+          <SummaryRow label="Email" value={venue.email} />
+          <SummaryRow label="Opening hours" value={venue.openHours} />
+          <SummaryRow label="Address" value={venue.address} />
+        </dl>
+      ) : (
+        <div className="h-20 animate-pulse rounded bg-muted" />
+      )}
+      <Button asChild size="sm" variant="outline">
+        <Link href="/dashboard/settings/general"><Pencil className="mr-1.5 h-4 w-4" />Edit on General</Link>
+      </Button>
     </SettingsSection>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="truncate">{value || <span className="text-muted-foreground">Not set</span>}</dd>
+    </div>
   );
 }
 

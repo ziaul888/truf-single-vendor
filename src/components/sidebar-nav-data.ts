@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, MapPin, MapPinPlus, List, CalendarDays,
   CalendarCheck, CalendarRange, Users, UserCog,
-  UserCheck, CreditCard, Receipt, RotateCcw, BarChart3,
+  UserCheck, BarChart3,
   TrendingUp, FileText, Clock, Ban, SlidersHorizontal, LayoutGrid,
   Settings, Building2, CalendarCog, Wallet, Bell, ShieldCheck, Database, Globe, CalendarOff, History,
 } from "lucide-react";
@@ -66,14 +66,6 @@ export const NAV: NavGroup[] = [
         children: [
           { label: "All Staff",  href: "/dashboard/staff",       icon: List      },
           { label: "Roles",      href: "/dashboard/staff/roles", icon: UserCheck },
-        ],
-      },
-      {
-        label: "Payments", href: "/dashboard/payments", icon: CreditCard, color: "text-chart-2",
-        children: [
-          { label: "All Payments", href: "/dashboard/payments",          icon: List      },
-          { label: "Invoices",     href: "/dashboard/payments/invoices", icon: Receipt   },
-          { label: "Refunds",      href: "/dashboard/payments/refunds",  icon: RotateCcw },
         ],
       },
     ],

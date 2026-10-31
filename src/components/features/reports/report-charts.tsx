@@ -4,37 +4,49 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Legend, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, Line,
 } from "recharts";
-import { formatCurrency } from "@/lib/utils";
-import type { MonthlyRevenue, GroundRevenue, BookingTrend } from "@/hooks/useReports";
+import { fromMinorUnits } from "@/lib/ground-format";
+import { slotPriceLabel } from "@/lib/slot-format";
+import type { BookingStatus } from "@/types/booking";
+import type { BookingPoint, GroundReport, RevenuePoint } from "@/types/report";
 
-const STATUS_COLORS: Record<string, string> = {
+export const STATUS_COLORS: Record<BookingStatus, string> = {
+  completed: "#6366f1",
   confirmed: "#22c55e",
   pending:   "#f59e0b",
   cancelled: "#ef4444",
-  completed: "#6366f1",
 };
 
-const PIE_COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444"];
+const STATUS_NAME: Record<BookingStatus, string> = {
+  completed: "Completed", confirmed: "Confirmed", pending: "Pending", cancelled: "Cancelled",
+};
+
+/** Axis ticks from minor units: ৳12k, ৳1.2k, ৳800. */
+export function compactTaka(minor: number) {
+  const taka = fromMinorUnits(minor);
+  if (Math.abs(taka) >= 1000) return `৳${(taka / 1000).toFixed(Math.abs(taka) >= 10_000 ? 0 : 1)}k`;
+  return `৳${taka}`;
+}
 
 function ChartSkeleton({ height = 280 }: { height?: number }) {
   return <div className="animate-pulse rounded bg-muted" style={{ height }} />;
 }
 
-function EmptyChart() {
-  return <p className="py-10 text-center text-sm text-muted-foreground">No data available for this period.</p>;
+function EmptyChart({ text = "No data for this period." }: { text?: string }) {
+  return <p className="py-10 text-center text-sm text-muted-foreground">{text}</p>;
 }
 
-export function MonthlyRevenueChart({ data, loading }: { data?: MonthlyRevenue[]; loading?: boolean }) {
+/** Revenue bars with bookings as a line; points follow the API's groupBy (day, week or month). */
+export function RevenueTrendChart({ data, loading }: { data?: RevenuePoint[]; loading?: boolean }) {
   if (loading) return <ChartSkeleton />;
   if (!data?.length) return <EmptyChart />;
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <ComposedChart data={data} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+      <ComposedChart data={data} margin={{ top: 4, right: 8, left: -4, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-        <YAxis yAxisId="rev" tick={{ fontSize: 12 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-        <YAxis yAxisId="bk" orientation="right" tick={{ fontSize: 12 }} />
-        <Tooltip formatter={(v: number, name: string) => name === "Revenue" ? formatCurrency(v) : v} />
+        <XAxis dataKey="label" tick={{ fontSize: 12 }} minTickGap={16} />
+        <YAxis yAxisId="rev" tick={{ fontSize: 12 }} tickFormatter={compactTaka} />
+        <YAxis yAxisId="bk" orientation="right" allowDecimals={false} tick={{ fontSize: 12 }} />
+        <Tooltip formatter={(v: number, name: string) => (name === "Revenue" ? slotPriceLabel(v) : v)} />
         <Legend />
         <Bar yAxisId="rev" dataKey="revenue" name="Revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
         <Line yAxisId="bk" type="monotone" dataKey="bookings" name="Bookings" stroke="#f59e0b" strokeWidth={2} dot={false} />
@@ -43,23 +55,23 @@ export function MonthlyRevenueChart({ data, loading }: { data?: MonthlyRevenue[]
   );
 }
 
-export function RevenueByGroundChart({ data, loading }: { data?: GroundRevenue[]; loading?: boolean }) {
+export function RevenueByGroundChart({ data, loading }: { data?: GroundReport[]; loading?: boolean }) {
   if (loading) return <ChartSkeleton />;
   if (!data?.length) return <EmptyChart />;
   return (
     <ResponsiveContainer width="100%" height={Math.max(200, data.length * 48)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-        <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+        <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={compactTaka} />
         <YAxis type="category" dataKey="groundName" tick={{ fontSize: 12 }} width={130} />
-        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+        <Tooltip formatter={(v: number) => slotPriceLabel(v)} />
         <Bar dataKey="revenue" name="Revenue" fill="#22c55e" radius={[0, 4, 4, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
 }
 
-export function BookingTrendsChart({ data, loading }: { data?: BookingTrend[]; loading?: boolean }) {
+export function BookingTrendsChart({ data, loading }: { data?: BookingPoint[]; loading?: boolean }) {
   if (loading) return <ChartSkeleton />;
   if (!data?.length) return <EmptyChart />;
   return (
@@ -74,30 +86,33 @@ export function BookingTrendsChart({ data, loading }: { data?: BookingTrend[]; l
           ))}
         </defs>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 12 }} />
+        <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={16} />
+        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
         <Tooltip />
         <Legend />
-        {Object.entries(STATUS_COLORS).map(([k, color]) => (
-          <Area key={k} type="monotone" dataKey={k}
-            name={k.charAt(0).toUpperCase() + k.slice(1)}
-            stroke={color} strokeWidth={2} fill={`url(#grad-${k})`} />
+        {(Object.keys(STATUS_COLORS) as BookingStatus[]).map((k) => (
+          <Area key={k} type="monotone" dataKey={k} name={STATUS_NAME[k]}
+            stroke={STATUS_COLORS[k]} strokeWidth={2} fill={`url(#grad-${k})`} />
         ))}
       </AreaChart>
     </ResponsiveContainer>
   );
 }
 
-export function BookingStatusPieChart({ data, loading }: { data?: { name: string; value: number }[]; loading?: boolean }) {
+/** Pie of `statusCounts` from the summary; empty statuses are left out. */
+export function BookingStatusPieChart({ counts, loading }: { counts?: Record<BookingStatus, number>; loading?: boolean }) {
   if (loading) return <ChartSkeleton height={240} />;
-  if (!data?.length) return <EmptyChart />;
+  const data = (Object.keys(STATUS_COLORS) as BookingStatus[])
+    .map((k) => ({ key: k, name: STATUS_NAME[k], value: counts?.[k] ?? 0 }))
+    .filter((d) => d.value > 0);
+  if (!data.length) return <EmptyChart text="No bookings in this period." />;
   return (
     <ResponsiveContainer width="100%" height={240}>
       <PieChart>
         <Pie data={data} cx="50%" cy="50%" outerRadius={90} dataKey="value"
           label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
           labelLine={false}>
-          {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+          {data.map((d) => <Cell key={d.key} fill={STATUS_COLORS[d.key]} />)}
         </Pie>
         <Tooltip />
         <Legend />

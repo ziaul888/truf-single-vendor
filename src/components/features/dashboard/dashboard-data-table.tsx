@@ -5,10 +5,11 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Banknote } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
-import type { Ground } from "@/hooks/useGrounds";
 import type { Booking } from "@/types/booking";
 
 function bookingStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
@@ -58,35 +59,21 @@ export const bookingColumns: ColumnDef<Booking>[] = [
   },
 ];
 
-/** A ground row on the dashboard: today's bookings come from the dashboard stats (null while loading). */
-export type DashboardGroundRow = Ground & { todayBookings: number | null };
-
-export const groundColumns: ColumnDef<DashboardGroundRow>[] = [
-  {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => (
-      <Link href={`/dashboard/grounds/${row.original.id}`} className="font-medium hover:underline">{row.original.name}</Link>
-    ),
-  },
-  { accessorKey: "sport", header: "Sport", cell: ({ getValue }) => <span className="capitalize">{getValue<string>()}</span> },
-  { accessorKey: "format", header: "Format", cell: ({ getValue }) => getValue<string | null>() ?? "—" },
-  {
-    accessorKey: "pricePerHour",
-    header: "Price / Hour",
-    cell: ({ row }) => slotPriceLabel(row.original.hourlyPrice),
-  },
-  {
-    id: "hours",
-    header: "Hours",
-    cell: ({ row }) => `${row.original.openingTime} – ${row.original.closingTime}`,
-  },
-  {
-    accessorKey: "todayBookings",
-    header: "Today's bookings",
-    cell: ({ getValue }) => getValue<number | null>() ?? "—",
-  },
-];
+/** Upcoming bookings plus a "Collect" button for bookings with money due. */
+export function upcomingColumns(onCollect: (b: Booking) => void): ColumnDef<Booking>[] {
+  return [
+    ...bookingColumns,
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => row.original.due > 0 && (
+        <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs" onClick={() => onCollect(row.original)}>
+          <Banknote className="h-3.5 w-3.5" /> Collect {slotPriceLabel(row.original.due)}
+        </Button>
+      ),
+    },
+  ];
+}
 
 export function DashboardDataTable<TData>({ columns, data }: { columns: ColumnDef<TData>[]; data: TData[] }) {
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });

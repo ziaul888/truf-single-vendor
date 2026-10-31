@@ -1,75 +1,50 @@
 import { useQuery } from "@tanstack/react-query";
-import { mockApi as api } from "@/lib/api";
+import api from "@/lib/api";
+import { venueToday } from "@/lib/slot-format";
+import type {
+  BookingPoint, GroundReport, GroupBy, ReportSummary, RevenuePoint, Series,
+} from "@/types/report";
 
 export type DateRange = "7d" | "30d" | "90d" | "1y";
 
-export interface ReportSummary {
-  totalRevenue: number;
-  revenueTrend: number;
-  totalBookings: number;
-  bookingsTrend: number;
-  avgBookingValue: number;
-  avgValueTrend: number;
-  completionRate: number;
-  completionTrend: number;
-}
+const RANGE_DAYS: Record<DateRange, number> = { "7d": 7, "30d": 30, "90d": 90, "1y": 365 };
 
-export interface MonthlyRevenue {
-  month: string;
-  revenue: number;
-  bookings: number;
-}
+export interface ReportPeriod { from: string; to: string }
 
-export interface GroundRevenue {
-  groundName: string;
-  revenue: number;
-  bookings: number;
-}
+/** A preset as venue-local dates, ending today (both ends inclusive). */
+export const periodFor = (range: DateRange): ReportPeriod => ({
+  from: venueToday(-(RANGE_DAYS[range] - 1)),
+  to: venueToday(),
+});
 
-export interface BookingTrend {
-  date: string;
-  confirmed: number;
-  pending: number;
-  cancelled: number;
-  completed: number;
-}
+const get = async <T,>(path: string, params: object) =>
+  (await api.get(`/admin/reports/${path}`, { params })).data.data as T;
 
-export function useReportSummary(range: DateRange) {
+export function useReportSummary(period: ReportPeriod) {
   return useQuery<ReportSummary>({
-    queryKey: ["reports", "summary", range],
-    queryFn: async () => {
-      const { data } = await api.get("/reports/summary", { params: { range } });
-      return data.data;
-    },
+    queryKey: ["reports", "summary", period],
+    queryFn: () => get("summary", period),
   });
 }
 
-export function useMonthlyRevenue(range: DateRange) {
-  return useQuery<MonthlyRevenue[]>({
-    queryKey: ["reports", "revenue", "monthly", range],
-    queryFn: async () => {
-      const { data } = await api.get("/reports/revenue/monthly", { params: { range } });
-      return data.data;
-    },
+/** groupBy left out: the API picks day / week / month from the range length. */
+export function useRevenueSeries(period: ReportPeriod, groupBy?: GroupBy) {
+  return useQuery<Series<RevenuePoint>>({
+    queryKey: ["reports", "revenue", period, groupBy],
+    queryFn: () => get("revenue", { ...period, groupBy }),
   });
 }
 
-export function useGroundRevenue(range: DateRange) {
-  return useQuery<GroundRevenue[]>({
-    queryKey: ["reports", "revenue", "by-ground", range],
-    queryFn: async () => {
-      const { data } = await api.get("/reports/revenue/by-ground", { params: { range } });
-      return data.data;
-    },
+export function useBookingSeries(period: ReportPeriod, groupBy?: GroupBy) {
+  return useQuery<Series<BookingPoint>>({
+    queryKey: ["reports", "bookings", period, groupBy],
+    queryFn: () => get("bookings", { ...period, groupBy }),
   });
 }
 
-export function useBookingTrends(range: DateRange) {
-  return useQuery<BookingTrend[]>({
-    queryKey: ["reports", "bookings", "trends", range],
-    queryFn: async () => {
-      const { data } = await api.get("/reports/bookings/trends", { params: { range } });
-      return data.data;
-    },
+export function useGroundReport(period: ReportPeriod) {
+  return useQuery<GroundReport[]>({
+    queryKey: ["reports", "grounds", period],
+    queryFn: () => get("grounds", period),
   });
 }

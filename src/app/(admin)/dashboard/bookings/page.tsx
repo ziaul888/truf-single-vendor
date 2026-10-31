@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useBookings } from "@/hooks/useBookings";
+import { DUE_FILTERS, useBookings, type DueFilter } from "@/hooks/useBookings";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { Booking } from "@/types/booking";
 import { CalendarDays, XCircle, CheckCircle, Plus, LayoutGrid, Flag } from "lucide-react";
@@ -19,8 +20,18 @@ import {
 
 const PAGE_SIZE = 20;
 
+// useSearchParams needs a Suspense boundary on a client page.
 export default function BookingsPage() {
-  const [filters, setFilters] = useState<BookingListFilters>(EMPTY_BOOKING_FILTERS);
+  return <Suspense><BookingsView /></Suspense>;
+}
+
+/** ?due=overdue|today|any from the dashboard's attention cards. */
+const dueFromUrl = (v: string | null): DueFilter | "all" =>
+  DUE_FILTERS.includes(v as DueFilter) ? (v as DueFilter) : "all";
+
+function BookingsView() {
+  const initialDue = dueFromUrl(useSearchParams().get("due"));
+  const [filters, setFilters] = useState<BookingListFilters>({ ...EMPTY_BOOKING_FILTERS, due: initialDue });
   const [page, setPage] = useState(1);
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
   const search = useDebouncedValue(filters.search.trim(), 300);
@@ -30,6 +41,7 @@ export default function BookingsPage() {
     status: filters.status === "all" ? undefined : filters.status,
     paymentStatus: filters.paymentStatus === "all" ? undefined : filters.paymentStatus,
     groundId: filters.groundId === "all" ? undefined : filters.groundId,
+    due: filters.due === "all" ? undefined : filters.due,
     page,
     limit: PAGE_SIZE,
   });

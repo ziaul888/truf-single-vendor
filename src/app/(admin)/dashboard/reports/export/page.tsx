@@ -1,179 +1,151 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, FileSpreadsheet, Download, CheckCircle2, CalendarDays, Users } from "lucide-react";
+import { Banknote, CalendarDays, Download, FileSpreadsheet, FileText, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useBookings, type Booking } from "@/hooks/useBookings";
-import { useCustomers, type Customer } from "@/hooks/useCustomers";
-import { fromMinorUnits, hourToTime } from "@/lib/ground-format";
-import * as XLSX from "xlsx";
+import { venueToday } from "@/lib/slot-format";
+import { downloadReport, type ExportFormat } from "@/lib/report-export";
+import type { ExportType } from "@/types/report";
 
-type DataType     = "bookings" | "customers";
-type ExportFormat = "csv" | "xlsx";
-type ExportRow    = Record<string, string | number>;
-
-/** The API returns at most this many rows per request; the export covers the most recent ones. */
-const EXPORT_LIMIT = 100;
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a   = Object.assign(document.createElement("a"), { href: url, download: filename });
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-const bookingRow = (b: Booking): ExportRow => ({
-  "Booking #": b.bookingNumber, Customer: b.contact.name || b.customer.name, Phone: b.contact.phone || b.customer.phone,
-  Ground: b.ground.name, Date: b.slot.date, Start: hourToTime(b.slot.startHour), End: hourToTime(b.slot.endHour),
-  Amount: fromMinorUnits(b.amount), "Service fee": fromMinorUnits(b.serviceFee), Total: fromMinorUnits(b.total),
-  Paid: fromMinorUnits(b.paid), Due: fromMinorUnits(b.due), Status: b.status, "Payment status": b.paymentStatus,
-  Source: b.source, Created: b.createdAt,
-});
-
-const TAG_LABEL: Record<Customer["tag"], string> = { vip: "VIP", regular: "Regular", new: "New" };
-
-const customerRow = (c: Customer): ExportRow => ({
-  Name: c.name, Phone: c.phone, Email: c.email, "Customer since": c.createdAt.slice(0, 10), Bookings: c.bookings,
-  "Total spent": fromMinorUnits(c.totalSpent), "Last booking": c.lastBooking ?? "",
-  "Due amount": fromMinorUnits(c.dueAmount), Tag: TAG_LABEL[c.tag],
-});
-
-const BOOKING_HEADER = [
-  "Booking #", "Customer", "Phone", "Ground", "Date", "Start", "End", "Amount", "Service fee", "Total",
-  "Paid", "Due", "Status", "Payment status", "Source", "Created",
-];
-const CUSTOMER_HEADER = [
-  "Name", "Phone", "Email", "Customer since", "Bookings", "Total spent", "Last booking", "Due amount", "Tag",
-];
-
-function toCSV(rows: ExportRow[], header: string[]): string {
-  const cell = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
-  return [header.map(cell).join(","), ...rows.map((r) => header.map((h) => cell(r[h] ?? "")).join(","))].join("\n");
-}
-
-function writeFile(rows: ExportRow[], header: string[], format: ExportFormat, sheet: string, slug: string) {
-  if (format === "csv") {
-    downloadBlob(new Blob([toCSV(rows, header)], { type: "text/csv" }), `${slug}.csv`);
-    return;
-  }
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows, { header }), sheet);
-  XLSX.writeFile(wb, `${slug}.xlsx`);
-}
+type Grouping = "day" | "week";
 
 const DATA_OPTIONS = [
-  { value: "bookings",  label: "Bookings",  description: "All booking records with status and payment info", icon: CalendarDays },
-  { value: "customers", label: "Customers", description: "Customer profiles with booking history",           icon: Users        },
+  { value: "revenue",   label: "Revenue",   description: "Daily or weekly money received, refunds and net, by payment method", icon: Banknote },
+  { value: "bookings",  label: "Bookings",  description: "Every booking with its slot, amounts and statuses",                     icon: CalendarDays },
+  { value: "customers", label: "Customers", description: "Customer profiles with bookings, spending and dues",                   icon: Users },
 ] as const;
 
 const FORMAT_OPTIONS = [
-  { value: "csv",  label: "CSV",   description: "Universal plain-text format",  icon: FileText        },
-  { value: "xlsx", label: "Excel", description: "Microsoft Excel workbook",      icon: FileSpreadsheet },
+  { value: "csv",  label: "CSV",   description: "Opens in any spreadsheet app", icon: FileText },
+  { value: "xlsx", label: "Excel", description: "Microsoft Excel workbook",     icon: FileSpreadsheet },
 ] as const;
 
-export default function ExportPage() {
-  const [dataType,   setDataType]   = useState<DataType>("bookings");
-  const [format,     setFormat]     = useState<ExportFormat>("csv");
-  const [startDate,  setStartDate]  = useState("");
-  const [endDate,    setEndDate]    = useState("");
-  const [downloaded, setDownloaded] = useState(false);
+const INCLUDED: Record<ExportType, string[]> = {
+  revenue: ["Period start and end", "Received, refunds and net revenue", "Card, cash and bank transfer", "Bookings played in the period"],
+  bookings: ["Booking number, ground, date and time", "Customer name and phone", "Amount, fee, total, paid and due", "Booking and payment status, source"],
+  customers: ["Name, phone and email", "Customer since and last booking", "Bookings and total spent", "Due amount and tag"],
+};
 
-  const hasRange  = !!startDate && !!endDate;
-  const badRange  = (!!startDate !== !!endDate) || (hasRange && startDate > endDate);
-  const bookings  = useBookings(
-    { limit: EXPORT_LIMIT, ...(hasRange && !badRange ? { from: startDate, to: endDate } : {}) },
-    { enabled: dataType === "bookings" },
+const RANGE_HINT: Record<ExportType, string> = {
+  revenue: "Dated by when money was received or refunded.",
+  bookings: "Filters by the day each slot is played.",
+  customers: "Optional: only customers who joined in this range.",
+};
+
+function OptionCard({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} aria-pressed={selected}
+      className={cn("rounded-lg border p-4 text-left transition-colors", selected ? "border-primary bg-primary/5" : "hover:bg-muted/50")}>
+      {children}
+    </button>
   );
-  const customers = useCustomers({ limit: EXPORT_LIMIT }, { enabled: dataType === "customers" });
+}
 
-  const active    = dataType === "bookings" ? bookings : customers;
-  const total     = active.data?.total ?? 0;
-  const isLoading = active.isLoading || active.isFetching;
+export default function ExportPage() {
+  const [type, setType] = useState<ExportType>("revenue");
+  const [format, setFormat] = useState<ExportFormat>("csv");
+  const [grouping, setGrouping] = useState<Grouping>("day");
+  const [from, setFrom] = useState(venueToday(-29));
+  const [to, setTo] = useState(venueToday());
+  const [busy, setBusy] = useState(false);
 
-  function handleExport() {
-    const slug = `${dataType}-${new Date().toISOString().split("T")[0]}`;
-    if (dataType === "bookings") {
-      const rows = (bookings.data?.data ?? []).map(bookingRow);
-      writeFile(rows, BOOKING_HEADER, format, "Bookings", slug);
-    } else {
-      const rows = (customers.data?.data ?? []).map(customerRow);
-      writeFile(rows, CUSTOMER_HEADER, format, "Customers", slug);
+  const rangeOptional = type === "customers";
+  const oneMissing = !!from !== !!to;
+  const rangeError =
+    oneMissing || (!rangeOptional && (!from || !to))
+      ? "Pick both a start and an end date."
+      : from && to && from > to ? "The start date must be on or before the end date." : null;
+
+  async function handleExport() {
+    setBusy(true);
+    try {
+      await downloadReport({ type, format, from: from || undefined, to: to || undefined, groupBy: type === "revenue" ? grouping : undefined });
+      toast.success("Download started");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "The export failed. Please try again.");
+    } finally {
+      setBusy(false);
     }
-    setDownloaded(true);
-    setTimeout(() => setDownloaded(false), 3000);
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Export Data</h1>
-        <p className="text-muted-foreground">Download your business data as CSV or Excel</p>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Export Data</h1>
+        <p className="text-sm text-muted-foreground sm:text-base">Download your business data as CSV or Excel</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Export Settings</CardTitle>
-            <CardDescription>Choose what to export and in which format.</CardDescription>
+            <CardDescription>Choose what to export, the dates, and the file format.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>Data Type</Label>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <Label>Data</Label>
+              <div className="grid gap-3 sm:grid-cols-3">
                 {DATA_OPTIONS.map(({ value, label, description, icon: Icon }) => (
-                  <button key={value} type="button" onClick={() => setDataType(value)}
-                    className={cn("rounded-lg border p-4 text-left transition-colors",
-                      dataType === value ? "border-primary bg-primary/5" : "hover:bg-muted/50")}>
+                  <OptionCard key={value} selected={type === value} onClick={() => setType(value)}>
                     <Icon className="mb-2 h-5 w-5 text-muted-foreground" />
                     <p className="text-sm font-medium">{label}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
-                  </button>
+                  </OptionCard>
                 ))}
               </div>
             </div>
 
-            {dataType === "bookings" && (
+            <div className="space-y-2">
+              <Label htmlFor="export-from">
+                Date range {rangeOptional && <span className="font-normal text-muted-foreground">(optional)</span>}
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input id="export-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-9" />
+                <span className="shrink-0 text-sm text-muted-foreground">to</span>
+                <Input id="export-to" aria-label="End date" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-9" />
+                {rangeOptional && (from || to) && (
+                  <Button variant="ghost" size="sm" onClick={() => { setFrom(""); setTo(""); }}>Clear</Button>
+                )}
+              </div>
+              <p className={cn("text-xs", rangeError ? "text-destructive" : "text-muted-foreground")}>
+                {rangeError ?? `${RANGE_HINT[type]} Up to 366 days.`}
+              </p>
+            </div>
+
+            {type === "revenue" && (
               <div className="space-y-2">
-                <Label>Date Range <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                <div className="flex items-center gap-2">
-                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9" />
-                  <span className="shrink-0 text-sm text-muted-foreground">to</span>
-                  <Input type="date" value={endDate}   onChange={(e) => setEndDate(e.target.value)}   className="h-9" />
+                <Label>One row per</Label>
+                <div className="flex w-fit gap-1 rounded-lg border p-1">
+                  {(["day", "week"] as const).map((g) => (
+                    <Button key={g} size="sm" className="h-7 text-xs" variant={grouping === g ? "default" : "ghost"} onClick={() => setGrouping(g)}>
+                      {g === "day" ? "Day" : "Week (Sat–Fri)"}
+                    </Button>
+                  ))}
                 </div>
-                {badRange
-                  ? <p className="text-xs text-destructive">Pick both a start and an end date, with the start first.</p>
-                  : <p className="text-xs text-muted-foreground">Filters by slot date.</p>}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label>File Format</Label>
+              <Label>File format</Label>
               <div className="flex gap-3">
                 {FORMAT_OPTIONS.map(({ value, label, description, icon: Icon }) => (
-                  <button key={value} type="button" onClick={() => setFormat(value)}
-                    className={cn("flex-1 rounded-lg border p-3 text-left transition-colors",
-                      format === value ? "border-primary bg-primary/5" : "hover:bg-muted/50")}>
+                  <OptionCard key={value} selected={format === value} onClick={() => setFormat(value)}>
                     <Icon className="mb-1.5 h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">{label}</p>
                     <p className="text-xs text-muted-foreground">{description}</p>
-                  </button>
+                  </OptionCard>
                 ))}
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Exports up to the {EXPORT_LIMIT} most recent {dataType}
-              {!isLoading && total > EXPORT_LIMIT ? ` (${total} match — only the first ${EXPORT_LIMIT} are included)` : ""}.
-            </p>
-
-            <Button onClick={handleExport} disabled={isLoading || downloaded || total === 0 || (dataType === "bookings" && badRange)} className="w-full">
-              {downloaded
-                ? <><CheckCircle2 className="mr-2 h-4 w-4" /> Downloaded!</>
-                : <><Download className="mr-2 h-4 w-4" /> Download {format.toUpperCase()}</>}
+            <Button onClick={handleExport} disabled={busy || !!rangeError} className="w-full">
+              {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              Download {format === "csv" ? "CSV" : "Excel"}
             </Button>
           </CardContent>
         </Card>
@@ -182,25 +154,12 @@ export default function ExportPage() {
           <CardHeader>
             <CardTitle className="text-base">What&apos;s included?</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5 text-sm">
-            <div>
-              <p className="mb-1.5 font-medium">Bookings export</p>
-              <ul className="list-inside list-disc space-y-1 text-muted-foreground">
-                <li>Booking number and slot date/time</li>
-                <li>Customer name, phone and ground</li>
-                <li>Amount, fee, total, paid and due</li>
-                <li>Booking and payment status, source</li>
-              </ul>
-            </div>
-            <div>
-              <p className="mb-1.5 font-medium">Customers export</p>
-              <ul className="list-inside list-disc space-y-1 text-muted-foreground">
-                <li>Name, phone and email</li>
-                <li>Total bookings and spending</li>
-                <li>Last booking date</li>
-                <li>Due amounts and tier tag</li>
-              </ul>
-            </div>
+          <CardContent className="space-y-3 text-sm">
+            <p className="font-medium">{DATA_OPTIONS.find((o) => o.value === type)?.label} export</p>
+            <ul className="list-inside list-disc space-y-1 text-muted-foreground">
+              {INCLUDED[type].map((line) => <li key={line}>{line}</li>)}
+            </ul>
+            <p className="text-xs text-muted-foreground">Every matching row is included. Money is in taka with two decimals.</p>
           </CardContent>
         </Card>
       </div>

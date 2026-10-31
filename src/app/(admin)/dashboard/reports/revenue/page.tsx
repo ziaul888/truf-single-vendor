@@ -2,91 +2,86 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, TrendingUp, BarChart3, Award } from "lucide-react";
-import { useReportSummary, useMonthlyRevenue, useGroundRevenue, type DateRange } from "@/hooks/useReports";
+import { Banknote, Receipt, RotateCcw, Award } from "lucide-react";
+import { periodFor, useGroundReport, useReportSummary, useRevenueSeries, type DateRange } from "@/hooks/useReports";
 import { StatCard } from "@/components/features/dashboard/stat-card";
-import { MonthlyRevenueChart, RevenueByGroundChart } from "@/components/features/reports/report-charts";
-import { formatCurrency } from "@/lib/utils";
+import { RevenueByGroundChart, RevenueTrendChart } from "@/components/features/reports/report-charts";
+import { ReportHeader } from "@/components/features/reports/report-header";
+import { GroundReportTable } from "@/components/features/reports/ground-report-table";
+import { PAYMENT_METHOD_LABEL } from "@/components/features/bookings/booking-status-helpers";
+import { slotPriceLabel } from "@/lib/slot-format";
+import { PAYMENT_METHODS } from "@/types/booking";
 
-const RANGES: { label: string; value: DateRange }[] = [
-  { label: "7 days",  value: "7d"  },
-  { label: "30 days", value: "30d" },
-  { label: "90 days", value: "90d" },
-  { label: "1 year",  value: "1y"  },
-];
+const TREND_LABEL = "vs previous period";
+const GROUP_LABEL = { day: "Daily", week: "Weekly", month: "Monthly" } as const;
 
 export default function RevenueReportPage() {
   const [range, setRange] = useState<DateRange>("30d");
-  const summary  = useReportSummary(range);
-  const monthly  = useMonthlyRevenue(range);
-  const byGround = useGroundRevenue(range);
-
-  const topGround     = byGround.data?.[0];
-  const totalFromGrds = byGround.data?.reduce((s, g) => s + g.revenue, 0) ?? 0;
+  const period = periodFor(range);
+  const summary = useReportSummary(period);
+  const series = useRevenueSeries(period);
+  const grounds = useGroundReport(period);
+  const s = summary.data;
+  const top = grounds.data?.[0];
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Revenue Report</h1>
-          <p className="text-muted-foreground">Detailed revenue breakdown and ground performance</p>
-        </div>
-        <div className="flex gap-1 rounded-lg border p-1">
-          {RANGES.map(({ label, value }) => (
-            <Button key={value} variant={range === value ? "default" : "ghost"}
-              size="sm" className="h-7 text-xs" onClick={() => setRange(value)}>
-              {label}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <ReportHeader title="Revenue Report" subtitle="Money received, minus refunds" range={range} period={period} onRange={setRange} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Revenue"
-          value={summary.data ? formatCurrency(summary.data.totalRevenue) : "—"}
-          icon={DollarSign}
-          trend={summary.data?.revenueTrend}
-          loading={summary.isLoading}
-        />
-        <StatCard
-          title="Avg Booking Value"
-          value={summary.data ? formatCurrency(summary.data.avgBookingValue) : "—"}
-          icon={TrendingUp}
-          trend={summary.data?.avgValueTrend}
-          loading={summary.isLoading}
-        />
-        <StatCard
-          title="Top Ground Revenue"
-          value={topGround ? formatCurrency(topGround.revenue) : "—"}
-          icon={Award}
-          loading={byGround.isLoading}
-        />
-        <StatCard
-          title="Grounds Tracked"
-          value={byGround.data ? String(byGround.data.length) : "—"}
-          icon={BarChart3}
-          loading={byGround.isLoading}
-        />
+        <StatCard title="Net Revenue" value={s ? slotPriceLabel(s.revenue) : "—"} icon={Banknote}
+          trend={s?.revenueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
+        <StatCard title="Avg Booking Value" value={s ? slotPriceLabel(s.avgBookingValue) : "—"} icon={Receipt}
+          trend={s?.avgBookingValueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
+        <StatCard title="Refunds" value={s ? slotPriceLabel(s.refunds) : "—"} icon={RotateCcw} loading={summary.isLoading} />
+        <StatCard title="Top Ground" value={top && top.revenue > 0 ? top.groundName : "—"} icon={Award} loading={grounds.isLoading} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-medium">Monthly Revenue &amp; Bookings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <MonthlyRevenueChart data={monthly.data} loading={monthly.isLoading} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base font-medium">
+              {series.data ? GROUP_LABEL[series.data.groupBy] : ""} Revenue &amp; Bookings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RevenueTrendChart data={series.data?.points} loading={series.isLoading} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-medium">Where the money came from</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            {summary.isLoading || !s ? (
+              <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-6 animate-pulse rounded bg-muted" />)}</div>
+            ) : (
+              <>
+                {PAYMENT_METHODS.map((m) => (
+                  <div key={m} className="flex justify-between">
+                    <span className="text-muted-foreground">{PAYMENT_METHOD_LABEL[m]}</span>
+                    <span className="font-medium tabular-nums">{slotPriceLabel(s.revenueByMethod[m])}</span>
+                  </div>
+                ))}
+                <div className="space-y-2 border-t pt-3">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Received</span><span className="tabular-nums">{slotPriceLabel(s.received)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Refunded</span><span className="tabular-nums text-red-500">− {slotPriceLabel(s.refunds)}</span></div>
+                  <div className="flex justify-between text-base font-bold"><span>Net revenue</span><span className="tabular-nums">{slotPriceLabel(s.revenue)}</span></div>
+                </div>
+                <p className="text-xs text-muted-foreground">Each method is net of its refunds.</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-medium">Revenue by Ground</CardTitle>
         </CardHeader>
         <CardContent>
-          <RevenueByGroundChart data={byGround.data} loading={byGround.isLoading} />
+          <RevenueByGroundChart data={grounds.data} loading={grounds.isLoading} />
         </CardContent>
       </Card>
 
@@ -95,36 +90,7 @@ export default function RevenueReportPage() {
           <CardTitle className="text-base font-medium">Ground Performance</CardTitle>
         </CardHeader>
         <CardContent>
-          {byGround.isLoading ? (
-            <div className="space-y-2">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-10 animate-pulse rounded bg-muted" />)}
-            </div>
-          ) : !byGround.data?.length ? (
-            <p className="text-sm text-muted-foreground">No data available for this period.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ground</TableHead>
-                  <TableHead className="text-right">Bookings</TableHead>
-                  <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Share</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {byGround.data.map((g) => (
-                  <TableRow key={g.groundName}>
-                    <TableCell className="font-medium">{g.groundName}</TableCell>
-                    <TableCell className="text-right">{g.bookings}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(g.revenue)}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {totalFromGrds > 0 ? `${((g.revenue / totalFromGrds) * 100).toFixed(1)}%` : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <GroundReportTable data={grounds.data} loading={grounds.isLoading} mode="revenue" />
         </CardContent>
       </Card>
     </div>

@@ -192,13 +192,13 @@ export type CustomerSort = "lastBooking" | "totalSpent" | "bookings" | "since" |
 
 export interface DashboardStats {
   todayRevenue: number;
-  todayRevenueTrend: number;
+  todayRevenueTrend: number | null;
   todayBookings: number;
-  todayBookingsTrend: number;
+  todayBookingsTrend: number | null;
   totalCustomers: number;
-  totalCustomersTrend: number;
+  totalCustomersTrend: number | null;
   activeGrounds: number;
-  activeGroundsTrend: number;
+  activeGroundsTrend: number | null;
   bookingsTodayByGround: { groundId: string; bookings: number }[];
 }
 

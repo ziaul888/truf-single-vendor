@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { isAxiosError } from "axios";
 import Image from "next/image";
 import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 import { ImagePlus, Loader2, RotateCcw, Upload } from "lucide-react";
@@ -10,25 +11,24 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { resizeImage } from "@/lib/resize-image";
 import {
-  WEBSITE_IMAGE_MAX_PICK_BYTES, WEBSITE_IMAGE_SLOTS, WEBSITE_IMAGE_TYPES, isWebsiteImageSrc, websiteImagePath,
+  WEBSITE_IMAGE_MAX_PICK_BYTES, WEBSITE_IMAGE_TYPES, isUploadedWebsiteImage, isWebsiteImageSrc,
   type WebsiteImageSlot, type WebsiteSettings,
 } from "@/validations/website-settings";
+import { useUploadWebsiteImage } from "@/hooks/useSettings";
+import { toApiFailure } from "@/lib/api-error";
 import { FormField } from "./form-primitives";
 
 type Form = UseFormReturn<WebsiteSettings>;
 export type ImageFieldName = "hero.imageUrl" | "sections.visitUs.imageUrl";
 
-async function uploadWebsiteImage(slot: WebsiteImageSlot, picked: File): Promise<string> {
+/** Checks the picked file, then resizes it in the browser to fit turf-api's 2 MB limit. */
+async function prepareImage(picked: File): Promise<File> {
   if (!(WEBSITE_IMAGE_TYPES as readonly string[]).includes(picked.type)) throw new Error("Use a JPG, PNG or WebP image");
   if (picked.size > WEBSITE_IMAGE_MAX_PICK_BYTES) throw new Error("Image is larger than 10 MB");
-
-  const body = new FormData();
-  body.append("file", await resizeImage(picked));
-  const res = await fetch(websiteImagePath(slot), { method: "POST", body });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.error ?? "Upload failed");
-  return json.data.url;
+  return resizeImage(picked);
 }
+
+const savedUrl = (w: WebsiteSettings, slot: WebsiteImageSlot) => (slot === "hero" ? w.hero.imageUrl : w.sections.visitUs.imageUrl);
 
 export function ImageUploadField({
   form, name, slot, label, hint, defaultUrl,
@@ -36,7 +36,9 @@ export function ImageUploadField({
   form: Form; name: ImageFieldName; slot: WebsiteImageSlot; label: string; hint: string; defaultUrl: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const upload = useUploadWebsiteImage();
+  const uploading = preparing || upload.isPending;
   const imageUrl = useWatch({ control: form.control, name });
   const error = form.getFieldState(name, form.formState).error?.message;
   const inputId = `${slot}-image-file`;
@@ -45,16 +47,20 @@ export function ImageUploadField({
     form.setValue(name, url, { shouldDirty: true, shouldValidate: true });
   }
 
+  // The upload is live as soon as it finishes, so the field becomes the new saved value (not a pending change).
   async function handleFile(file: File | undefined) {
     if (!file || uploading) return;
-    setUploading(true);
+    setPreparing(true);
     try {
-      setImage(await uploadWebsiteImage(slot, file));
-      toast.success("Image uploaded. Save changes to publish it.");
+      const prepared = await prepareImage(file);
+      setPreparing(false);
+      const saved = await upload.mutateAsync({ slot, file: prepared });
+      form.resetField(name, { defaultValue: savedUrl(saved, slot) });
+      toast.success("Image uploaded and published");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.error(isAxiosError(err) || !(err instanceof Error) ? toApiFailure(err).error : err.message);
     } finally {
-      setUploading(false);
+      setPreparing(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -136,11 +142,6 @@ function Thumbnail({ src, uploading }: { src: string | undefined; uploading: boo
   );
 }
 
-/** Uploaded images live at our own API path, which isn't useful to show as a link. */
-function isUploadedPath(value: string | undefined) {
-  return WEBSITE_IMAGE_SLOTS.some((slot) => value?.startsWith(websiteImagePath(slot)));
-}
-
 function ImageLinkInput({ form, name }: { form: Form; name: ImageFieldName }) {
   return (
     <details className="group text-sm">
@@ -154,7 +155,7 @@ function ImageLinkInput({ form, name }: { form: Form; name: ImageFieldName }) {
             aria-label="Image link"
             placeholder="https://images.example.com/turf.jpg"
             className="mt-2"
-            value={isUploadedPath(field.value) ? "" : field.value ?? ""}
+            value={isUploadedWebsiteImage(field.value) ? "" : field.value ?? ""}
             onChange={(e) => field.onChange(e.target.value)}
             onBlur={field.onBlur}
           />
