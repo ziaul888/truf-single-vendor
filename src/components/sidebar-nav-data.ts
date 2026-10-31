@@ -76,6 +76,7 @@ export const NAV: NavGroup[] = [
       {
         label: "Reports", href: "/dashboard/reports", icon: BarChart3, color: "text-destructive",
         children: [
+          { label: "Overview", href: "/dashboard/reports",          icon: BarChart3    },
           { label: "Revenue",  href: "/dashboard/reports/revenue",  icon: TrendingUp   },
           { label: "Bookings", href: "/dashboard/reports/bookings", icon: CalendarDays },
           { label: "Export",   href: "/dashboard/reports/export",   icon: FileText     },

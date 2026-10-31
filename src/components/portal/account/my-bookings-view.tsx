@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { CalendarDays, ChevronRight, Loader2, Mail } from "lucide-react";
+import { CalendarDays, ChevronRight, Mail } from "lucide-react";
+import { BookingRowsSkeleton, MyBookingsSkeleton } from "@/components/portal/loading/account-skeletons";
 import { cn } from "@/lib/utils";
 import { fromMinorUnits } from "@/lib/ground-format";
 import { formatSlotDate, slotTimeLabel } from "@/lib/slot-format";
@@ -28,7 +29,7 @@ export function MyBookingsView() {
   const [scope, setScope] = useState<Scope>("upcoming");
 
   if (session.isPending) {
-    return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin opacity-60" /></div>;
+    return <MyBookingsSkeleton />;
   }
   if (!session.data) return <SignedOut />;
 
@@ -40,10 +41,13 @@ export function MyBookingsView() {
           <h1 className="text-3xl font-extrabold tracking-tight">My bookings</h1>
           <p className="mt-1 text-sm text-muted-foreground">Signed in as {who}{session.data.name ? ` · ${session.data.phone}` : ""}</p>
         </div>
-        <button type="button" onClick={() => signOut.mutate()} disabled={signOut.isPending}
-          className="text-sm font-medium text-muted-foreground hover:text-foreground">
-          {signOut.isPending ? "Signing out…" : "Sign out"}
-        </button>
+        <div className="flex items-center gap-4">
+          <Link href="/account" className="text-sm font-medium text-muted-foreground hover:text-foreground">Profile</Link>
+          <button type="button" onClick={() => signOut.mutate()} disabled={signOut.isPending}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            {signOut.isPending ? "Signing out…" : "Sign out"}
+          </button>
+        </div>
       </div>
 
       <div role="tablist" className="mt-6 inline-flex rounded-lg border p-1">
@@ -69,7 +73,7 @@ function BookingList({ scope }: { scope: Scope }) {
   });
   const rows = q.data?.pages.flatMap((p) => p.data) ?? [];
 
-  if (q.isPending) return <div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin opacity-60" /></div>;
+  if (q.isPending) return <BookingRowsSkeleton />;
   if (q.isError) return <p className="mt-8 text-sm text-destructive">{q.error.message}</p>;
   if (rows.length === 0) {
     return (
@@ -122,18 +126,19 @@ function BookingRow({ booking: b }: { booking: CustomerBooking }) {
   );
 }
 
-function SignedOut() {
+/** Signed out: sign in with the phone (coming back to `from`), or use the email link. */
+export function SignedOut({ title = "Your bookings", from = "/my-bookings" }: { title?: string; from?: string }) {
   return (
     <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-6 lg:px-8">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent">
         <Mail className="h-8 w-8 text-accent-foreground" />
       </div>
-      <h1 className="mt-6 text-3xl font-extrabold tracking-tight">Your bookings</h1>
+      <h1 className="mt-6 text-3xl font-extrabold tracking-tight">{title}</h1>
       <p className="mt-2 text-muted-foreground">
         Sign in with your mobile number to see every booking you&apos;ve made, or open the link in your confirmation email.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link href="/sign-in?from=/my-bookings"
+        <Link href={`/sign-in?from=${encodeURIComponent(from)}`}
           className="inline-flex h-11 items-center rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground hover:opacity-90">
           Sign in with phone
         </Link>

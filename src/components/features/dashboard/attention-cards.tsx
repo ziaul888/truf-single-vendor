@@ -28,7 +28,7 @@ export function AttentionCards() {
   const { data, isLoading } = useDashboardAttention();
 
   if (isLoading || !data) {
-    return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[...Array(5)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />)}</div>;
+    return <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">{[...Array(5)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-muted last:col-span-2 lg:last:col-span-1" />)}</div>;
   }
 
   const cards: AttentionCard[] = [
@@ -43,20 +43,21 @@ export function AttentionCards() {
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
       {cards.map((c) => {
         const body = (
           <>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{c.label}</span>
+              <span className="truncate text-sm font-medium">{c.label}</span>
               <c.Icon className="h-4 w-4 opacity-70" />
             </div>
-            <div className="mt-1 text-2xl font-bold tabular-nums">{c.count}</div>
+            <div className="mt-1 text-xl font-bold tabular-nums sm:text-2xl">{c.count}</div>
             <div className="truncate text-xs opacity-75">{c.count > 0 ? c.sub : "Nothing right now"}</div>
           </>
         );
         const cls = cn(
-          "block rounded-xl border p-4 transition-colors",
+          // Two per row on phones; the fifth card spans the row so nothing sits alone.
+          "block min-w-0 rounded-xl border p-3 transition-colors last:col-span-2 sm:p-4 lg:last:col-span-1",
           c.count > 0 ? TONE[c.tone] : "bg-card text-muted-foreground",
           c.href && "hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         );

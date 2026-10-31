@@ -9,6 +9,7 @@ import type { Ground } from "@/types/api";
 import type { PublicClosure, PublicSlot } from "@/types/slot";
 import { formatPeakRanges, fromMinorUnits } from "@/lib/ground-format";
 import { addDays, venueToday } from "@/lib/slot-format";
+import { SkeletonBlock } from "@/components/portal/loading/skeleton-block";
 
 const SERVICE_FEE = 50;
 /** Days offered in the picker; turf-api returns at most 14 per request. */
@@ -108,7 +109,7 @@ export function SlotPicker({ ground }: { ground: Ground }) {
       </p>
       {isLoading ? (
         <div className="grid grid-cols-3 gap-2">
-          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />)}
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonBlock key={i} className="h-10 rounded-lg" />)}
         </div>
       ) : isError ? (
         <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">Couldn&apos;t load slots. Please refresh.</p>

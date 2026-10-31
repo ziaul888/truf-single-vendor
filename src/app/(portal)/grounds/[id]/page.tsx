@@ -2,11 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ChevronRight, Heart, Share2 } from "lucide-react";
+import { ChevronRight, Heart, MapPin, Share2 } from "lucide-react";
 import { SlotPicker } from "@/components/portal/slot-picker";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround } from "@/services/portal-grounds";
+import { getPublicVenue } from "@/services/website-settings";
+import { GroundLocation } from "@/components/portal/ground-location";
+import { directionsUrl } from "@/lib/maps";
 import type { Ground } from "@/types/api";
 
 export async function generateMetadata({
@@ -29,8 +32,10 @@ export default async function GroundDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ground = await getPublicGround(id);
+  const [ground, venue] = await Promise.all([getPublicGround(id), getPublicVenue()]);
   if (!ground) notFound();
+  // The ground's own address (set in the dashboard), else the venue's.
+  const location = ground.address?.trim() || venue.address.trim();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -39,9 +44,10 @@ export default async function GroundDetailPage({
 
       <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_400px]">
         <div>
-          <Header ground={ground} />
+          <Header ground={ground} location={location} />
           <About ground={ground} />
           <Specs ground={ground} />
+          <GroundLocation groundAddress={ground.address} venueAddress={venue.address} />
         </div>
 
         <aside className="lg:sticky lg:top-20 lg:self-start">
@@ -81,7 +87,7 @@ function Gallery({ images }: { images: string[] }) {
   );
 }
 
-function Header({ ground }: { ground: Ground }) {
+function Header({ ground, location }: { ground: Ground; location: string }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
@@ -99,6 +105,13 @@ function Header({ ground }: { ground: Ground }) {
         <p className="mt-3 text-sm text-muted-foreground">
           Open {pad(ground.openHour)}:00 — {pad(ground.closeHour)}:00
         </p>
+        {location && (
+          <a href={directionsUrl(location)} target="_blank" rel="noopener noreferrer"
+            className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-accent">
+            <MapPin className="h-4 w-4 text-primary" />
+            <span className="underline decoration-dotted underline-offset-2">{location}</span>
+          </a>
+        )}
       </div>
       <div className="flex shrink-0 gap-2">
         <button className="flex h-10 w-10 items-center justify-center rounded-full border hover:bg-muted">

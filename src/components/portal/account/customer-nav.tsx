@@ -26,7 +26,7 @@ export function CustomerNav() {
   const label = session.name?.split(" ")[0] ?? session.phone;
   return (
     <div className="flex items-center">
-      <Link href="/my-bookings" title={session.phone}
+      <Link href="/account" title="My profile"
         className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold hover:text-accent">
         <UserRound className="h-4 w-4" />
         <span className="hidden max-w-28 truncate sm:inline">{label}</span>

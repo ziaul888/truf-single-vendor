@@ -3,6 +3,7 @@ import {
   BadgeCheck, Calendar, CircleDot, Grid3x3, Search, ShieldCheck, Zap,
 } from "lucide-react";
 import { listPublicGrounds } from "@/services/portal-grounds";
+import { venueToday } from "@/lib/slot-format";
 import { SPORT_META, SPORTS } from "@/components/portal/sports";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import { isUploadedImage } from "./is-uploaded-image";
@@ -87,6 +88,7 @@ function Stat({ n, label }: { n: string; label: string }) {
   );
 }
 
+/** Opens /grounds with every matching ground's free slots for that day. */
 function SearchBox() {
   return (
     <form
@@ -99,7 +101,9 @@ function SearchBox() {
             type="date"
             name="date"
             className="w-full bg-transparent text-sm font-medium outline-none"
-            defaultValue={new Date().toISOString().slice(0, 10)}
+            required
+            min={venueToday()}
+            defaultValue={venueToday()}
           />
         </Field>
         <Field colSpan={3} icon={CircleDot} label="Sport">

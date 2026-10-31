@@ -14,10 +14,12 @@ import { RailNavItem } from "./rail-nav-item";
 interface SidebarProps {
   collapsed: boolean;
   onCollapse: (v: boolean) => void;
+  /** Below lg the sidebar is a drawer: tapping a section with sub-pages shows them instead of navigating. */
+  drawer?: boolean;
   onClose?: () => void;
 }
 
-export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
+export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   const { data: me } = useMe();
@@ -28,17 +30,20 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
     allItems
       .filter((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
       .sort((a, b) => b.href.length - a.href.length)[0] ?? allItems[0];
-  // Hovering a rail icon previews that section in the panel; leaving the sidebar goes back.
-  const [hoveredHref, setHoveredHref] = useState<string | null>(null);
-  const panelItem = allItems.find((i) => i.href === hoveredHref) ?? activeItem;
+  // Hovering (or, in the drawer, tapping) a rail icon shows that section in the panel.
+  // Leaving the sidebar, or navigating anywhere, goes back to the current section.
+  const [preview, setPreview] = useState<{ href: string; path: string } | null>(null);
+  const previewed = preview?.path === pathname ? preview.href : null;
+  const panelItem = allItems.find((i) => i.href === previewed) ?? activeItem;
+  const showSection = (href: string | null) => setPreview(href ? { href, path: pathname } : null);
 
   return (
     <TooltipProvider delayDuration={0}>
       <aside
-        onMouseLeave={() => setHoveredHref(null)}
+        onMouseLeave={() => { if (!drawer) showSection(null); }}
         className={cn(
           "relative flex h-screen overflow-hidden bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out border-r border-sidebar-border",
-          collapsed ? "w-18" : "w-72",
+          collapsed ? "w-18" : drawer ? "w-[min(20rem,88vw)]" : "w-72",
         )}
       >
         {/* ─── Ambient brand glows ─── */}
@@ -72,7 +77,10 @@ export function Sidebar({ collapsed, onCollapse, onClose }: SidebarProps) {
                       item={item}
                       pathname={pathname}
                       showMenu={collapsed}
-                      onHover={() => setHoveredHref(item.href)}
+                      onHover={() => showSection(item.href)}
+                      selectOnly={drawer && !!item.children?.length}
+                      touch={drawer}
+                      selected={drawer && panelItem.href === item.href}
                       onNavClick={onClose}
                     />
                   ))}

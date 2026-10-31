@@ -1,23 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 
+const DESKTOP_QUERY = "(min-width: 1024px)";
+
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  // On lg+ default expanded; on md default collapsed; on mobile hidden (drawer)
+  // lg+: static sidebar the user can collapse. Below lg: a drawer, always shown in full,
+  // because the collapsed rail only reveals sub-pages on hover, which touch screens can't do.
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
 
-  // Initialise collapsed state based on screen width after hydration
   useEffect(() => {
-    const init = () => {
-      if (window.innerWidth < 1024) setCollapsed(true);
+    const mq = window.matchMedia(DESKTOP_QUERY);
+    const sync = () => {
+      setIsDesktop(mq.matches);
+      if (mq.matches) setMobileOpen(false);
     };
-    init();
-    window.addEventListener("resize", () => {
-      if (window.innerWidth >= 1024) setMobileOpen(false);
-    });
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
   }, []);
 
   return (
@@ -30,19 +34,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Sidebar — drawer on mobile, static on md+ */}
+      {/* Sidebar — drawer below lg, static on lg+ */}
       <div
         className={[
-          // mobile: fixed drawer
           "fixed inset-y-0 left-0 z-50 lg:static lg:z-auto",
-          // mobile visibility
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           "transition-transform duration-300 ease-in-out",
         ].join(" ")}
       >
         <Sidebar
-          collapsed={collapsed}
+          collapsed={isDesktop && collapsed}
           onCollapse={setCollapsed}
+          drawer={!isDesktop}
           onClose={() => setMobileOpen(false)}
         />
       </div>

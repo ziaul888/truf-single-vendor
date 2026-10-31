@@ -13,7 +13,7 @@ export function TodayMoney() {
   const { data, isLoading } = useReportSummary({ from: today, to: today });
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Wallet className="h-5 w-5" />Today&apos;s Money</CardTitle>
       </CardHeader>

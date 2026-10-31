@@ -15,6 +15,7 @@ import { AttentionCards } from "@/components/features/dashboard/attention-cards"
 import { TodayGrounds } from "@/components/features/dashboard/today-grounds";
 import { TodayMoney } from "@/components/features/dashboard/today-money";
 import { RecentActivity } from "@/components/features/dashboard/recent-activity";
+import { UpcomingList } from "@/components/features/dashboard/upcoming-list";
 import { CollectPaymentDialog } from "@/components/features/bookings/collect-payment-dialog";
 
 const quickActions = [
@@ -52,7 +53,7 @@ export default function DashboardPage() {
         <AttentionCards />
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard title="Today's Revenue"  value={s ? slotPriceLabel(s.todayRevenue) : "—"} icon={DollarSign}   trend={s?.todayRevenueTrend}   trendLabel={TREND_LABEL} loading={stats.isLoading} />
         <StatCard title="Today's Bookings" value={s ? String(s.todayBookings) : "—"}        icon={CalendarDays} trend={s?.todayBookingsTrend}  trendLabel={TREND_LABEL} loading={stats.isLoading} />
         <StatCard title="Total Customers"  value={s ? String(s.totalCustomers) : "—"}       icon={Users}        trend={s?.totalCustomersTrend} trendLabel={TREND_LABEL} loading={stats.isLoading} />
@@ -61,8 +62,9 @@ export default function DashboardPage() {
 
       <TodayGrounds />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card id="upcoming" className="scroll-mt-20 lg:col-span-2">
+      {/* min-w-0 on the items: a grid column otherwise grows to fit the bookings table and spills off phones */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card id="upcoming" className="min-w-0 scroll-mt-20 lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" />Upcoming Bookings</CardTitle>
           </CardHeader>
@@ -74,16 +76,19 @@ export default function DashboardPage() {
             ) : !upcoming.data?.length ? (
               <p className="text-sm text-muted-foreground">No upcoming bookings.</p>
             ) : (
-              <div className="scrollbar-thin overflow-x-auto">
-                <DashboardDataTable columns={upcomingColumns(setCollecting)} data={upcoming.data} />
-              </div>
+              <>
+                <div className="md:hidden"><UpcomingList bookings={upcoming.data} onCollect={setCollecting} /></div>
+                <div className="scrollbar-thin hidden overflow-x-auto md:block">
+                  <DashboardDataTable columns={upcomingColumns(setCollecting)} data={upcoming.data} />
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
         <TodayMoney />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <WeeklyRevenueChart />
         <BookingsByStatusChart />
       </div>

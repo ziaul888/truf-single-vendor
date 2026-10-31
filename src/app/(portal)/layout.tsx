@@ -5,6 +5,7 @@ import { getPublicWebsite } from "@/services/website-settings";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import type { PublicVenue } from "@/types/settings";
 import { VenueMark } from "@/components/portal/venue-mark";
+import { MobileMenu } from "@/components/portal/mobile-menu";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
 
 /**
@@ -28,11 +29,11 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-sidebar text-sidebar-foreground">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex min-w-0 items-center gap-2">
           <VenueMark logoUrl={venue.logoUrl} name={venue.name} />
-          <span className="leading-tight">
-            <span className="block text-base font-extrabold tracking-tight">{venue.name}</span>
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate text-base font-extrabold tracking-tight">{venue.name}</span>
             {venue.tagline && <span className="hidden text-[10px] opacity-60 sm:block">{venue.tagline}</span>}
           </span>
         </Link>
@@ -44,7 +45,7 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
           <Link href="/#visit" className="hover:text-accent">Visit us</Link>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <a
             href={`tel:${venue.phone.replace(/\s/g, "")}`}
             className="mr-2 hidden items-center gap-1 text-xs opacity-80 hover:text-accent sm:inline-flex"
@@ -54,7 +55,7 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
           {isAdmin && (
             <Link
               href="/dashboard"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-accent/40 px-3 text-sm font-semibold text-accent hover:bg-accent hover:text-accent-foreground"
+              className="hidden h-9 items-center gap-1.5 rounded-lg border border-accent/40 px-3 text-sm font-semibold text-accent hover:bg-accent hover:text-accent-foreground md:inline-flex"
             >
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -63,10 +64,11 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
           <CustomerNav />
           <Link
             href="/grounds"
-            className="inline-flex h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground hover:opacity-90"
+            className="inline-flex h-9 items-center whitespace-nowrap rounded-lg bg-accent px-3 text-sm font-semibold text-accent-foreground hover:opacity-90 sm:px-4"
           >
             Book now
           </Link>
+          <MobileMenu phone={venue.phone} isAdmin={isAdmin} />
         </div>
       </div>
     </header>

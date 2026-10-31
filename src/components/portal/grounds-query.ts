@@ -9,8 +9,12 @@ export interface GroundsQuery {
   sport?: Sport;
   format?: GroundFormat;
   surface?: Surface;
+  /** Venue-local "YYYY-MM-DD": when set, each ground lists its free slots that day. */
+  date?: string;
   sort: GroundSort;
 }
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 type RawParams = Record<string, string | string[] | undefined>;
 
@@ -24,6 +28,7 @@ export function parseGroundsQuery(params: RawParams): GroundsQuery {
     sport: one("sport", SPORTS),
     format: one("format", FORMATS),
     surface: one("surface", SURFACES),
+    date: typeof params.date === "string" && ISO_DATE.test(params.date) ? params.date : undefined,
     sort: one("sort", SORTS) ?? "recommended",
   };
 }
@@ -32,7 +37,7 @@ export function parseGroundsQuery(params: RawParams): GroundsQuery {
 export function groundsHref(query: GroundsQuery, change: Partial<GroundsQuery>) {
   const next = { ...query, ...change };
   const params = new URLSearchParams();
-  for (const key of ["sport", "format", "surface"] as const) if (next[key]) params.set(key, next[key]);
+  for (const key of ["date", "sport", "format", "surface"] as const) if (next[key]) params.set(key, next[key]);
   if (next.sort !== "recommended") params.set("sort", next.sort);
   const qs = params.toString();
   return qs ? `/grounds?${qs}` : "/grounds";
