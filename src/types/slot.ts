@@ -148,7 +148,7 @@ export interface BulkSlotsResult {
   failed: { id: string; code: string; error: string }[];
 }
 
-/** One entry in a slot's audit trail. `user` is null if that staff account no longer exists. */
+/** One entry in a slot's audit trail. `user` is null for a system action, or if that staff account no longer exists. */
 export interface SlotEvent {
   id: string;
   action: SlotEventAction;

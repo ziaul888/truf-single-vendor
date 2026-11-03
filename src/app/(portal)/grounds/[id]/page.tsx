@@ -9,6 +9,7 @@ import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround } from "@/services/portal-grounds";
 import { getPublicVenue } from "@/services/website-settings";
 import { GroundLocation } from "@/components/portal/ground-location";
+import { GroundRules } from "@/components/portal/ground-rules";
 import { directionsUrl } from "@/lib/maps";
 import type { Ground } from "@/types/api";
 
@@ -46,6 +47,7 @@ export default async function GroundDetailPage({
         <div>
           <Header ground={ground} location={location} />
           <About ground={ground} />
+          <GroundRules rules={ground.rules} className="mt-6 border-b pb-8" />
           <Specs ground={ground} />
           <GroundLocation groundAddress={ground.address} venueAddress={venue.address} />
         </div>

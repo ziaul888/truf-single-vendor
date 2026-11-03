@@ -72,7 +72,9 @@ export function CheckoutForm({
     );
     fieldErrors.forEach((d) => setError(d.field as (typeof CHECKOUT_FIELDS)[number], { message: d.message }));
     if (fieldErrors.length && fieldErrors.length === err.details?.length) return;
-    setFormError({ message: err.message, slotTaken: err.code === "SLOT_NOT_AVAILABLE" });
+    if (err.code === "SLOT_NOT_AVAILABLE") setFormError({ message: "Sorry, someone just booked this slot.", slotTaken: true });
+    else if (err.code === "GROUND_CLOSED") setFormError({ message: "Sorry, the ground is closed on that day.", slotTaken: true });
+    else setFormError({ message: err.message, slotTaken: false });
   };
 
   const total = options.data ? takaLabel(slotPrice + options.data.serviceFee) : null;
@@ -133,7 +135,7 @@ export function CheckoutForm({
 
       {formError && (
         <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-          {formError.slotTaken ? "Sorry, someone just booked this slot." : formError.message}
+          {formError.message}
           {formError.slotTaken && (
             <Link href={`/grounds/${groundId}`} className="ml-1 font-semibold underline">Pick another time</Link>
           )}

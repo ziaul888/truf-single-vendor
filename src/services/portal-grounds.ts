@@ -14,6 +14,7 @@ function toPortalGround(g: ApiPublicGround): Ground {
     id: g.id,
     name: g.name,
     description: g.description,
+    rules: g.rules,
     address: g.address,
     hourlyRate: fromMinorUnits(g.hourlyPrice),
     openHour: g.openingHour,

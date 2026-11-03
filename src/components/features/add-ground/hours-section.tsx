@@ -84,8 +84,8 @@ export function HoursSection({ form }: { form: UseFormReturn<AddGroundFormData> 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="everyday">Every day</SelectItem>
-                    <SelectItem value="weekdays">Weekdays (Mon–Fri)</SelectItem>
-                    <SelectItem value="weekends">Weekends (Sat–Sun)</SelectItem>
+                    <SelectItem value="weekdays">Weekdays (Sun–Thu)</SelectItem>
+                    <SelectItem value="weekends">Weekends (Fri–Sat)</SelectItem>
                     <SelectItem value="custom">Custom</SelectItem>
                   </SelectContent>
                 </Select>

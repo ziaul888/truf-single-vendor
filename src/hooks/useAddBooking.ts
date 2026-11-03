@@ -18,7 +18,7 @@ export function useAvailableSlots(groundId: string | undefined, date: string | u
     queryKey: ["slots", "booking-form", groundId, date],
     queryFn: async () => {
       const { data } = await api.get("/admin/slots", {
-        params: { groundId, date, status: "available", limit: 100 },
+        params: { groundId, date, status: "available", openDaysOnly: true, limit: 100 },
       });
       return (data.data.data as Slot[]).map((s) => ({
         id: s.id,

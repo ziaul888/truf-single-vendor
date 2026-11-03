@@ -124,6 +124,23 @@ export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove 
             </p>
           </div>
           <div className="space-y-1.5">
+            <Label htmlFor="rules">Ground rules</Label>
+            <Textarea
+              id="rules"
+              placeholder="e.g. No metal studs. Please arrive 10 minutes early."
+              rows={3}
+              className={cn("resize-none", errors.rules && "border-destructive")}
+              {...register("rules")}
+            />
+            {errors.rules ? (
+              <p className="text-destructive text-xs">{errors.rules.message}</p>
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                Optional — shown to customers on the ground page and at checkout.
+              </p>
+            )}
+          </div>
+          <div className="space-y-1.5">
             <Label htmlFor="address">Address</Label>
             <Input
               id="address"

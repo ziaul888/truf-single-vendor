@@ -30,6 +30,7 @@ function groundToFormData(g: Ground): AddGroundFormData {
     surface:       g.surface ?? undefined,
     dimensions:    g.dimensions ?? "",
     description:   g.description ?? "",
+    rules:         g.rules ?? "",
     address:       g.address ?? "",
     openingTime:   g.openingTime,
     // A time picker can't show 24:00; 00:00 means midnight.

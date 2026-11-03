@@ -60,6 +60,7 @@ export function PreviewSidebar({
 
   const optionalFilled = [
     v.description?.trim(),
+    v.rules?.trim(),
     v.internalNotes?.trim(),
     (v.capacity ?? 0) > 0,
   ].filter(Boolean).length;

@@ -39,6 +39,7 @@ function AddGroundForm() {
     defaultValues: {
       name: "",
       description: "",
+      rules: "",
       address: "",
       openingTime: "",
       closingTime: "",

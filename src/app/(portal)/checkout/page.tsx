@@ -7,6 +7,7 @@ import { FormatBadge } from "@/components/portal/format-badge";
 import { CheckoutStepper } from "@/components/portal/checkout/checkout-stepper";
 import { CheckoutForm } from "@/components/portal/checkout/checkout-form";
 import { CheckoutTotals } from "@/components/portal/checkout/checkout-totals";
+import { GroundRules } from "@/components/portal/ground-rules";
 import type { Ground } from "@/types/api";
 import type { PublicSlot } from "@/types/slot";
 
@@ -97,6 +98,7 @@ function BookingSummary({ ground, date, slot }: { ground: Ground; date?: string;
         )}
       </dl>
       {slot && <CheckoutTotals slotPrice={slot.price} isPeak={slot.isPeak} />}
+      <GroundRules rules={ground.rules} heading="h3" className="mt-4 border-t pt-4" />
     </>
   );
 }

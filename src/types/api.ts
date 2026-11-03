@@ -14,6 +14,7 @@ export interface Ground {
   id: string;
   name: string;
   description?: string | null;
+  rules?: string | null;
   address?: string | null;
   hourlyRate: number;
   openHour: number;

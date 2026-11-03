@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { Upload, X, ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
 import { toast } from "sonner";
@@ -159,14 +159,21 @@ function MoveButton({ label, disabled, onClick, children }: {
   );
 }
 
-/** A blob: URL for previewing a picked file, revoked when the file changes. */
+/**
+ * A blob: URL for previewing a picked file, revoked when the file changes.
+ * Not a real store: useSyncExternalStore is used because subscribe runs in the commit
+ * phase and pairs with a cleanup, and React re-reads the snapshot straight after it.
+ * Do not create the URL during render: discarded renders would leak it, and StrictMode's
+ * effect re-run would revoke a URL that is still in use.
+ */
 function useObjectUrl(file: File | null) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!file) return setUrl(null);
-    const next = URL.createObjectURL(file);
-    setUrl(next);
-    return () => URL.revokeObjectURL(next);
+  const url = useRef<string | null>(null);
+  const subscribe = useCallback(() => {
+    const next = file ? URL.createObjectURL(file) : null;
+    url.current = next;
+    return () => {
+      if (next) URL.revokeObjectURL(next);
+    };
   }, [file]);
-  return url;
+  return useSyncExternalStore(subscribe, () => url.current, () => null);
 }

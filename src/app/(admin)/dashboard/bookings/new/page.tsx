@@ -92,10 +92,10 @@ export default function AddBookingPage() {
 
   function handleApiError(err: unknown) {
     const failure = toApiFailure(err);
-    if (failure.code === "SLOT_NOT_AVAILABLE") {
+    if (failure.code === "SLOT_NOT_AVAILABLE" || failure.code === "GROUND_CLOSED") {
       setValue("slotId", "");
       refetchSlots();
-      toast.error("That slot was just taken. Pick another one.");
+      toast.error(failure.code === "GROUND_CLOSED" ? "The ground is closed on that day. Pick another date." : "That slot was just taken. Pick another one.");
       return;
     }
     if (failure.code === "CUSTOMER_NOT_FOUND") setKnownCustomer(null);

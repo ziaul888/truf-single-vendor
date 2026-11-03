@@ -31,6 +31,8 @@ export interface ApiPublicGround {
   id: string;
   name: string;
   description: string | null;
+  /** Plain text shown to customers on the ground page and at checkout. */
+  rules: string | null;
   address: string | null;
   /** Smallest currency unit: 1500 = 15.00. */
   hourlyPrice: number;
@@ -72,6 +74,7 @@ export interface GroundWriteInput {
   openingHour: number;
   closingHour: number;
   description?: string | null;
+  rules?: string | null;
   address?: string | null;
   format?: GroundFormat | null;
   surface?: Surface | null;

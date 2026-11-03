@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useSyncExternalStore } from "react";
 import { LoginForm } from "@/components/features/login/login-form";
 import {
   LoginBrandPanel,
@@ -30,15 +30,25 @@ const GLOBAL_STYLES = `
   ::-webkit-scrollbar { display: none; }
 `;
 
+/** The width the page renders with until it has mounted: on the server, while hydrating, and on client navigation. */
+const INITIAL_WIDTH = 1200;
+let currentWidth = INITIAL_WIDTH;
+
+function subscribeToWidth(onChange: () => void) {
+  const handler = () => {
+    currentWidth = window.innerWidth;
+    onChange();
+  };
+  currentWidth = window.innerWidth;
+  window.addEventListener("resize", handler);
+  return () => {
+    window.removeEventListener("resize", handler);
+    currentWidth = INITIAL_WIDTH;
+  };
+}
+
 function useWindowWidth() {
-  const [width, setWidth] = useState(1200);
-  useEffect(() => {
-    setWidth(window.innerWidth);
-    const handler = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return width;
+  return useSyncExternalStore(subscribeToWidth, () => currentWidth, () => INITIAL_WIDTH);
 }
 
 function Backdrop({ isMobile }: { isMobile: boolean }) {

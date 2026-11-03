@@ -142,7 +142,7 @@ export default function SlotActivityPage() {
                     {e.reason ? BLOCK_REASON_LABEL[e.reason] : <span className="text-muted-foreground">—</span>}
                     {e.note && <span className="block max-w-[240px] truncate text-xs text-muted-foreground" title={e.note}>{e.note}</span>}
                   </TableCell>
-                  <TableCell className="text-sm">{e.user?.name ?? <span className="text-muted-foreground">Removed account</span>}</TableCell>
+                  <TableCell className="text-sm">{e.user?.name ?? <span className="text-muted-foreground">System / removed account</span>}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

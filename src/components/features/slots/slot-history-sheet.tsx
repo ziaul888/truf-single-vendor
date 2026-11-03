@@ -52,7 +52,7 @@ export function SlotHistorySheet({ slot, onClose }: { slot: Slot | null; onClose
                   </p>
                   {e.note && <p className="mt-0.5 text-sm text-muted-foreground">“{e.note}”</p>}
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {e.user ? e.user.name : "A removed staff account"} · {formatEventTime(e.createdAt)}
+                    {e.user ? e.user.name : "System / removed account"} · {formatEventTime(e.createdAt)}
                   </p>
                 </li>
               ))}
