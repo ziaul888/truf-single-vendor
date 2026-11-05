@@ -260,6 +260,13 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  /* Tailwind v4 leaves buttons on the default cursor. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
 }
 
 /* ─── Themed scrollbars ──────────────────────────────────────── */

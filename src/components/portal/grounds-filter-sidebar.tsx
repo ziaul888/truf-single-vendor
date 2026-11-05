@@ -3,12 +3,28 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FORMATS } from "@/types/ground";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
+import { FilterMenu } from "@/components/features/filter-menu";
 import { SPORT_META, SPORTS, SURFACE_LABEL, SURFACES } from "./sports";
 import { groundsHref, type GroundsQuery } from "./grounds-query";
 
-// Every option is a link, so filtering works without JavaScript and the URL can be shared.
+// Every option is a link, so the URL can be shared. Keying the menu by the active filters closes
+// it when an option is picked; from md up, filtering also works without JavaScript.
 export function GroundsFilterSidebar({ query }: { query: GroundsQuery }) {
   const anyFilter = Boolean(query.sport || query.format || query.surface);
+  const activeCount = [query.sport, query.format, query.surface].filter(Boolean).length;
+  return (
+    <FilterMenu
+      key={`${query.sport}-${query.format}-${query.surface}`}
+      activeCount={activeCount}
+      // The menu renders outside the portal layout, so it needs the portal's theme class too.
+      contentClassName="pitch max-h-[70vh] w-72 overflow-y-auto p-0"
+    >
+      <GroundsFilters query={query} anyFilter={anyFilter} />
+    </FilterMenu>
+  );
+}
+
+function GroundsFilters({ query, anyFilter }: { query: GroundsQuery; anyFilter: boolean }) {
   return (
     <aside className="h-fit rounded-2xl border bg-card p-5 lg:sticky lg:top-20">
       <h3 className="text-sm font-bold uppercase tracking-wide">Filters</h3>

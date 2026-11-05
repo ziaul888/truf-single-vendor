@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, History } from "lucide-react";
+import { FilterMenu } from "@/components/features/filter-menu";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,41 +69,43 @@ export default function SlotActivityPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={groundId} onValueChange={reset(setGroundId)}>
-          <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All grounds</SelectItem>
-            {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={action} onValueChange={reset((v: string) => setAction(v as SlotEventAction | "all"))}>
-          <SelectTrigger className="h-9 w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All actions</SelectItem>
-            {ACTIONS.map((a) => <SelectItem key={a} value={a}>{SLOT_EVENT_LABEL[a]}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        {staff.data && (
-          <Select value={userId} onValueChange={reset(setUserId)}>
-            <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+        <FilterMenu activeCount={(groundId !== "all" ? 1 : 0) + (action !== "all" ? 1 : 0) + (userId !== "all" ? 1 : 0) + (from || to ? 1 : 0)}>
+          <Select value={groundId} onValueChange={reset(setGroundId)}>
+            <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Anyone</SelectItem>
-              {staff.data.data.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+              <SelectItem value="all">All grounds</SelectItem>
+              {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
             </SelectContent>
           </Select>
-        )}
-        <div className="flex items-center gap-1.5">
-          <Input type="date" aria-label="Slot date from" value={from} onChange={(e) => reset(setFrom)(e.target.value)} className="h-9 w-40" />
-          <span className="text-sm text-muted-foreground">to</span>
-          <Input type="date" aria-label="Slot date to" min={from} value={to} onChange={(e) => reset(setTo)(e.target.value)} className="h-9 w-40" />
-        </div>
-        {filtered && (
-          <Button variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={() => {
-            setGroundId("all"); setAction("all"); setUserId("all"); setFrom(""); setTo(""); setPage(1);
-          }}>
-            Clear
-          </Button>
-        )}
+          <Select value={action} onValueChange={reset((v: string) => setAction(v as SlotEventAction | "all"))}>
+            <SelectTrigger className="h-9 w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All actions</SelectItem>
+              {ACTIONS.map((a) => <SelectItem key={a} value={a}>{SLOT_EVENT_LABEL[a]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {staff.data && (
+            <Select value={userId} onValueChange={reset(setUserId)}>
+              <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Anyone</SelectItem>
+                {staff.data.data.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          <div className="flex flex-col gap-1.5 md:flex-row md:items-center">
+            <Input type="date" aria-label="Slot date from" value={from} onChange={(e) => reset(setFrom)(e.target.value)} className="h-9 w-full md:w-40" />
+            <span className="text-sm text-muted-foreground">to</span>
+            <Input type="date" aria-label="Slot date to" min={from} value={to} onChange={(e) => reset(setTo)(e.target.value)} className="h-9 w-full md:w-40" />
+          </div>
+          {filtered && (
+            <Button variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={() => {
+              setGroundId("all"); setAction("all"); setUserId("all"); setFrom(""); setTo(""); setPage(1);
+            }}>
+              Clear
+            </Button>
+          )}
+        </FilterMenu>
       </div>
       {(from && !to) || (!from && to) ? <p className="-mt-3 text-xs text-muted-foreground">Pick both dates to filter by slot date.</p> : null}
 

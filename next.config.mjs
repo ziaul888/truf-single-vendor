@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Dev only: lets a phone on the local network load the dev server. Without it, Next blocks
+  // the HMR socket from a LAN IP and the pages never hydrate.
+  allowedDevOrigins: ["192.168.*.*"],
   images: {
     remotePatterns: [
       {

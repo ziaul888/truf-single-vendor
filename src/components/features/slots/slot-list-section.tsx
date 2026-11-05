@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSlots, type Slot } from "@/hooks/useSlots";
 import { useGrounds } from "@/hooks/useGrounds";
+import { FilterMenu } from "@/components/features/filter-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,28 +92,33 @@ export function SlotListSection() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); clearSelection(); }}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All grounds</SelectItem>
-            {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
+      <div className="flex items-center gap-2 md:grid md:grid-cols-3">
+        {/* Stays outside the menu on phones: it decides which day the list shows */}
         <Input
           type="date"
+          aria-label="Slot date"
           value={date}
           onChange={(e) => { if (e.target.value) { setDate(e.target.value); setPage(1); clearSelection(); } }}
+          className="min-w-0 flex-1 md:order-2"
         />
 
-        <Select value={status} onValueChange={(v) => { setStatus(v as SlotStatus | "all"); setPage(1); clearSelection(); }}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {SLOT_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <FilterMenu activeCount={(groundId !== "all" ? 1 : 0) + (status !== "all" ? 1 : 0)}>
+          <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); clearSelection(); }}>
+            <SelectTrigger className="md:order-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All grounds</SelectItem>
+              {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={status} onValueChange={(v) => { setStatus(v as SlotStatus | "all"); setPage(1); clearSelection(); }}>
+            <SelectTrigger className="md:order-3"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {SLOT_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterMenu>
       </div>
 
       {selectedSlots.length > 0 && <SlotBulkBar selected={selectedSlots} onDone={clearSelection} />}

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { FilterMenu } from "@/components/features/filter-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,31 +108,33 @@ function CustomersView() {
             onChange={(e) => update(setSearch)(e.target.value)} className="pl-9 h-9" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={tagF} onValueChange={(v) => update(setTagF)(v as CustomerTag | "all")}>
-            <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All customers</SelectItem>
-              {TAG_FILTER_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={payF} onValueChange={(v) => update(setPayF)(v as PayFilter)}>
-            <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All payments</SelectItem>
-              <SelectItem value="has-due">Has due</SelectItem>
-              <SelectItem value="paid">Fully paid</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sort} onValueChange={(v) => update(setSort)(v as CustomerSort)}>
-            <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Sort by…" /></SelectTrigger>
-            <SelectContent>
-              {SORT_COLUMNS.map(({ field, label }) => <SelectItem key={field} value={field}>Sort: {label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          {hasFilters && (
-            <Button variant="ghost" size="sm" className="h-9 text-muted-foreground"
-              onClick={() => { setSearch(""); setTagF("all"); setPayF("all"); setPage(1); }}>Clear</Button>
-          )}
+          <FilterMenu activeCount={(tagF !== "all" ? 1 : 0) + (payF !== "all" ? 1 : 0)}>
+            <Select value={tagF} onValueChange={(v) => update(setTagF)(v as CustomerTag | "all")}>
+              <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All customers</SelectItem>
+                {TAG_FILTER_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={payF} onValueChange={(v) => update(setPayF)(v as PayFilter)}>
+              <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All payments</SelectItem>
+                <SelectItem value="has-due">Has due</SelectItem>
+                <SelectItem value="paid">Fully paid</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sort} onValueChange={(v) => update(setSort)(v as CustomerSort)}>
+              <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Sort by…" /></SelectTrigger>
+              <SelectContent>
+                {SORT_COLUMNS.map(({ field, label }) => <SelectItem key={field} value={field}>Sort: {label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {hasFilters && (
+              <Button variant="ghost" size="sm" className="h-9 text-muted-foreground"
+                onClick={() => { setSearch(""); setTagF("all"); setPayF("all"); setPage(1); }}>Clear</Button>
+            )}
+          </FilterMenu>
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { FilterMenu } from "@/components/features/filter-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,8 +125,8 @@ export default function GroundsPage() {
 
       {/* Filters + view toggle */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-full sm:w-64">
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
+          <div className="relative min-w-0 flex-1 md:w-64 md:flex-none">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by name or ID…"
@@ -135,38 +136,40 @@ export default function GroundsPage() {
             />
           </div>
 
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="Sport type" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sports</SelectItem>
-              {SPORTS.map((t) => (
-                <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FilterMenu activeCount={(typeFilter !== "all" ? 1 : 0) + (statusFilter !== "all" ? 1 : 0)}>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-36"><SelectValue placeholder="Sport type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sports</SelectItem>
+                {SPORTS.map((t) => (
+                  <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
 
-          {hasFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-muted-foreground hover:text-foreground"
-              onClick={clearFilters}
-            >
-              Clear
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-[10px] font-semibold text-foreground">
-                {activeFilters}
-              </span>
-            </Button>
-          )}
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={clearFilters}
+              >
+                Clear
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-[10px] font-semibold text-foreground">
+                  {activeFilters}
+                </span>
+              </Button>
+            )}
+          </FilterMenu>
         </div>
 
         {/* View toggle */}

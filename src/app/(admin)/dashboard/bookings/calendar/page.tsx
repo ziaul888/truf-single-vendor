@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { FilterMenu } from "@/components/features/filter-menu";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MonthGrid }  from "@/components/features/booking-calendar/month-grid";
@@ -139,17 +140,19 @@ export default function CalendarPage() {
       {/* Controls bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Ground filter */}
-        <Select value={groundFilter} onValueChange={(v) => { setGroundFilter(v); }}>
-          <SelectTrigger className="w-44 h-9">
-            <SelectValue placeholder="All Grounds" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Grounds</SelectItem>
-            {grounds.map((g) => (
-              <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FilterMenu activeCount={groundFilter !== "all" ? 1 : 0}>
+          <Select value={groundFilter} onValueChange={(v) => { setGroundFilter(v); }}>
+            <SelectTrigger className="w-44 h-9">
+              <SelectValue placeholder="All Grounds" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Grounds</SelectItem>
+              {grounds.map((g) => (
+                <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterMenu>
 
         {/* Navigation */}
         <div className="flex items-center gap-2">

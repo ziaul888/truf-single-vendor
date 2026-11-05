@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { FilterMenu } from "@/components/features/filter-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,23 +90,25 @@ export default function ConfirmedPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-72">
+        <div className="relative min-w-0 flex-1 md:w-72 md:flex-none">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search booking #, name or phone…" className="pl-8" value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
-        <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); }}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="All Grounds" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Grounds</SelectItem>
-            {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        {(search || groundId !== "all") && (
-          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => { setSearch(""); setGroundId("all"); setPage(1); }}>
-            Clear filters
-          </Button>
-        )}
+        <FilterMenu activeCount={groundId !== "all" ? 1 : 0}>
+          <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); }}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="All Grounds" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Grounds</SelectItem>
+              {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {(search || groundId !== "all") && (
+            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => { setSearch(""); setGroundId("all"); setPage(1); }}>
+              Clear filters
+            </Button>
+          )}
+        </FilterMenu>
       </div>
 
       {isLoading ? (

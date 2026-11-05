@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { FilterMenu } from "@/components/features/filter-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,32 +105,34 @@ export default function BlockedSlotsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
-        <Input
-          type="date"
-          aria-label="Filter by date"
-          value={date}
-          onChange={(e) => { setDate(e.target.value); setPage(1); }}
-          className="h-9 w-52"
-        />
-        <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); }}>
-          <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All grounds</SelectItem>
-            {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={reason} onValueChange={(v) => { setReason(v as BlockReason | "all"); setPage(1); }}>
-          <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All reasons</SelectItem>
-            {BLOCK_REASONS.map((r) => <SelectItem key={r} value={r}>{BLOCK_REASON_LABEL[r]}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        {(date || groundId !== "all" || reason !== "all") && (
-          <Button variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={() => { setDate(""); setGroundId("all"); setReason("all"); setPage(1); }}>
-            Clear
-          </Button>
-        )}
+        <FilterMenu activeCount={(date ? 1 : 0) + (groundId !== "all" ? 1 : 0) + (reason !== "all" ? 1 : 0)}>
+          <Input
+            type="date"
+            aria-label="Filter by date"
+            value={date}
+            onChange={(e) => { setDate(e.target.value); setPage(1); }}
+            className="h-9 w-52"
+          />
+          <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All grounds</SelectItem>
+              {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={reason} onValueChange={(v) => { setReason(v as BlockReason | "all"); setPage(1); }}>
+            <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All reasons</SelectItem>
+              {BLOCK_REASONS.map((r) => <SelectItem key={r} value={r}>{BLOCK_REASON_LABEL[r]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {(date || groundId !== "all" || reason !== "all") && (
+            <Button variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={() => { setDate(""); setGroundId("all"); setReason("all"); setPage(1); }}>
+              Clear
+            </Button>
+          )}
+        </FilterMenu>
       </div>
 
       {/* Table */}
