@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fromMinorUnits, hourToTime } from "@/lib/ground-format";
+import { venueHourNow, venueToday } from "@/lib/slot-format";
 import type { Slot } from "@/types/slot";
 
 export interface TimeSlot {
@@ -20,7 +21,9 @@ export function useAvailableSlots(groundId: string | undefined, date: string | u
       const { data } = await api.get("/admin/slots", {
         params: { groundId, date, status: "available", openDaysOnly: true, limit: 100 },
       });
-      return (data.data.data as Slot[]).map((s) => ({
+      // A slot stays bookable after it starts, for walk-ins, until it ends.
+      const isOver = (s: Slot) => s.date === venueToday() && s.endHour <= venueHourNow();
+      return (data.data.data as Slot[]).filter((s) => !isOver(s)).map((s) => ({
         id: s.id,
         startTime: hourToTime(s.startHour),
         endTime: hourToTime(s.endHour),
