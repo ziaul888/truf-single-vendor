@@ -61,7 +61,7 @@ export default function RevenueReportPage() {
                 {PAYMENT_METHODS.map((m) => (
                   <div key={m} className="flex justify-between">
                     <span className="text-muted-foreground">{PAYMENT_METHOD_LABEL[m]}</span>
-                    <span className="font-medium tabular-nums">{slotPriceLabel(s.revenueByMethod[m])}</span>
+                    <span className="font-medium tabular-nums">{slotPriceLabel(s.revenueByMethod[m] ?? 0)}</span>
                   </div>
                 ))}
                 <div className="space-y-2 border-t pt-3">

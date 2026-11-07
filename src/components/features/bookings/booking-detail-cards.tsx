@@ -12,6 +12,7 @@ import type { BookingDetail } from "@/types/booking";
 import { CalendarDays, Clock, CreditCard, Mail, Pencil, Phone, Timer, Users } from "lucide-react";
 import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, paymentStatusVariant } from "./booking-status-helpers";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
+import { WalletBadge, WalletPaymentNotice } from "./wallet-payment-info";
 
 export function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -112,9 +113,11 @@ export function BookingPaymentCard({ booking }: { booking: BookingDetail }) {
         <DetailRow label="Status">
           <span className="flex items-center gap-1.5">
             {booking.payAtVenue && <PayAtVenueBadge />}
+            {booking.walletPayment && <WalletBadge payment={booking.walletPayment} />}
             <Badge variant={paymentStatusVariant(booking.paymentStatus)}>{PAYMENT_STATUS_LABEL[booking.paymentStatus]}</Badge>
           </span>
         </DetailRow>
+        {booking.walletPayment && <WalletPaymentNotice payment={booking.walletPayment} />}
         <Separator />
         <DetailRow label="Slot price"><span>{slotPriceLabel(booking.amount)}</span></DetailRow>
         {booking.serviceFee > 0 && <DetailRow label="Service fee"><span>{slotPriceLabel(booking.serviceFee)}</span></DetailRow>}
@@ -148,6 +151,13 @@ export function BookingPaymentCard({ booking }: { booking: BookingDetail }) {
                     {formatEventTime(p.createdAt)}{p.recordedBy ? ` · ${p.recordedBy.name}` : ""}
                     {p.refundedAt ? ` · refunded ${formatEventTime(p.refundedAt)}` : ""}
                   </p>
+                  {(p.reference || p.payerNumber) && (
+                    <p className="text-xs text-muted-foreground">
+                      {p.reference && <>TrxID <span className="font-mono">{p.reference}</span></>}
+                      {p.reference && p.payerNumber && " · "}
+                      {p.payerNumber && `from ${p.payerNumber}`}
+                    </p>
+                  )}
                   {p.note && <p className="text-xs italic text-muted-foreground">{p.note}</p>}
                   {p.stripePaymentIntentId && <p className="truncate font-mono text-[11px] text-muted-foreground">{p.stripePaymentIntentId}</p>}
                 </div>

@@ -6,6 +6,8 @@ import type { SlotStatus } from "./slot";
 
 export interface DashboardAttention {
   toConfirm: { count: number; payAtVenue: number };
+  /** bKash / Nagad payments to check in the venue's app (also in toConfirm). Missing from older APIs. */
+  toVerify?: { count: number };
   overdue: { count: number; amount: number };
   dueToday: { count: number; amount: number };
   payingNow: { count: number };

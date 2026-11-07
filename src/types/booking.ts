@@ -5,14 +5,29 @@ import type { Sport, GroundFormat } from "./ground";
 
 export const BOOKING_STATUSES = ["pending", "confirmed", "cancelled", "completed"] as const;
 export const PAYMENT_STATUSES = ["unpaid", "partial", "paid", "refunded", "failed"] as const;
-export const PAYMENT_METHODS = ["card", "cash", "bank_transfer"] as const;
+export const PAYMENT_METHODS = ["card", "cash", "bank_transfer", "bkash", "nagad"] as const;
 /** Methods staff can record by hand (card payments only come through Stripe). */
-export const OFFLINE_METHODS = ["cash", "bank_transfer"] as const;
+export const OFFLINE_METHODS = ["cash", "bank_transfer", "bkash", "nagad"] as const;
+/** Mobile wallets: the customer sends money to the venue's number; staff check it in their own app. */
+export const WALLET_METHODS = ["bkash", "nagad"] as const;
 
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 export type OfflineMethod = (typeof OFFLINE_METHODS)[number];
+export type WalletMethod = (typeof WALLET_METHODS)[number];
+
+export const isWalletMethod = (m: string): m is WalletMethod => (WALLET_METHODS as readonly string[]).includes(m);
+
+/** A bKash / Nagad payment a portal customer sent at checkout. `pending` until staff verify it. */
+export interface WalletPayment {
+  method: WalletMethod;
+  amount: number;
+  /** The TrxID. */
+  reference: string | null;
+  payerNumber: string;
+  status: "pending" | "succeeded" | "failed" | "refunded";
+}
 export type BookingSource = "portal" | "staff";
 
 export interface StaffRef { id: string; name: string }
@@ -26,6 +41,10 @@ export interface Booking {
   paymentStatus: PaymentStatus;
   /** A portal customer chose to pay cash at the venue; pending until staff confirm. */
   payAtVenue: boolean;
+  /** A portal customer paid by bKash / Nagad: what they sent, for staff to verify. */
+  walletPayment: WalletPayment | null;
+  /** The customer asked to cancel while their bKash / Nagad payment was under review. */
+  cancelRequestedAt: string | null;
   ground: { id: string; name: string; sport: Sport };
   slot: { id: string; date: string; startHour: number; endHour: number };
   customer: { id: string; name: string; phone: string; email: string };
@@ -53,6 +72,10 @@ export interface BookingPayment {
   status: string;
   cardLast4: string | null;
   stripePaymentIntentId: string | null;
+  /** bKash / Nagad TrxID. */
+  reference: string | null;
+  /** bKash / Nagad: the number a portal customer sent from. */
+  payerNumber: string | null;
   note: string | null;
   recordedBy: StaffRef | null;
   createdAt: string;
@@ -60,7 +83,7 @@ export interface BookingPayment {
 }
 
 export type BookingEventType =
-  | "created" | "payment_received" | "confirmed" | "cancelled" | "refunded" | "email_sent" | "completed";
+  | "created" | "payment_received" | "confirmed" | "cancelled" | "refunded" | "email_sent" | "completed" | "cancel_requested";
 
 export interface BookingEvent {
   id: string;
@@ -92,8 +115,8 @@ export interface CreateBookingInput {
   slotId: string;
   customer: { id?: string; name: string; phone: string; email: string };
   payment:
-    | { type: "full"; method: OfflineMethod; note?: string }
-    | { type: "partial"; method: OfflineMethod; amount: number; dueDate?: string; note?: string }
+    | { type: "full"; method: OfflineMethod; reference?: string; note?: string }
+    | { type: "partial"; method: OfflineMethod; amount: number; dueDate?: string; reference?: string; note?: string }
     | { type: "none" };
   notes?: string;
 }
@@ -101,16 +124,21 @@ export interface CreateBookingInput {
 // ── Portal (no login; access by signed link) ──
 
 export interface CheckoutOptions {
+  cardEnabled: boolean;
   cashEnabled: boolean;
+  /** bKash / Nagad numbers to send money to; only the ones the admin has set. */
+  wallets: { method: WalletMethod; number: string }[];
   serviceFee: number;
   currency: string;
   holdMinutes: number;
 }
 
+export type CheckoutMethod = "card" | "cash" | WalletMethod;
+
 export interface CheckoutResult {
   bookingId: string;
-  paymentMethod: "card" | "cash";
-  /** Stripe for card; null for cash. */
+  paymentMethod: CheckoutMethod;
+  /** Stripe for card; null for cash, bKash and Nagad. */
   checkoutUrl: string | null;
   confirmationUrl: string;
 }
@@ -121,6 +149,8 @@ export interface PublicBooking {
   status: BookingStatus;
   paymentStatus: PaymentStatus;
   payAtVenue: boolean;
+  /** Paid by bKash / Nagad at checkout; `status: "pending"` while the venue verifies it. */
+  walletPayment: Omit<WalletPayment, "payerNumber"> | null;
   ground: { id: string; name: string; sport: Sport; format: GroundFormat | null; address: string | null; coverPhoto: string | null };
   slot: { date: string; startHour: number; endHour: number };
   amount: number;
@@ -133,6 +163,10 @@ export interface PublicBooking {
   canCancel: boolean;
   /** Something is due and can be paid online ("Pay ৳{due} now"). */
   canPay: boolean;
+  /** The customer asked the venue to cancel while their bKash / Nagad payment is under review. */
+  cancelRequested: boolean;
+  /** They can ask now ("Request cancellation"): payment under review, no request yet, before the cutoff. */
+  canRequestCancel: boolean;
 }
 
 export interface PayResult {

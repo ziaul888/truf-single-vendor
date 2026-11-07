@@ -25,7 +25,7 @@ export function TodayMoney() {
             {PAYMENT_METHODS.map((m) => (
               <div key={m} className="flex justify-between">
                 <span className="text-muted-foreground">{PAYMENT_METHOD_LABEL[m]}</span>
-                <span className="font-medium tabular-nums">{slotPriceLabel(data.revenueByMethod[m])}</span>
+                <span className="font-medium tabular-nums">{slotPriceLabel(data.revenueByMethod[m] ?? 0)}</span>
               </div>
             ))}
             {data.refunds > 0 && (

@@ -8,6 +8,7 @@ export type ConfirmationState =
   | "confirming"      // just back from Stripe, waiting for the webhook
   | "unpaid"          // pending and not paid (card or staff booking): "Pay now"
   | "reserved"        // pay at venue, pending until staff confirm
+  | "verifying"       // paid by bKash / Nagad, pending until the venue verifies the payment
   | "confirmed"
   | "completed"
   | "cancelled";
@@ -23,9 +24,18 @@ export function paymentLanded(b: PublicBooking, paidBefore: number | null) {
 
 export function confirmationState(b: PublicBooking, waitingForPayment: boolean): ConfirmationState {
   if (waitingForPayment) return "confirming";
-  if (b.status === "pending") return b.payAtVenue ? "reserved" : "unpaid";
+  if (b.status === "pending") {
+    if (isUnderReview(b)) return "verifying";
+    return b.payAtVenue ? "reserved" : "unpaid";
+  }
   return b.status;
 }
+
+export const WALLET_NAME = { bkash: "bKash", nagad: "Nagad" } as const;
+
+/** A bKash / Nagad payment the venue is still verifying: nothing is "due" or "to pay" meanwhile. */
+export const isUnderReview = (b: Pick<PublicBooking, "status" | "walletPayment">) =>
+  b.status === "pending" && b.walletPayment?.status === "pending";
 
 export const PAYMENT_STATUS_LABEL: Record<PublicBooking["paymentStatus"], string> = {
   unpaid: "Unpaid",

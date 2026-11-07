@@ -20,6 +20,7 @@ const EMAIL_KIND_LABEL: Record<EmailKind, string> = {
   payment_due: "Payment due",
   staff_new_booking: "Staff: new booking",
   staff_customer_cancelled: "Staff: customer cancelled",
+  staff_cancel_requested: "Staff: cancellation requested",
   staff_due_digest: "Staff: due digest",
   test: "Test email",
 };

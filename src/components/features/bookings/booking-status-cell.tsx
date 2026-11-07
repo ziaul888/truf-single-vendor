@@ -6,7 +6,9 @@ import { useConfirmBooking } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
 import type { Booking } from "@/types/booking";
 import { toast } from "sonner";
-import { BOOKING_STATUS_LABEL, bookingStatusVariant, isAwaitingCardPayment, isCancellable } from "./booking-status-helpers";
+import {
+  BOOKING_STATUS_LABEL, bookingStatusVariant, isAwaitingCardPayment, isAwaitingWalletVerification, isCancellable,
+} from "./booking-status-helpers";
 
 /**
  * Inline status: there is no generic status update, so "Confirmed" calls confirm
@@ -19,7 +21,8 @@ export function StatusCell({ booking, onCancel }: { booking: Booking; onCancel: 
     return <Badge variant={bookingStatusVariant(booking.status)}>{BOOKING_STATUS_LABEL[booking.status]}</Badge>;
   }
 
-  const canConfirm = booking.status === "pending" && !isAwaitingCardPayment(booking);
+  // bKash / Nagad payments are verified from Confirm Bookings or the detail page, where the TrxID shows.
+  const canConfirm = booking.status === "pending" && !isAwaitingCardPayment(booking) && !isAwaitingWalletVerification(booking);
 
   function handleChange(value: string) {
     if (value === "cancelled") return onCancel(booking);

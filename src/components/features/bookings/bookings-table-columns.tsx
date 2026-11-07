@@ -10,6 +10,7 @@ import { Phone, XCircle } from "lucide-react";
 import { PAYMENT_STATUS_LABEL, isCancellable, paymentStatusVariant } from "./booking-status-helpers";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
+import { WalletBadge } from "./wallet-payment-info";
 
 export function getBookingColumns(setCancelTarget: (b: Booking) => void): ColumnDef<Booking>[] {
   return [
@@ -60,6 +61,7 @@ export function getBookingColumns(setCancelTarget: (b: Booking) => void): Column
         <div className="flex flex-col items-start gap-1">
           <Badge variant={paymentStatusVariant(row.original.paymentStatus)}>{PAYMENT_STATUS_LABEL[row.original.paymentStatus]}</Badge>
           {row.original.payAtVenue && <PayAtVenueBadge />}
+          {row.original.walletPayment && <WalletBadge payment={row.original.walletPayment} />}
         </div>
       ),
     },

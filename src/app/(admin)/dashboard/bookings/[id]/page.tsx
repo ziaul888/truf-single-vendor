@@ -10,7 +10,7 @@ import { useBookingDetail } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
 import { ArrowLeft, CheckCircle2, SearchX } from "lucide-react";
 import {
-  BOOKING_STATUS_LABEL, bookingStatusVariant, isAwaitingCardPayment, isCancellable,
+  BOOKING_STATUS_LABEL, bookingStatusVariant, isAwaitingCardPayment, isAwaitingWalletVerification, isCancellable,
 } from "@/components/features/bookings/booking-status-helpers";
 import { BookingDetailSidebar } from "@/components/features/bookings/booking-detail-sidebar";
 import {
@@ -21,6 +21,7 @@ import { ConfirmDialog } from "@/components/features/bookings/confirm-dialog";
 import { CollectPaymentDialog } from "@/components/features/bookings/collect-payment-dialog";
 import { EditBookingDialog } from "@/components/features/bookings/edit-booking-dialog";
 import { PayAtVenueBadge } from "@/components/features/bookings/pay-at-venue-badge";
+import { CancelRequestedBadge } from "@/components/features/bookings/wallet-payment-info";
 
 type DialogName = "cancel" | "confirm" | "collect" | "edit" | null;
 
@@ -92,10 +93,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         </h1>
         <div className="ml-auto flex items-center gap-2">
           {booking.payAtVenue && <PayAtVenueBadge />}
+          {booking.cancelRequestedAt && booking.status === "pending" && <CancelRequestedBadge />}
           <Badge variant={bookingStatusVariant(booking.status)}>{BOOKING_STATUS_LABEL[booking.status]}</Badge>
           {canConfirm && (
             <Button size="sm" className="bg-green-600 text-white hover:bg-green-700" onClick={() => setDialog("confirm")}>
-              <CheckCircle2 className="mr-1.5 h-4 w-4" />Confirm
+              <CheckCircle2 className="mr-1.5 h-4 w-4" />{isAwaitingWalletVerification(booking) ? "Verify" : "Confirm"}
             </Button>
           )}
         </div>

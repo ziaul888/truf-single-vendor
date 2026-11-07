@@ -7,11 +7,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Lock, Wallet } from "lucide-react";
 import { PortalApiError, startCheckout, markLeavingForPayment, toAppPath } from "@/lib/portal-bookings";
+import type { CheckoutMethod } from "@/types/booking";
 import { useCustomerSession } from "@/components/portal/account/use-customer-session";
 import { CheckoutFormSchema, CHECKOUT_FIELDS, type CheckoutFormValues } from "./checkout-schema";
 import { Field, PaymentChoice } from "./checkout-fields";
 import { takaLabel } from "./checkout-totals";
 import { useCheckoutOptions } from "./use-checkout-options";
+import { WalletFields } from "./wallet-fields";
 
 interface FormError { message: string; slotTaken: boolean }
 
@@ -29,7 +31,9 @@ export function CheckoutForm({
   const { register, handleSubmit, watch, setValue, setError, formState: { errors, isSubmitting } } =
     useForm<CheckoutFormValues>({
       resolver: zodResolver(CheckoutFormSchema),
-      defaultValues: { customerName: "", customerEmail: "", customerPhone: "", paymentMethod: "card", acceptTerms: false },
+      defaultValues: {
+        customerName: "", customerEmail: "", customerPhone: "", paymentMethod: "card", reference: "", payerNumber: "", acceptTerms: false,
+      },
     });
 
   useEffect(() => {
@@ -39,16 +43,32 @@ export function CheckoutForm({
     if (session.email && !watch("customerEmail")) setValue("customerEmail", session.email);
   }, [session, setValue, watch]);
 
+  // An older API without the field still takes card payments.
+  const cardEnabled = !!options.data && options.data.cardEnabled !== false;
   const cashEnabled = options.data?.cashEnabled ?? false;
-  const method = cashEnabled ? watch("paymentMethod") : "card";
+  const wallets = options.data?.wallets ?? [];
+  // The methods on offer, in display order; the choice falls back to the first one available.
+  const available: CheckoutMethod[] = [
+    ...(cardEnabled ? ["card" as const] : []), ...(cashEnabled ? ["cash" as const] : []), ...wallets.map((w) => w.method),
+  ];
+  const canPay = available.length > 0;
+  const chosen = watch("paymentMethod");
+  const method = available.includes(chosen) ? chosen : (available[0] ?? "card");
+  const wallet = wallets.find((w) => w.method === method);
   const busy = isSubmitting || leaving;
+
+  // Keep the form's value on the method shown, so the wallet fields are validated when they apply.
+  useEffect(() => {
+    if (options.data && chosen !== method) setValue("paymentMethod", method);
+  }, [options.data, chosen, method, setValue]);
 
   const onSubmit = async (values: CheckoutFormValues) => {
     setFormError(null);
     try {
-      const { customerName, customerEmail, customerPhone } = values;
+      const { customerName, customerEmail, customerPhone, reference, payerNumber } = values;
       const result = await startCheckout({
         groundId, date, hour, customerName, customerEmail, customerPhone, paymentMethod: method,
+        ...(wallet && { reference: reference.trim().toUpperCase(), payerNumber: payerNumber.trim() }),
       });
       setLeaving(true);
       if (result.checkoutUrl) {
@@ -72,6 +92,7 @@ export function CheckoutForm({
     );
     fieldErrors.forEach((d) => setError(d.field as (typeof CHECKOUT_FIELDS)[number], { message: d.message }));
     if (fieldErrors.length && fieldErrors.length === err.details?.length) return;
+    if (err.code === "REFERENCE_ALREADY_USED") return setError("reference", { message: err.message });
     if (err.code === "SLOT_NOT_AVAILABLE") setFormError({ message: "Sorry, someone just booked this slot.", slotTaken: true });
     else if (err.code === "GROUND_CLOSED") setFormError({ message: "Sorry, the ground is closed on that day.", slotTaken: true });
     else setFormError({ message: err.message, slotTaken: false });
@@ -116,10 +137,13 @@ export function CheckoutForm({
           <PaymentChoice
             value={method}
             onChange={(m) => setValue("paymentMethod", m)}
+            cardEnabled={cardEnabled}
             cashEnabled={cashEnabled}
+            wallets={wallets}
             holdMinutes={options.data.holdMinutes}
           />
         )}
+        {wallet && <WalletFields method={wallet.method} number={wallet.number} total={total} register={register} errors={errors} />}
         {errors.paymentMethod && <p className="mt-1 text-[11px] text-destructive">{errors.paymentMethod.message}</p>}
       </div>
 
@@ -144,18 +168,19 @@ export function CheckoutForm({
 
       <button
         type="submit"
-        disabled={disabled || busy || !options.data}
+        disabled={disabled || busy || !canPay}
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-        {submitLabel(method, total, busy)}
+        {options.data && !canPay ? "Online booking unavailable" : submitLabel(method, total, busy)}
       </button>
     </form>
   );
 }
 
-function submitLabel(method: "card" | "cash", total: string | null, busy: boolean) {
+function submitLabel(method: CheckoutMethod, total: string | null, busy: boolean) {
   if (busy) return method === "card" ? "Taking you to payment…" : "Reserving your slot…";
   if (method === "cash") return total ? `Reserve · pay ${total} at the venue` : "Reserve slot";
+  if (method !== "card") return total ? `Book · I've sent ${total}` : "Book slot";
   return total ? `Continue to pay ${total}` : "Continue to payment";
 }

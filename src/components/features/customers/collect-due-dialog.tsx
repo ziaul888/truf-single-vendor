@@ -1,6 +1,6 @@
 "use client";
 
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -15,40 +15,47 @@ import { useRecordPayment } from "@/hooks/useBookings";
 import { applyApiErrors, toApiFailure } from "@/lib/api-error";
 import { fromMinorUnits, toMinorUnits } from "@/lib/ground-format";
 import { slotPriceLabel } from "@/lib/slot-format";
-import { OFFLINE_METHODS, type OfflineMethod } from "@/types/booking";
+import { OFFLINE_METHODS, isWalletMethod, type OfflineMethod } from "@/types/booking";
+import { OptionalTrxIdSchema } from "@/validations/wallet";
+import { TrxIdField } from "@/components/features/bookings/trx-id-field";
 import type { DuePayment } from "./customer-due-payments";
 
-const METHOD_LABEL: Record<OfflineMethod, string> = { cash: "Cash", bank_transfer: "Bank transfer" };
+const METHOD_LABEL: Record<OfflineMethod, string> = { cash: "Cash", bank_transfer: "Bank transfer", bkash: "bKash", nagad: "Nagad" };
 
 const schemaFor = (dueMajor: number) => z.object({
   amount: z.coerce.number({ message: "Enter an amount" })
     .positive("Enter an amount above 0")
     .max(dueMajor, `At most ${slotPriceLabel(toMinorUnits(dueMajor))}`),
   method: z.enum(OFFLINE_METHODS),
+  reference: OptionalTrxIdSchema,
   note:   z.string().max(500, "At most 500 characters"),
 });
 type CollectInput = z.input<ReturnType<typeof schemaFor>>;
 type CollectData = z.output<ReturnType<typeof schemaFor>>;
 
-/** Records cash or a bank transfer against one due booking. Mount only while open. */
+/** Records cash, a bank transfer, bKash or Nagad against one due booking. Mount only while open. */
 export function CollectDueDialog({ due, onClose }: { due: DuePayment; onClose: () => void }) {
   const dueMajor = fromMinorUnits(due.amount);
   const form = useForm<CollectInput, unknown, CollectData>({
     resolver: zodResolver(schemaFor(dueMajor)),
-    defaultValues: { amount: dueMajor, method: "cash", note: "" },
+    defaultValues: { amount: dueMajor, method: "cash", reference: "", note: "" },
   });
   const record = useRecordPayment();
   const { register, control, formState: { errors } } = form;
+  const wallet = isWalletMethod(useWatch({ control, name: "method" }));
 
   const onSubmit = form.handleSubmit((d) => {
     const note = d.note.trim();
+    const reference = isWalletMethod(d.method) && d.reference ? d.reference : undefined;
     record.mutate(
-      { id: due.bookingId, amount: toMinorUnits(d.amount), method: d.method, ...(note ? { note } : {}) },
+      { id: due.bookingId, amount: toMinorUnits(d.amount), method: d.method, reference, ...(note ? { note } : {}) },
       {
         onSuccess: () => { toast.success(`Payment recorded for ${due.bookingNumber}`); onClose(); },
         onError: (err) => {
           const failure = toApiFailure(err);
-          const placed = applyApiErrors(form, failure, { PAYMENT_EXCEEDS_DUE: "amount" }, ["amount", "method", "note"]);
+          const placed = applyApiErrors(
+            form, failure, { PAYMENT_EXCEEDS_DUE: "amount", REFERENCE_ALREADY_USED: "reference" }, ["amount", "method", "reference", "note"],
+          );
           if (!placed) toast.error(failure.error);
         },
       },
@@ -81,6 +88,7 @@ export function CollectDueDialog({ due, onClose }: { due: DuePayment; onClose: (
               </Select>
             )} />
           </div>
+          {wallet && <TrxIdField id="collect-reference" registration={register("reference")} error={errors.reference?.message} />}
           <div className="space-y-1.5">
             <Label htmlFor="collect-note">Note <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
             <Input id="collect-note" placeholder="e.g. Paid at the counter" {...register("note")} />

@@ -26,7 +26,7 @@ const FORMAT_OPTIONS = [
 ] as const;
 
 const INCLUDED: Record<ExportType, string[]> = {
-  revenue: ["Period start and end", "Received, refunds and net revenue", "Card, cash and bank transfer", "Bookings played in the period"],
+  revenue: ["Period start and end", "Received, refunds and net revenue", "Card, cash and bank transfer", "Bookings played in the period", "bKash and Nagad"],
   bookings: ["Booking number, ground, date and time", "Customer name and phone", "Amount, fee, total, paid and due", "Booking and payment status, source"],
   customers: ["Name, phone and email", "Customer since and last booking", "Bookings and total spent", "Due amount and tag"],
 };

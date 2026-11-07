@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +15,21 @@ import {
 import { useConfirmBooking } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
-import { OFFLINE_METHODS, type Booking } from "@/types/booking";
+import { OFFLINE_METHODS, isWalletMethod, type Booking } from "@/types/booking";
+import { OptionalTrxIdSchema } from "@/validations/wallet";
 import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, paymentStatusVariant } from "./booking-status-helpers";
+import {
+  PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, isAwaitingWalletVerification, paymentStatusVariant,
+} from "./booking-status-helpers";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
+import { TrxIdField } from "./trx-id-field";
+import { WalletPaymentRows } from "./wallet-payment-info";
 
 const ConfirmSchema = z.object({
   markPaid: z.boolean(),
   method: z.enum(OFFLINE_METHODS),
+  reference: OptionalTrxIdSchema,
   notifyCustomer: z.boolean(),
 });
 type ConfirmForm = z.infer<typeof ConfirmSchema>;
@@ -34,7 +40,10 @@ interface ConfirmDialogProps {
   onOpenChange: (v: boolean) => void;
 }
 
-/** Confirms a pending staff or pay-at-venue booking, optionally recording the payment and emailing the customer. */
+/**
+ * Confirms a pending staff or pay-at-venue booking, optionally recording the payment and emailing the
+ * customer. For a portal bKash / Nagad booking it is "Verify": the payment the customer sent is marked received.
+ */
 export function ConfirmDialog({ booking, open, onOpenChange }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,20 +56,25 @@ export function ConfirmDialog({ booking, open, onOpenChange }: ConfirmDialogProp
 
 function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => void }) {
   const confirm = useConfirmBooking();
-  const hasDue = booking.due > 0;
-  const { control, watch, handleSubmit } = useForm<ConfirmForm>({
+  const verify = isAwaitingWalletVerification(booking);
+  // A verified bKash / Nagad payment covers the total: nothing is left to mark paid.
+  const hasDue = booking.due > 0 && !verify;
+  const { control, watch, register, handleSubmit, formState: { errors } } = useForm<ConfirmForm>({
     resolver: zodResolver(ConfirmSchema),
-    defaultValues: { markPaid: false, method: "cash", notifyCustomer: true },
+    defaultValues: { markPaid: false, method: "cash", reference: "", notifyCustomer: true },
   });
   const markPaid = watch("markPaid");
+  const wallet = isWalletMethod(useWatch({ control, name: "method" }));
 
   function onSubmit(values: ConfirmForm) {
     const paid = hasDue && values.markPaid;
+    const reference = paid && isWalletMethod(values.method) && values.reference ? values.reference : undefined;
     confirm.mutate(
-      { id: booking.id, markPaid: paid, method: paid ? values.method : undefined, notifyCustomer: values.notifyCustomer },
+      { id: booking.id, markPaid: paid, method: paid ? values.method : undefined, reference, notifyCustomer: values.notifyCustomer },
       {
         onSuccess: () => {
-          toast.success(`Booking ${booking.bookingNumber} confirmed${paid ? " and payment recorded" : ""}${values.notifyCustomer ? " · customer emailed" : ""}`);
+          const what = verify ? "payment verified and booking confirmed" : `confirmed${paid ? " and payment recorded" : ""}`;
+          toast.success(`Booking ${booking.bookingNumber} ${what}${values.notifyCustomer ? " · customer emailed" : ""}`);
           onClose();
         },
         onError: (err) => toast.error(toApiFailure(err).error),
@@ -72,10 +86,13 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
     <form onSubmit={handleSubmit(onSubmit)}>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <CheckCircle2 className="h-5 w-5 text-green-600" />Confirm Booking
+          <CheckCircle2 className="h-5 w-5 text-green-600" />{verify ? "Verify Payment" : "Confirm Booking"}
         </DialogTitle>
         <DialogDescription>
-          Confirm booking <span className="font-mono font-medium">{booking.bookingNumber}</span> for{" "}
+          {verify
+            ? <>Check your {PAYMENT_METHOD_LABEL[booking.walletPayment!.method]} app for this payment before you verify booking{" "}</>
+            : <>Confirm booking{" "}</>}
+          <span className="font-mono font-medium">{booking.bookingNumber}</span> for{" "}
           <span className="font-medium">{booking.contact.name}</span>?
         </DialogDescription>
       </DialogHeader>
@@ -92,6 +109,7 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
               <Badge variant={paymentStatusVariant(booking.paymentStatus)} className="text-xs">{PAYMENT_STATUS_LABEL[booking.paymentStatus]}</Badge>
             </span>
           </Row>
+          {booking.walletPayment && <WalletPaymentRows payment={booking.walletPayment} />}
         </div>
 
         <Separator />
@@ -106,7 +124,8 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
               <div>
                 <Label htmlFor="markPaid" className="cursor-pointer font-medium">Mark payment as received</Label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {hasDue ? `Record ${slotPriceLabel(booking.due)} collected in cash or by bank transfer` : "Nothing due on this booking"}
+                  {verify ? "Verifying records the payment the customer sent"
+                    : hasDue ? `Record ${slotPriceLabel(booking.due)} collected now` : "Nothing due on this booking"}
                 </p>
               </div>
             </div>
@@ -119,6 +138,9 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
                   </SelectContent>
                 </Select>
               )} />
+            )}
+            {hasDue && markPaid && wallet && (
+              <TrxIdField id="confirm-reference" registration={register("reference")} error={errors.reference?.message} />
             )}
           </div>
           <div className="flex items-start gap-3 rounded-md border p-3">
@@ -137,7 +159,7 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
         <Button type="submit" className="bg-green-600 text-white hover:bg-green-700" disabled={confirm.isPending}>
           <CheckCircle2 className="mr-1.5 h-4 w-4" />
-          {confirm.isPending ? "Confirming…" : "Confirm Booking"}
+          {confirm.isPending ? "Confirming…" : verify ? "Verify & Confirm" : "Confirm Booking"}
         </Button>
       </DialogFooter>
     </form>

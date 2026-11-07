@@ -8,8 +8,10 @@ import { ReadOnlyNotice } from "@/components/features/settings/read-only-notice"
 import { SettingsLoadError, SettingsLoading } from "@/components/features/settings/settings-load-state";
 import { StripeStatusCard } from "@/components/features/settings/stripe-status-card";
 import { PaymentMethodsCard } from "@/components/features/settings/payment-methods-card";
+import { WalletNumbersForm } from "@/components/features/settings/wallet-numbers-form";
 
-// Read-only payment status. Stripe keys live in turf-api's .env; only "pay at venue" is editable here.
+// Read-only payment status. Stripe keys live in turf-api's .env; "pay at venue" and the bKash / Nagad
+// numbers are editable here (admin only).
 export default function PaymentsSettingsPage() {
   const { data: status, isLoading, isError, refetch } = usePaymentStatus();
   // "Pay at venue" is a slot setting; its cache updates as soon as the switch saves.
@@ -33,6 +35,7 @@ export default function PaymentsSettingsPage() {
           onSaved={() => refetch()}
         />
       </div>
+      {slotSettings && <WalletNumbersForm settings={slotSettings} canEdit={canEdit} onSaved={() => refetch()} />}
     </div>
   );
 }

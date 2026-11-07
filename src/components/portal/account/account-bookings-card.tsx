@@ -6,6 +6,7 @@ import { CalendarDays, ChevronRight } from "lucide-react";
 import { listMyBookings, toAppPath } from "@/lib/portal-bookings";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
 import { SkeletonBlock } from "@/components/portal/loading/skeleton-block";
+import { isUnderReview } from "@/components/portal/confirmation/confirmation-state";
 
 /** Next booking plus upcoming / past totals, linking to My bookings. */
 export function AccountBookingsCard() {
@@ -36,7 +37,7 @@ export function AccountBookingsCard() {
           <p className="text-sm text-muted-foreground">
             {formatSlotDate(next.slot.date)} · {slotTimeLabel(next.slot)} · {next.bookingNumber}
           </p>
-          {next.due > 0 && <p className="mt-1 text-sm font-semibold text-accent">{slotPriceLabel(next.due)} to pay</p>}
+          {next.due > 0 && !isUnderReview(next) && <p className="mt-1 text-sm font-semibold text-accent">{slotPriceLabel(next.due)} to pay</p>}
         </Link>
       ) : (
         <p className="mt-4 text-sm text-muted-foreground">

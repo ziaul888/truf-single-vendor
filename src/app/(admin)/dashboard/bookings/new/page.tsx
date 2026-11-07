@@ -22,7 +22,7 @@ import { useCreateBooking } from "@/hooks/useBookings";
 import { applyApiErrors, toApiFailure, type ApiFailure } from "@/lib/api-error";
 import { toMinorUnits } from "@/lib/ground-format";
 import { AddBookingSchema, type AddBookingFormData } from "@/schemas";
-import type { CreateBookingInput } from "@/types/booking";
+import { isWalletMethod, type CreateBookingInput } from "@/types/booking";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ const API_FIELD: Record<string, keyof AddBookingFormData> = {
   "customer.phone": "customerPhone",
   "customer.email": "customerEmail",
   "payment.method": "paymentMethod",
+  "payment.reference": "paymentReference",
   "payment.amount": "advanceAmount",
   "payment.dueDate": "dueDate",
   "payment.note": "partialNote",
@@ -53,10 +54,11 @@ function toCreateInput(data: AddBookingFormData, known: KnownCustomer | null): C
     email: data.customerEmail.trim(),
   };
   const note = data.partialNote?.trim() || undefined;
+  const reference = isWalletMethod(data.paymentMethod) && data.paymentReference ? data.paymentReference : undefined;
   const payment: CreateBookingInput["payment"] =
     data.paymentType === "none" ? { type: "none" }
-    : data.paymentType === "full" ? { type: "full", method: data.paymentMethod }
-    : { type: "partial", method: data.paymentMethod, amount: toMinorUnits(data.advanceAmount ?? 0), dueDate: data.dueDate || undefined, note };
+    : data.paymentType === "full" ? { type: "full", method: data.paymentMethod, reference }
+    : { type: "partial", method: data.paymentMethod, amount: toMinorUnits(data.advanceAmount ?? 0), dueDate: data.dueDate || undefined, reference, note };
   return { slotId: data.slotId, customer, payment, notes: data.notes?.trim() || undefined };
 }
 
@@ -72,7 +74,7 @@ export default function AddBookingPage() {
     defaultValues: {
       groundId: "", date: "", slotId: "",
       customerName: "", customerPhone: "", customerEmail: "",
-      paymentType: "full", paymentMethod: "cash",
+      paymentType: "full", paymentMethod: "cash", paymentReference: "",
       advanceAmount: 0, dueDate: "", partialNote: "", notes: "",
     },
   });
@@ -99,7 +101,9 @@ export default function AddBookingPage() {
       return;
     }
     if (failure.code === "CUSTOMER_NOT_FOUND") setKnownCustomer(null);
-    const landed = applyApiErrors(form, toFormFailure(failure), { PAYMENT_EXCEEDS_DUE: "advanceAmount", SLOT_IN_PAST: "slotId" });
+    const landed = applyApiErrors(form, toFormFailure(failure), {
+      PAYMENT_EXCEEDS_DUE: "advanceAmount", SLOT_IN_PAST: "slotId", REFERENCE_ALREADY_USED: "paymentReference",
+    });
     if (!landed) toast.error(failure.error);
   }
 

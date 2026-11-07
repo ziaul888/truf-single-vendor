@@ -4,18 +4,28 @@ import type { PublicBooking } from "@/types/booking";
 import { fromMinorUnits } from "@/lib/ground-format";
 import { formatSlotDate, slotTimeLabel } from "@/lib/slot-format";
 import { FormatBadge } from "@/components/portal/format-badge";
-import { PAYMENT_STATUS_LABEL, type ConfirmationState } from "./confirmation-state";
+import { PAYMENT_STATUS_LABEL, WALLET_NAME, isUnderReview, type ConfirmationState } from "./confirmation-state";
 
 const STATUS_PILL: Record<ConfirmationState, { label: string; className: string }> = {
   confirming: { label: "Processing", className: "bg-warning/15 text-warning" },
   unpaid: { label: "Awaiting payment", className: "bg-warning/15 text-warning" },
   reserved: { label: "Pending", className: "bg-warning/15 text-warning" },
+  verifying: { label: "Verifying payment", className: "bg-warning/15 text-warning" },
   confirmed: { label: "Confirmed", className: "bg-success/15 text-success" },
   completed: { label: "Completed", className: "bg-muted text-muted-foreground" },
   cancelled: { label: "Cancelled", className: "bg-destructive/15 text-destructive" },
 };
 
 const taka = (minor: number) => `৳${fromMinorUnits(minor).toLocaleString()}`;
+
+/** "Paid · cash at venue", "Unpaid · bKash, being verified". */
+function paymentLabel(b: PublicBooking) {
+  const status = PAYMENT_STATUS_LABEL[b.paymentStatus];
+  if (b.payAtVenue) return `${status} · cash at venue`;
+  const w = b.walletPayment;
+  if (!w) return status;
+  return w.status === "pending" ? `${WALLET_NAME[w.method]} · being verified` : `${status} · ${WALLET_NAME[w.method]}`;
+}
 
 export function BookingDetailsCard({
   booking: b, state, venueName, children,
@@ -53,13 +63,14 @@ export function BookingDetailsCard({
         <Line label="Slot" value={taka(b.amount)} />
         <Line label="Service fee" value={taka(b.serviceFee)} />
         <Line label="Total" value={taka(b.total)} bold />
-        {b.paid > 0 && b.due > 0 && (
+        {b.paid > 0 && b.due > 0 && !isUnderReview(b) && (
           <>
             <Line label="Paid" value={taka(b.paid)} />
             <Line label="Due" value={taka(b.due)} bold />
           </>
         )}
-        <Line label="Payment" value={b.payAtVenue ? `${PAYMENT_STATUS_LABEL[b.paymentStatus]} · cash at venue` : PAYMENT_STATUS_LABEL[b.paymentStatus]} />
+        <Line label="Payment" value={paymentLabel(b)} />
+        {b.walletPayment?.reference && <Line label="TrxID" value={b.walletPayment.reference} />}
       </div>
 
       {b.ground.address && state !== "cancelled" && (

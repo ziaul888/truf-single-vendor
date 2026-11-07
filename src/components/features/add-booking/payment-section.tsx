@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { venueToday } from "@/lib/slot-format";
-import { Banknote, Building2, CheckCircle2, Clock, Wallet, HandCoins } from "lucide-react";
+import { Banknote, Building2, CheckCircle2, Clock, Wallet, HandCoins, Smartphone } from "lucide-react";
 import { takaLabel } from "@/components/features/bookings/booking-status-helpers";
+import { TrxIdField } from "@/components/features/bookings/trx-id-field";
+import { isWalletMethod } from "@/types/booking";
 import { SectionCard } from "./section-card";
 
 type PaymentType = AddBookingFormData["paymentType"];
@@ -22,6 +24,8 @@ export const PAYMENT_TYPES = [
 const METHODS = [
   { value: "cash", label: "Cash", desc: "Collected in person", icon: Banknote },
   { value: "bank_transfer", label: "Bank Transfer", desc: "Customer pays via bank", icon: Building2 },
+  { value: "bkash", label: "bKash", desc: "Sent to the venue's bKash", icon: Smartphone },
+  { value: "nagad", label: "Nagad", desc: "Sent to the venue's Nagad", icon: Smartphone },
 ] as const;
 
 /** The booking and payment status the API will set for a payment type. */
@@ -100,6 +104,11 @@ export function PaymentSection({ form, totalAmount }: PaymentSectionProps) {
               })}
             </div>
             {errors.paymentMethod && <p className="text-xs text-destructive">{errors.paymentMethod.message}</p>}
+            {isWalletMethod(paymentMethod) && (
+              <div className="max-w-xs pt-1">
+                <TrxIdField id="paymentReference" registration={register("paymentReference")} error={errors.paymentReference?.message} />
+              </div>
+            )}
           </div>
         )}
 
