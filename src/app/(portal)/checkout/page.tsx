@@ -6,6 +6,7 @@ import { formatSlotDate, slotTimeLabel } from "@/lib/slot-format";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { CheckoutStepper } from "@/components/portal/checkout/checkout-stepper";
 import { CheckoutForm } from "@/components/portal/checkout/checkout-form";
+import { CHECKOUT_METHODS } from "@/types/booking";
 import { CheckoutTotals } from "@/components/portal/checkout/checkout-totals";
 import { GroundRules } from "@/components/portal/ground-rules";
 import type { Ground } from "@/types/api";
@@ -14,9 +15,9 @@ import type { PublicSlot } from "@/types/slot";
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ groundId?: string; date?: string; hour?: string }>;
+  searchParams: Promise<{ groundId?: string; date?: string; hour?: string; method?: string }>;
 }) {
-  const { groundId, date, hour } = await searchParams;
+  const { groundId, date, hour, method } = await searchParams;
   const ground = groundId ? await getPublicGround(groundId) : null;
 
   const hourNum = hour && /^\d+$/.test(hour) ? Number(hour) : null;
@@ -47,6 +48,7 @@ export default async function CheckoutPage({
             hour={hourNum}
             slotPrice={slot.price}
             disabled={unavailable}
+            initialMethod={CHECKOUT_METHODS.find((m) => m === method)}
           />
         ) : (
           !unavailable && (

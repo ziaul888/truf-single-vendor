@@ -133,7 +133,8 @@ export interface CheckoutOptions {
   holdMinutes: number;
 }
 
-export type CheckoutMethod = "card" | "cash" | WalletMethod;
+export const CHECKOUT_METHODS = ["card", "cash", ...WALLET_METHODS] as const;
+export type CheckoutMethod = (typeof CHECKOUT_METHODS)[number];
 
 export interface CheckoutResult {
   bookingId: string;

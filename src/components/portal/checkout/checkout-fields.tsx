@@ -1,6 +1,7 @@
 "use client";
 
 import type { InputHTMLAttributes } from "react";
+import Link from "next/link";
 import { Banknote, CreditCard, Smartphone } from "lucide-react";
 import type { CheckoutMethod, CheckoutOptions } from "@/types/booking";
 
@@ -21,6 +22,21 @@ export function Field({
       ) : (
         hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
       )}
+    </div>
+  );
+}
+
+/** Shown instead of the submit button: cash, bKash and Nagad need the customer signed in with their phone. */
+export function SignInNotice({ href }: { href: string }) {
+  return (
+    <div role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">
+      <p>Sign in with your phone number to pay at the venue or by bKash / Nagad. Card payment works without signing in.</p>
+      <Link
+        href={href}
+        className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90"
+      >
+        <Smartphone className="h-4 w-4" /> Sign in with phone
+      </Link>
     </div>
   );
 }

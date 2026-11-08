@@ -18,7 +18,7 @@ export default function SignInPage() {
         </Suspense>
       </div>
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        You can also book without signing in. Your confirmation email has a link to each booking.
+        Card bookings don&apos;t need an account. To pay at the venue or by bKash / Nagad, sign in first. Your confirmation email has a link to each booking.
       </p>
     </div>
   );

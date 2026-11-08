@@ -5,34 +5,38 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Lock, Wallet } from "lucide-react";
 import { PortalApiError, startCheckout, markLeavingForPayment, toAppPath } from "@/lib/portal-bookings";
 import type { CheckoutMethod } from "@/types/booking";
-import { useCustomerSession } from "@/components/portal/account/use-customer-session";
+import { CUSTOMER_SESSION_KEY, useCustomerSession } from "@/components/portal/account/use-customer-session";
 import { CheckoutFormSchema, CHECKOUT_FIELDS, type CheckoutFormValues } from "./checkout-schema";
-import { Field, PaymentChoice } from "./checkout-fields";
+import { Field, PaymentChoice, SignInNotice } from "./checkout-fields";
 import { takaLabel } from "./checkout-totals";
 import { useCheckoutOptions } from "./use-checkout-options";
 import { WalletFields } from "./wallet-fields";
 
-interface FormError { message: string; slotTaken: boolean }
+interface FormError { message: string; slotTaken: boolean; myBookings?: boolean }
 
 export function CheckoutForm({
-  groundId, date, hour, slotPrice, disabled,
+  groundId, date, hour, slotPrice, disabled, initialMethod = "card",
 }: {
   groundId: string; date: string; hour: number; slotPrice: number; disabled: boolean;
+  /** The method chosen before signing in (`?method=` on the way back). */
+  initialMethod?: CheckoutMethod;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const options = useCheckoutOptions();
   // Signed-in customers book on their verified phone (read-only); name and email are prefilled.
-  const { data: session } = useCustomerSession();
+  const { data: session, isPending: sessionPending } = useCustomerSession();
   const [formError, setFormError] = useState<FormError | null>(null);
   const [leaving, setLeaving] = useState(false);
   const { register, handleSubmit, watch, setValue, setError, formState: { errors, isSubmitting } } =
     useForm<CheckoutFormValues>({
       resolver: zodResolver(CheckoutFormSchema),
       defaultValues: {
-        customerName: "", customerEmail: "", customerPhone: "", paymentMethod: "card", reference: "", payerNumber: "", acceptTerms: false,
+        customerName: "", customerEmail: "", customerPhone: "", paymentMethod: initialMethod, reference: "", payerNumber: "", acceptTerms: false,
       },
     });
 
@@ -56,6 +60,9 @@ export function CheckoutForm({
   const method = available.includes(chosen) ? chosen : (available[0] ?? "card");
   const wallet = wallets.find((w) => w.method === method);
   const busy = isSubmitting || leaving;
+  // Cash, bKash and Nagad need a signed-in customer (turf-api: 401 SIGN_IN_REQUIRED); card stays open to guests.
+  const needsSignIn = method !== "card" && !session;
+  const signInHref = `/sign-in?from=${encodeURIComponent(`/checkout?groundId=${groundId}&date=${date}&hour=${hour}&method=${method}`)}`;
 
   // Keep the form's value on the method shown, so the wallet fields are validated when they apply.
   useEffect(() => {
@@ -93,7 +100,18 @@ export function CheckoutForm({
     fieldErrors.forEach((d) => setError(d.field as (typeof CHECKOUT_FIELDS)[number], { message: d.message }));
     if (fieldErrors.length && fieldErrors.length === err.details?.length) return;
     if (err.code === "REFERENCE_ALREADY_USED") return setError("reference", { message: err.message });
-    if (err.code === "SLOT_NOT_AVAILABLE") setFormError({ message: "Sorry, someone just booked this slot.", slotTaken: true });
+    if (err.code === "SIGN_IN_REQUIRED") {
+      // The session ended meanwhile: drop it so the sign-in notice shows.
+      queryClient.setQueryData(CUSTOMER_SESSION_KEY, null);
+      setFormError({ message: "Please sign in with your phone number to pay at the venue or by bKash / Nagad.", slotTaken: false });
+    } else if (err.code === "TOO_MANY_OPEN_BOOKINGS") {
+      setFormError({
+        message: "You already have 3 unpaid bookings waiting. Pay or cancel one of them first, or pay by card.",
+        slotTaken: false, myBookings: true,
+      });
+    } else if (err.code === "TOO_MANY_ATTEMPTS") {
+      setFormError({ message: "Too many booking attempts. Please wait a few minutes and try again.", slotTaken: false });
+    } else if (err.code === "SLOT_NOT_AVAILABLE") setFormError({ message: "Sorry, someone just booked this slot.", slotTaken: true });
     else if (err.code === "GROUND_CLOSED") setFormError({ message: "Sorry, the ground is closed on that day.", slotTaken: true });
     else setFormError({ message: err.message, slotTaken: false });
   };
@@ -163,17 +181,24 @@ export function CheckoutForm({
           {formError.slotTaken && (
             <Link href={`/grounds/${groundId}`} className="ml-1 font-semibold underline">Pick another time</Link>
           )}
+          {formError.myBookings && (
+            <Link href="/my-bookings" className="ml-1 font-semibold underline">My bookings</Link>
+          )}
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={disabled || busy || !canPay}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-        {options.data && !canPay ? "Online booking unavailable" : submitLabel(method, total, busy)}
-      </button>
+      {needsSignIn && !sessionPending ? (
+        <SignInNotice href={signInHref} />
+      ) : (
+        <button
+          type="submit"
+          disabled={disabled || busy || !canPay || needsSignIn}
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+          {options.data && !canPay ? "Online booking unavailable" : submitLabel(method, total, busy)}
+        </button>
+      )}
     </form>
   );
 }
