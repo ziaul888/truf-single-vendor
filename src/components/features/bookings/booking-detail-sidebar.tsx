@@ -12,7 +12,7 @@ import type { BookingDetail } from "@/types/booking";
 import { Banknote, ExternalLink, History, Layers, Mail, MapPin, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
-  EVENT_DOT_CLASS, EVENT_LABEL, eventDetailLabel, isAwaitingWalletVerification, isCancellable,
+  EVENT_DOT_CLASS, EVENT_LABEL, canCollectPayment, eventDetailLabel, isCancellable,
 } from "./booking-status-helpers";
 
 interface BookingDetailSidebarProps {
@@ -98,7 +98,7 @@ function ActivityCard({ events }: { events: BookingDetail["events"] }) {
 export function BookingDetailSidebar({ booking, onCancelClick, onCollectClick }: BookingDetailSidebarProps) {
   const resend = useResendConfirmation();
   // Not while a bKash / Nagad payment is waiting to be verified: verify or reject it first.
-  const canCollect = booking.due > 0 && booking.status !== "cancelled" && !isAwaitingWalletVerification(booking);
+  const canCollect = canCollectPayment(booking);
 
   function handleResend() {
     resend.mutate(booking.id, {

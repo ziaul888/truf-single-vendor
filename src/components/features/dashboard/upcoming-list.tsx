@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
 import type { Booking } from "@/types/booking";
 import {
-  BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL, bookingStatusVariant, isAwaitingWalletVerification, paymentStatusVariant,
+  BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL, bookingStatusVariant, canCollectPayment, paymentStatusVariant,
 } from "@/components/features/bookings/booking-status-helpers";
 
 /** Upcoming bookings as stacked rows for phones, where the table would scroll sideways. */
@@ -29,7 +29,7 @@ export function UpcomingList({ bookings, onCollect }: { bookings: Booking[]; onC
             <Link href={`/dashboard/bookings/${b.id}`} className="font-mono text-xs text-primary hover:underline">{b.bookingNumber}</Link>
             <Badge variant={bookingStatusVariant(b.status)}>{BOOKING_STATUS_LABEL[b.status]}</Badge>
             <Badge variant={paymentStatusVariant(b.paymentStatus)}>{PAYMENT_STATUS_LABEL[b.paymentStatus]}</Badge>
-            {b.due > 0 && !isAwaitingWalletVerification(b) && (
+            {canCollectPayment(b) && (
               <Button size="sm" variant="outline" className="ml-auto h-7 gap-1 px-2 text-xs" onClick={() => onCollect(b)}>
                 <Banknote className="h-3.5 w-3.5" /> Collect {slotPriceLabel(b.due)}
               </Button>

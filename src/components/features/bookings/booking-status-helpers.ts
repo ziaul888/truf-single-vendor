@@ -86,6 +86,10 @@ export const isAwaitingCardPayment = (b: Pick<Booking, "source" | "payAtVenue" |
 export const isAwaitingWalletVerification = (b: Pick<Booking, "status" | "walletPayment">) =>
   b.status === "pending" && b.walletPayment?.status === "pending";
 
+/** Money is due and staff may take it: not while a card or bKash / Nagad payment is still on its way. */
+export const canCollectPayment = (b: Pick<Booking, "due" | "source" | "payAtVenue" | "status" | "walletPayment">) =>
+  b.due > 0 && b.status !== "cancelled" && !isAwaitingCardPayment(b) && !isAwaitingWalletVerification(b);
+
 export function timeAgo(isoString: string): string {
   const diff = Date.now() - new Date(isoString).getTime();
   const mins = Math.max(0, Math.floor(diff / 60_000));

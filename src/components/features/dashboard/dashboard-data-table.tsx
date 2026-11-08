@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Link from "next/link";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
 import type { Booking } from "@/types/booking";
-import { isAwaitingWalletVerification } from "@/components/features/bookings/booking-status-helpers";
+import { canCollectPayment } from "@/components/features/bookings/booking-status-helpers";
 
 function bookingStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   if (status === "confirmed") return "default";
@@ -67,7 +67,7 @@ export function upcomingColumns(onCollect: (b: Booking) => void): ColumnDef<Book
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => row.original.due > 0 && !isAwaitingWalletVerification(row.original) && (
+      cell: ({ row }) => canCollectPayment(row.original) && (
         <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs" onClick={() => onCollect(row.original)}>
           <Banknote className="h-3.5 w-3.5" /> Collect {slotPriceLabel(row.original.due)}
         </Button>
