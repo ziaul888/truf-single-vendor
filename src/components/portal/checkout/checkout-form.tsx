@@ -151,7 +151,7 @@ export function CheckoutForm({
         <label className="flex items-start gap-2 text-sm">
           <input type="checkbox" className="mt-0.5 accent-primary" {...register("acceptTerms")} />
           <span>
-            I agree to the <a href="#" className="underline">terms</a> and free-cancellation policy.
+            I agree to the venue&apos;s booking and cancellation rules.
           </span>
         </label>
         {errors.acceptTerms && <p className="mt-1 text-[11px] text-destructive">{errors.acceptTerms.message}</p>}

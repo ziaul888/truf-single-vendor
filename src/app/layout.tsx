@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: { default: "Champions Turf", template: "%s · Champions Turf" },
-  description: "Book a turf in 60 seconds. Football, cricket, badminton — six grounds in Banani, Dhaka.",
+  description: "Check live slot availability and book your turf online.",
 };
 
 export default function RootLayout({
