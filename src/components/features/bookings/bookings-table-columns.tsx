@@ -7,7 +7,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { Booking } from "@/types/booking";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
 import { Phone, XCircle } from "lucide-react";
-import { PAYMENT_STATUS_LABEL, isCancellable, paymentStatusVariant } from "./booking-status-helpers";
+import { PAYMENT_STATUS_LABEL, isAwaitingWalletVerification, isCancellable, paymentStatusVariant } from "./booking-status-helpers";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
 import { WalletBadge } from "./wallet-payment-info";
@@ -45,7 +45,9 @@ export function getBookingColumns(setCancelTarget: (b: Booking) => void): Column
       cell: ({ row }) => (
         <div className="text-xs">
           <div className="text-green-600 dark:text-green-400">{slotPriceLabel(row.original.paid)}</div>
-          {row.original.due > 0 && <div className="text-amber-600 dark:text-amber-400">{slotPriceLabel(row.original.due)} due</div>}
+          {row.original.due > 0 && (isAwaitingWalletVerification(row.original)
+            ? <div className="text-muted-foreground">Verifying</div>
+            : <div className="text-amber-600 dark:text-amber-400">{slotPriceLabel(row.original.due)} due</div>)}
         </div>
       ),
     },

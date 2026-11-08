@@ -59,9 +59,12 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
   const verify = isAwaitingWalletVerification(booking);
   // A verified bKash / Nagad payment covers the total: nothing is left to mark paid.
   const hasDue = booking.due > 0 && !verify;
+  // The customer asked to cancel: verifying is usually the step before cancelling with a refund, so a
+  // "you're booked" email would confuse them.
+  const cancelAsked = verify && booking.cancelRequestedAt !== null;
   const { control, watch, register, handleSubmit, formState: { errors } } = useForm<ConfirmForm>({
     resolver: zodResolver(ConfirmSchema),
-    defaultValues: { markPaid: false, method: "cash", reference: "", notifyCustomer: true },
+    defaultValues: { markPaid: false, method: "cash", reference: "", notifyCustomer: !cancelAsked },
   });
   const markPaid = watch("markPaid");
   const wallet = isWalletMethod(useWatch({ control, name: "method" }));
@@ -149,7 +152,11 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
             )} />
             <div>
               <Label htmlFor="sendEmail" className="cursor-pointer font-medium">Send confirmation email</Label>
-              <p className="mt-0.5 text-xs text-muted-foreground">Notify the customer with booking details</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {cancelAsked
+                  ? "Off by default: the customer asked to cancel. Verify, then cancel with a refund; they get the cancellation email instead."
+                  : "Notify the customer with booking details"}
+              </p>
             </div>
           </div>
         </div>

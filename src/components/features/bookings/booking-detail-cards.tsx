@@ -10,7 +10,7 @@ import { formatDate, getInitials } from "@/lib/utils";
 import { formatEventTime, slotPriceLabel, slotTimeLabel, formatSlotDate } from "@/lib/slot-format";
 import type { BookingDetail } from "@/types/booking";
 import { CalendarDays, Clock, CreditCard, Mail, Pencil, Phone, Timer, Users } from "lucide-react";
-import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, paymentStatusVariant } from "./booking-status-helpers";
+import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, isAwaitingWalletVerification, paymentStatusVariant } from "./booking-status-helpers";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
 import { WalletBadge, WalletPaymentNotice } from "./wallet-payment-info";
 
@@ -123,7 +123,10 @@ export function BookingPaymentCard({ booking }: { booking: BookingDetail }) {
         {booking.serviceFee > 0 && <DetailRow label="Service fee"><span>{slotPriceLabel(booking.serviceFee)}</span></DetailRow>}
         <DetailRow label="Total"><span className="text-base font-bold">{slotPriceLabel(booking.total)}</span></DetailRow>
         <DetailRow label="Paid"><span className="font-medium text-green-600 dark:text-green-400">{slotPriceLabel(booking.paid)}</span></DetailRow>
-        {booking.due > 0 && (
+        {booking.due > 0 && isAwaitingWalletVerification(booking) && (
+          <DetailRow label="Due"><span className="text-muted-foreground">Verifying</span></DetailRow>
+        )}
+        {booking.due > 0 && !isAwaitingWalletVerification(booking) && (
           <DetailRow label="Due">
             <span className="font-medium text-amber-600 dark:text-amber-400">
               {slotPriceLabel(booking.due)}{booking.dueDate ? ` by ${formatSlotDate(booking.dueDate)}` : ""}
