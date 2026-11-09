@@ -10,7 +10,7 @@ import { useBookingDetail } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
 import { ArrowLeft, CheckCircle2, SearchX } from "lucide-react";
 import {
-  BOOKING_STATUS_LABEL, bookingStatusVariant, isAwaitingCardPayment, isAwaitingWalletVerification, isCancellable,
+  BOOKING_STATUS_LABEL, bookingStatusVariant, canMarkNoShow, isAwaitingCardPayment, isAwaitingWalletVerification, isCancellable,
 } from "@/components/features/bookings/booking-status-helpers";
 import { BookingDetailSidebar } from "@/components/features/bookings/booking-detail-sidebar";
 import {
@@ -20,10 +20,11 @@ import { CancelDialog } from "@/components/features/bookings/cancel-dialog";
 import { ConfirmDialog } from "@/components/features/bookings/confirm-dialog";
 import { CollectPaymentDialog } from "@/components/features/bookings/collect-payment-dialog";
 import { EditBookingDialog } from "@/components/features/bookings/edit-booking-dialog";
+import { NoShowDialog, UndoNoShowDialog, noShowTargetOf } from "@/components/features/bookings/no-show-dialog";
 import { PayAtVenueBadge } from "@/components/features/bookings/pay-at-venue-badge";
 import { CancelRequestedBadge } from "@/components/features/bookings/wallet-payment-info";
 
-type DialogName = "cancel" | "confirm" | "collect" | "edit" | null;
+type DialogName = "cancel" | "confirm" | "collect" | "edit" | "noShow" | "undoNoShow" | null;
 
 function SkeletonBlock({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-muted ${className}`} />;
@@ -114,6 +115,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           booking={booking}
           onCancelClick={() => setDialog("cancel")}
           onCollectClick={() => setDialog("collect")}
+          onNoShowClick={() => setDialog("noShow")}
+          onUndoNoShowClick={() => setDialog("undoNoShow")}
         />
       </div>
 
@@ -123,6 +126,12 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       {canConfirm && <ConfirmDialog booking={booking} open={dialog === "confirm"} onOpenChange={closeDialog} />}
       <CollectPaymentDialog booking={booking} open={dialog === "collect"} onOpenChange={closeDialog} />
       <EditBookingDialog booking={booking} open={dialog === "edit"} onOpenChange={closeDialog} />
+      {canMarkNoShow(booking) && (
+        <NoShowDialog booking={noShowTargetOf(booking)} open={dialog === "noShow"} onOpenChange={closeDialog} />
+      )}
+      {booking.status === "no_show" && (
+        <UndoNoShowDialog booking={booking} open={dialog === "undoNoShow"} onOpenChange={closeDialog} />
+      )}
     </div>
   );
 }

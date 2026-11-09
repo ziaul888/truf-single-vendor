@@ -34,6 +34,7 @@ export function StatCard({
   trend,
   trendLabel = "vs yesterday",
   loading,
+  note,
 }: {
   title: string;
   value: string;
@@ -43,6 +44,8 @@ export function StatCard({
   /** Shown after the %, e.g. "vs last week". */
   trendLabel?: string;
   loading?: boolean;
+  /** A small line under the value, e.g. "2 no-shows". */
+  note?: string;
 }) {
   return (
     <Card className="min-w-0">
@@ -60,6 +63,7 @@ export function StatCard({
           <>
             <div className="truncate text-xl font-bold sm:text-2xl">{value}</div>
             {trend !== undefined && <Trend value={trend} label={trendLabel} />}
+            {note && <p className="text-xs text-muted-foreground">{note}</p>}
           </>
         )}
       </CardContent>

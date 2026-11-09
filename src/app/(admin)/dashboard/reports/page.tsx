@@ -59,7 +59,8 @@ export default function ReportsPage() {
         <StatCard title="Avg Booking Value" value={s ? slotPriceLabel(s.avgBookingValue) : "—"} icon={Receipt}
           trend={s?.avgBookingValueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
         <StatCard title="Completion Rate" value={s?.completionRate != null ? `${s.completionRate.toFixed(1)}%` : "—"} icon={CheckCircle}
-          trend={s?.completionRate != null ? s.completionRateTrend : undefined} trendLabel={TREND_LABEL} loading={summary.isLoading} />
+          trend={s?.completionRate != null ? s.completionRateTrend : undefined} trendLabel={TREND_LABEL} loading={summary.isLoading}
+          note={s?.noShows != null ? `${s.noShows} no-show${s.noShows === 1 ? "" : "s"}` : undefined} />
       </div>
 
       <Card>

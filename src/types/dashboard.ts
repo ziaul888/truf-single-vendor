@@ -1,7 +1,7 @@
 // Dashboard home shapes exactly as turf-api returns them (31 Oct 2026).
 // Money is in the smallest currency unit; dates and hours are venue-local.
 
-import type { BookingEventType } from "./booking";
+import type { BookingEventType, WalletMethod, WalletPayment } from "./booking";
 import type { SlotStatus } from "./slot";
 
 export interface DashboardAttention {
@@ -12,6 +12,25 @@ export interface DashboardAttention {
   dueToday: { count: number; amount: number };
   payingNow: { count: number };
   startingSoon: { count: number; withinMinutes: number };
+  /** Still pending after the slot ended: collect, verify or mark no-show. Missing from older APIs. */
+  needsOutcome?: { count: number; bookings?: NeedsOutcomeBooking[] };
+}
+
+/** A booking on the "Needs outcome" card (at most 10, most recently ended first). */
+export interface NeedsOutcomeBooking {
+  id: string;
+  bookingNumber: string;
+  customerName: string;
+  groundName: string;
+  slot: { date: string; startHour: number; endHour: number };
+  total: number;
+  /** Received so far: what stays if it's marked no-show. */
+  paid: number;
+  /** Owed; 0 while a bKash / Nagad payment is under review. */
+  due: number;
+  payAtVenue: boolean;
+  /** `status: "pending"`: staff verify or reject it first. */
+  walletPayment: { method: WalletMethod; status: WalletPayment["status"] } | null;
 }
 
 export interface TodayBookingRef {

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
 import type { Booking } from "@/types/booking";
 import { formatDate, PAY_CLS, BK_CLS } from "./customer-display";
+import { BOOKING_STATUS_LABEL } from "@/components/features/bookings/booking-status-helpers";
 
 export function CustomerBookingHistory({
   customerId,
@@ -59,7 +60,7 @@ export function CustomerBookingHistory({
                   </TableCell>
                   <TableCell>
                     <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", BK_CLS[b.status])}>
-                      {b.status}
+                      {BOOKING_STATUS_LABEL[b.status]}
                     </span>
                   </TableCell>
                 </TableRow>

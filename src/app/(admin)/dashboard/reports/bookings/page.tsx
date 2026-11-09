@@ -31,7 +31,8 @@ export default function BookingsReportPage() {
         <StatCard title="Bookings" value={s ? String(s.bookings) : "—"} icon={CalendarDays}
           trend={s?.bookingsTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
         <StatCard title="Completion Rate" value={s?.completionRate != null ? `${s.completionRate.toFixed(1)}%` : "—"} icon={CheckCircle}
-          trend={s?.completionRate != null ? s.completionRateTrend : undefined} trendLabel={TREND_LABEL} loading={summary.isLoading} />
+          trend={s?.completionRate != null ? s.completionRateTrend : undefined} trendLabel={TREND_LABEL} loading={summary.isLoading}
+          note={s?.noShows != null ? `${s.noShows} no-show${s.noShows === 1 ? "" : "s"}` : undefined} />
         <StatCard title="Cancellation Rate" value={s ? `${s.cancellationRate.toFixed(1)}%` : "—"} icon={XCircle} loading={summary.isLoading} />
         <StatCard title="Utilization" value={utilization} icon={Gauge} loading={grounds.isLoading} />
       </div>

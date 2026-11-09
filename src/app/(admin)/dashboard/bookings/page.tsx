@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DUE_FILTERS, useBookings, type DueFilter } from "@/hooks/useBookings";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { Booking } from "@/types/booking";
-import { CalendarDays, XCircle, CheckCircle, Plus, LayoutGrid, Flag } from "lucide-react";
+import { CalendarDays, XCircle, CheckCircle, Plus, LayoutGrid, Flag, UserX } from "lucide-react";
 import { CancelDialog } from "@/components/features/bookings/cancel-dialog";
+import { NoShowDialog, noShowTargetOf } from "@/components/features/bookings/no-show-dialog";
 import { getBookingColumns } from "@/components/features/bookings/bookings-table-columns";
 import { BookingsPagination } from "@/components/features/bookings/bookings-pagination";
 import {
@@ -34,6 +35,7 @@ function BookingsView() {
   const [filters, setFilters] = useState<BookingListFilters>({ ...EMPTY_BOOKING_FILTERS, due: initialDue });
   const [page, setPage] = useState(1);
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
+  const [noShowTarget, setNoShowTarget] = useState<Booking | null>(null);
   const search = useDebouncedValue(filters.search.trim(), 300);
 
   const { data, isLoading, isError } = useBookings({
@@ -46,7 +48,7 @@ function BookingsView() {
     limit: PAGE_SIZE,
   });
 
-  const columns = getBookingColumns(setCancelTarget);
+  const columns = getBookingColumns(setCancelTarget, setNoShowTarget);
   const table = useReactTable({ data: data?.data ?? [], columns, getCoreRowModel: getCoreRowModel() });
   const counts = data?.counts;
 
@@ -78,12 +80,13 @@ function BookingsView() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
           { label: "Confirmed", count: counts?.confirmed, icon: CheckCircle, color: "text-green-600" },
           { label: "Pending",   count: counts?.pending,   icon: CalendarDays, color: "text-yellow-600" },
           { label: "Completed", count: counts?.completed, icon: Flag,         color: "text-blue-600" },
           { label: "Cancelled", count: counts?.cancelled, icon: XCircle,      color: "text-red-500" },
+          { label: "No-show",   count: counts?.no_show,   icon: UserX,        color: "text-orange-600" },
         ].map(({ label, count, icon: Icon, color }) => (
           <Card key={label}>
             <CardContent className="flex items-center gap-4 pt-6">
@@ -142,6 +145,8 @@ function BookingsView() {
       </Card>
 
       <CancelDialog booking={cancelTarget} open={cancelTarget !== null} onOpenChange={(v) => { if (!v) setCancelTarget(null); }} />
+      <NoShowDialog booking={noShowTarget && noShowTargetOf(noShowTarget)} open={noShowTarget !== null}
+        onOpenChange={(v) => { if (!v) setNoShowTarget(null); }} />
     </div>
   );
 }

@@ -11,6 +11,7 @@ export type ConfirmationState =
   | "verifying"       // paid by bKash / Nagad, pending until the venue verifies the payment
   | "confirmed"
   | "completed"
+  | "no_show"         // staff marked that the team didn't turn up: nothing to pay or cancel
   | "cancelled";
 
 /**

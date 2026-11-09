@@ -15,6 +15,7 @@ const STATUS_ORDER: { key: BookingStatus; name: string }[] = [
   { key: "confirmed", name: "Confirmed" },
   { key: "pending", name: "Pending" },
   { key: "cancelled", name: "Cancelled" },
+  { key: "no_show", name: "No-show" },
 ];
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
