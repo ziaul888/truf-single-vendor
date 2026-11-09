@@ -4,7 +4,7 @@ import { FilterMenu } from "@/components/features/filter-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGrounds } from "@/hooks/useGrounds";
+import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
 import { DUE_FILTERS, type DueFilter } from "@/hooks/useBookings";
 import { BOOKING_STATUSES, PAYMENT_STATUSES, type BookingStatus, type PaymentStatus } from "@/types/booking";
 import { FilterX, Search } from "lucide-react";
@@ -55,13 +55,15 @@ export function BookingsFilters({ value, onChange }: BookingsFiltersProps) {
               {PAYMENT_STATUSES.map((s) => <SelectItem key={s} value={s}>{PAYMENT_STATUS_LABEL[s]}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={value.groundId} onValueChange={(v) => set({ groundId: v })}>
-            <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="Ground" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Grounds</SelectItem>
-              {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          {hasGroundChoice(grounds) && (
+            <Select value={value.groundId} onValueChange={(v) => set({ groundId: v })}>
+              <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="Ground" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Grounds</SelectItem>
+                {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={value.due} onValueChange={(v) => set({ due: v as BookingListFilters["due"] })}>
             <SelectTrigger className="w-full lg:w-36"><SelectValue placeholder="Due" /></SelectTrigger>
             <SelectContent>

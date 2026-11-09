@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBookings } from "@/hooks/useBookings";
-import { useGrounds } from "@/hooks/useGrounds";
+import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { slotPriceLabel } from "@/lib/slot-format";
 import type { Booking } from "@/types/booking";
@@ -97,20 +97,23 @@ export default function ConfirmedPage() {
           <Input placeholder="Search booking #, name or phone…" className="pl-8" value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
-        <FilterMenu activeCount={groundId !== "all" ? 1 : 0}>
-          <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); }}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="All Grounds" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Grounds</SelectItem>
-              {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          {(search || groundId !== "all") && (
-            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => { setSearch(""); setGroundId("all"); setPage(1); }}>
-              Clear filters
-            </Button>
-          )}
-        </FilterMenu>
+        {/* The ground is the only filter here: with one ground there is nothing to put in the menu. */}
+        {hasGroundChoice(grounds) && (
+          <FilterMenu activeCount={groundId !== "all" ? 1 : 0}>
+            <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); }}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="All Grounds" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Grounds</SelectItem>
+                {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {(search || groundId !== "all") && (
+              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => { setSearch(""); setGroundId("all"); setPage(1); }}>
+                Clear filters
+              </Button>
+            )}
+          </FilterMenu>
+        )}
       </div>
 
       {isLoading ? (

@@ -31,6 +31,12 @@ export function toGround(g: ApiGround): Ground {
 
 const GROUNDS_KEY = ["grounds"] as const;
 
+/**
+ * Ground filters only make sense with more than one ground. Shown while the list is still
+ * loading, so a multi-ground venue doesn't see them pop in.
+ */
+export const hasGroundChoice = (grounds: readonly unknown[] | undefined) => grounds === undefined || grounds.length > 1;
+
 // A venue has a handful of grounds, so the dashboard loads them in one page (API max 100)
 // and keeps its existing client-side search and filters.
 export function useGrounds() {

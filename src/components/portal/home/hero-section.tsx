@@ -48,9 +48,19 @@ export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["
           )}
 
           <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm opacity-90">
-            <Stat n={String(grounds.length)} label={grounds.length === 1 ? "ground" : "grounds"} />
-            <Stat n={String(sports)} label={sports === 1 ? "sport" : "sports"} />
-            <Stat n={hours} label="daily hours" />
+            {/* "1 ground · 1 sport" says nothing to a one-ground venue: show its hours and price instead. */}
+            {grounds.length === 1 ? (
+              <>
+                <Stat n={hours} label="daily hours" />
+                <Stat n={`৳${grounds[0].hourlyRate.toLocaleString()}`} label="per hour" />
+              </>
+            ) : (
+              <>
+                <Stat n={String(grounds.length)} label="grounds" />
+                <Stat n={String(sports)} label={sports === 1 ? "sport" : "sports"} />
+                <Stat n={hours} label="daily hours" />
+              </>
+            )}
           </div>
         </div>
 

@@ -79,38 +79,40 @@ export function DayPanel({ slots, selectedDate, grounds, groundFilter, totalSlot
         </div>
       </div>
 
-      {/* Ground color filter */}
-      <div className="rounded-xl border bg-card p-4">
-        <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Grounds</p>
-        <div className="space-y-1.5">
-          <button
-            type="button"
-            onClick={() => onGroundFilter("all")}
-            className={cn(
-              "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors",
-              groundFilter === "all" ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/60 text-muted-foreground"
-            )}
-          >
-            <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/50 shrink-0" />
-            All Grounds
-          </button>
-          {grounds.map((g) => (
+      {/* Ground color filter: nothing to pick between with one ground */}
+      {grounds.length > 1 && (
+        <div className="rounded-xl border bg-card p-4">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Grounds</p>
+          <div className="space-y-1.5">
             <button
-              key={g.id}
               type="button"
-              onClick={() => onGroundFilter(g.id)}
+              onClick={() => onGroundFilter("all")}
               className={cn(
                 "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors",
-                groundFilter === g.id ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/60 text-muted-foreground"
+                groundFilter === "all" ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/60 text-muted-foreground"
               )}
             >
-              <div className={cn("h-2.5 w-2.5 shrink-0 rounded-full", GROUND_COLOR_CLASSES[g.color])} />
-              <span className="truncate">{g.name}</span>
-              <span className="ml-auto text-[10px] capitalize opacity-60">{g.type}</span>
+              <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/50 shrink-0" />
+              All Grounds
             </button>
-          ))}
+            {grounds.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => onGroundFilter(g.id)}
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors",
+                  groundFilter === g.id ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/60 text-muted-foreground"
+                )}
+              >
+                <div className={cn("h-2.5 w-2.5 shrink-0 rounded-full", GROUND_COLOR_CLASSES[g.color])} />
+                <span className="truncate">{g.name}</span>
+                <span className="ml-auto text-[10px] capitalize opacity-60">{g.type}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Day detail */}
       <div className="rounded-xl border bg-card p-4 flex-1">
