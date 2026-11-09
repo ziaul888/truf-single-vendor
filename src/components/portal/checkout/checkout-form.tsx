@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -10,7 +10,7 @@ import { Loader2, Lock, Wallet } from "lucide-react";
 import { PortalApiError, startCheckout, markLeavingForPayment, toAppPath } from "@/lib/portal-bookings";
 import type { CheckoutMethod } from "@/types/booking";
 import { CUSTOMER_SESSION_KEY, useCustomerSession } from "@/components/portal/account/use-customer-session";
-import { CheckoutFormSchema, CHECKOUT_FIELDS, type CheckoutFormValues } from "./checkout-schema";
+import { checkoutFormSchema, CHECKOUT_FIELDS, EMAIL_REQUIRED_MESSAGE, type CheckoutFormValues } from "./checkout-schema";
 import { Field, PaymentChoice, SignInNotice } from "./checkout-fields";
 import { takaLabel } from "./checkout-totals";
 import { useCheckoutOptions } from "./use-checkout-options";
@@ -32,9 +32,11 @@ export function CheckoutForm({
   const { data: session, isPending: sessionPending } = useCustomerSession();
   const [formError, setFormError] = useState<FormError | null>(null);
   const [leaving, setLeaving] = useState(false);
+  // Email is optional once signed in, required for a guest.
+  const schema = useMemo(() => checkoutFormSchema(!!session), [session]);
   const { register, handleSubmit, watch, setValue, setError, formState: { errors, isSubmitting } } =
     useForm<CheckoutFormValues>({
-      resolver: zodResolver(CheckoutFormSchema),
+      resolver: zodResolver(schema),
       defaultValues: {
         customerName: "", customerEmail: "", customerPhone: "", paymentMethod: initialMethod, reference: "", payerNumber: "", acceptTerms: false,
       },
@@ -100,6 +102,7 @@ export function CheckoutForm({
     fieldErrors.forEach((d) => setError(d.field as (typeof CHECKOUT_FIELDS)[number], { message: d.message }));
     if (fieldErrors.length && fieldErrors.length === err.details?.length) return;
     if (err.code === "REFERENCE_ALREADY_USED") return setError("reference", { message: err.message });
+    if (err.code === "EMAIL_REQUIRED") return setError("customerEmail", { message: EMAIL_REQUIRED_MESSAGE });
     if (err.code === "SIGN_IN_REQUIRED") {
       // The session ended meanwhile: drop it so the sign-in notice shows.
       queryClient.setQueryData(CUSTOMER_SESSION_KEY, null);
@@ -131,8 +134,10 @@ export function CheckoutForm({
             error={errors.customerPhone?.message} {...register("customerPhone")}
           />
           <Field
-            id="customerEmail" label="Email" type="email" autoComplete="email" className="sm:col-span-2"
-            hint="Your confirmation link will be sent here."
+            id="customerEmail" label={session ? "Email (optional)" : "Email"} type="email" autoComplete="email" className="sm:col-span-2"
+            hint={session
+              ? "Your confirmation link will be sent here. No email: no confirmation emails; find your bookings under My bookings."
+              : "Your confirmation link will be sent here."}
             error={errors.customerEmail?.message} {...register("customerEmail")}
           />
         </div>

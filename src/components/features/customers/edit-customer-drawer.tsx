@@ -13,7 +13,7 @@ import {
 } from "./customer-form-fields";
 
 const toForm = (c: Customer): CustomerFormData => ({
-  name: c.name, phone: c.phone, email: c.email, adminNote: c.adminNote ?? "",
+  name: c.name, phone: c.phone, email: c.email ?? "", adminNote: c.adminNote ?? "",
 });
 
 /** Mount only while open so the form starts from the saved values each time. */
@@ -30,7 +30,8 @@ export function EditCustomerDrawer({
   const onSubmit = form.handleSubmit((d) => {
     const adminNote = d.adminNote.trim();
     update.mutate(
-      { id: customer.id, name: d.name, phone: d.phone, email: d.email, adminNote: adminNote || null },
+      // A cleared email is sent as null, which removes it.
+      { id: customer.id, name: d.name, phone: d.phone, email: d.email || null, adminNote: adminNote || null },
       {
         onSuccess: () => {
           toast.success("Customer updated");

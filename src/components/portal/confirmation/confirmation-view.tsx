@@ -12,7 +12,7 @@ import { CancelBooking } from "./cancel-booking";
 import { RequestCancel } from "./request-cancel";
 import { PayNow } from "./pay-now";
 
-const NOT_FOUND_BODY = "Use the link in your email.";
+const NOT_FOUND_BODY = "Use the link in your email, or open it from My bookings.";
 
 /** Loads the booking by its signed link and shows the view for its current state. */
 export function ConfirmationView({ id, token, venueName }: { id: string; token?: string; venueName: string }) {

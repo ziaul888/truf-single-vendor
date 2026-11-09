@@ -80,7 +80,7 @@ export function CustomerContactCard({ customer: c }: { customer: CustomerDetail 
   const fav = c.favoriteGround;
   const rows = [
     { icon: Phone,    label: "Phone",            value: c.phone },
-    { icon: Mail,     label: "Email",            value: c.email },
+    { icon: Mail,     label: "Email",            value: c.email ?? "No email" },
     { icon: Calendar, label: "Customer since",   value: formatDate(c.createdAt) },
     { icon: MapPin,   label: "Favourite ground", value: fav ? `${fav.name} (${fav.bookings} bookings)` : "—" },
   ];

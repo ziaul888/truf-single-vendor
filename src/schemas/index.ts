@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { OFFLINE_METHODS } from "@/types/booking";
 import { venueToday } from "@/lib/slot-format";
+import { OptionalEmailSchema } from "@/validations/customer";
 import { OptionalTrxIdSchema } from "@/validations/wallet";
 
 /**
@@ -15,7 +16,8 @@ export const AddBookingSchema = z
     slotId: z.string().min(1, "Select a time slot"),
     customerName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
     customerPhone: z.string().trim().refine((p) => p.replace(/\D/g, "").length >= 10, "Enter a valid phone number"),
-    customerEmail: z.string().trim().email("Enter a valid email address"),
+    /** Optional; "" for none. */
+    customerEmail: OptionalEmailSchema,
     /** full → confirmed + paid · partial → confirmed + partial · none → pending + unpaid */
     paymentType: z.enum(["full", "partial", "none"]),
     paymentMethod: z.enum(OFFLINE_METHODS),

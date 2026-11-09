@@ -5,12 +5,14 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { OptionalEmailSchema } from "@/validations/customer";
 import { User, Phone, Mail, FileText } from "lucide-react";
 
 export const CustomerFormSchema = z.object({
   name:      z.string().trim().min(2, "At least 2 characters").max(100, "At most 100 characters"),
   phone:     z.string().trim().min(10, "Enter a valid phone number").max(20, "Enter a valid phone number"),
-  email:     z.string().trim().email("Enter a valid email"),
+  /** "" for none. */
+  email:     OptionalEmailSchema,
   adminNote: z.string().max(1000, "At most 1000 characters"),
 });
 export type CustomerFormData = z.infer<typeof CustomerFormSchema>;
@@ -44,12 +46,14 @@ export function CustomerFormFields({ form, idPrefix }: { form: UseFormReturn<Cus
           <p className="text-[11px] text-muted-foreground">Must be unique — used for booking lookup</p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor={id("email")}>Email <span className="text-destructive">*</span></Label>
+          <Label htmlFor={id("email")}>Email <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input id={id("email")} type="email" placeholder="customer@example.com" className="pl-9" {...register("email")} />
           </div>
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          {errors.email
+            ? <p className="text-xs text-destructive">{errors.email.message}</p>
+            : <p className="text-[11px] text-muted-foreground">No email: the customer won&apos;t get confirmation emails</p>}
         </div>
       </div>
 

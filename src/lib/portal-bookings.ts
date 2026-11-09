@@ -36,6 +36,7 @@ export const startCheckout = (body: {
   date: string;
   hour: number;
   customerName: string;
+  /** "" for none: only when signed in (a guest gets 400 EMAIL_REQUIRED). */
   customerEmail: string;
   customerPhone: string;
   paymentMethod: CheckoutMethod;
@@ -94,7 +95,7 @@ export const sendSignInCode = (phone: string) =>
 export const verifySignInCode = (phone: string, code: string) =>
   call<CustomerSession>("/customer/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) });
 
-/** Creates the customer record for a new number, or updates name and email. */
+/** Creates the customer record for a new number, or updates name and email ("" keeps the stored email). */
 export const saveCustomerProfile = (profile: { name: string; email: string }) =>
   call<CustomerSession>("/customer/auth/profile", { method: "POST", body: JSON.stringify(profile) });
 

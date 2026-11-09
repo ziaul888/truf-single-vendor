@@ -26,7 +26,7 @@ function exportCSV(rows: Customer[]) {
     "customers.csv",
     ["Name", "Phone", "Email", "Customer since", "Bookings", "Total spent", "Last booking", "Due amount", "Tag"],
     rows.map((c) => [
-      c.name, c.phone, c.email, c.createdAt.slice(0, 10), c.bookings, fromMinorUnits(c.totalSpent),
+      c.name, c.phone, c.email ?? "", c.createdAt.slice(0, 10), c.bookings, fromMinorUnits(c.totalSpent),
       c.lastBooking ?? "", fromMinorUnits(c.dueAmount), TAG_LABEL[c.tag],
     ]),
   );

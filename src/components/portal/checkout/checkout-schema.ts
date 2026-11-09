@@ -1,11 +1,15 @@
 import { z } from "zod";
+import { OptionalEmailSchema } from "@/validations/customer";
 import { TrxIdSchema } from "@/validations/wallet";
 
 const isWallet = (m: string) => m === "bkash" || m === "nagad";
 
-export const CheckoutFormSchema = z.object({
+export const EMAIL_REQUIRED_MESSAGE = "Enter your email: your booking link is sent there. Or sign in with your phone";
+
+const CheckoutFields = z.object({
   customerName: z.string().trim().min(2, "Enter your full name (at least 2 characters)").max(100),
-  customerEmail: z.string().trim().email("Enter a valid email address"),
+  /** "" for none: only when signed in (see checkoutFormSchema). */
+  customerEmail: OptionalEmailSchema,
   customerPhone: z
     .string()
     .trim()
@@ -15,7 +19,14 @@ export const CheckoutFormSchema = z.object({
   reference: z.string(),
   payerNumber: z.string(),
   acceptTerms: z.boolean().refine((v) => v, "Please accept the terms to continue"),
-}).superRefine((v, ctx) => {
+});
+
+/**
+ * A guest must give an email, as the booking link only reaches them there (turf-api: 400
+ * EMAIL_REQUIRED); signed in with their phone it's optional.
+ */
+export const checkoutFormSchema = (signedIn: boolean) => CheckoutFields.superRefine((v, ctx) => {
+  if (!signedIn && !v.customerEmail) ctx.addIssue({ code: "custom", path: ["customerEmail"], message: EMAIL_REQUIRED_MESSAGE });
   if (!isWallet(v.paymentMethod)) return;
   const trx = TrxIdSchema.safeParse(v.reference);
   if (!trx.success) ctx.addIssue({ code: "custom", path: ["reference"], message: trx.error.issues[0]?.message ?? "Enter the TrxID" });
@@ -24,7 +35,7 @@ export const CheckoutFormSchema = z.object({
   }
 });
 
-export type CheckoutFormValues = z.infer<typeof CheckoutFormSchema>;
+export type CheckoutFormValues = z.infer<typeof CheckoutFields>;
 
 /** API validation `details[].field` names that map onto form fields. */
 export const CHECKOUT_FIELDS = ["customerName", "customerEmail", "customerPhone", "paymentMethod", "reference", "payerNumber"] as const;

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AlertCircle, Check, Clock, Loader2, X } from "lucide-react";
 import type { PublicBooking } from "@/types/booking";
 import { fromMinorUnits } from "@/lib/ground-format";
@@ -10,6 +11,9 @@ export function ConfirmationHero({ state, booking }: { state: ConfirmationState;
   const total = `৳${fromMinorUnits(booking.total).toLocaleString()}`;
   const ref = <strong>#{booking.bookingNumber}</strong>;
   const wallet = booking.walletPayment;
+  // No email on the booking (an older API sends no `emailed`): don't claim we emailed them.
+  const myBookings = <>Find it any time under <Link href="/my-bookings" className="underline">My bookings</Link>.</>;
+  const emailNote = booking.emailed === false ? myBookings : <>We&apos;ve emailed you the details.</>;
 
   const content: Record<ConfirmationState, { icon: React.ReactNode; title: string; body: React.ReactNode }> = {
     confirming: {
@@ -25,7 +29,7 @@ export function ConfirmationHero({ state, booking }: { state: ConfirmationState;
     reserved: {
       icon: <Clock className="h-10 w-10 text-accent-foreground" />,
       title: "Reserved: waiting for confirmation",
-      body: <>Booking {ref}. Pay <strong>{total}</strong> in cash at the venue. We&apos;ve emailed you the details.</>,
+      body: <>Booking {ref}. Pay <strong>{total}</strong> in cash at the venue. {emailNote}</>,
     },
     verifying: {
       icon: <Clock className="h-10 w-10 text-accent-foreground" />,
@@ -34,14 +38,14 @@ export function ConfirmationHero({ state, booking }: { state: ConfirmationState;
         <>
           Booking {ref}. We&apos;ve got your {wallet ? WALLET_NAME[wallet.method] : ""} payment
           {wallet?.reference && <> (TrxID <strong className="font-mono">{wallet.reference}</strong>)</>}. The venue will verify the
-          payment and confirm your booking. We&apos;ve emailed you the details.
+          payment and confirm your booking. {emailNote}
         </>
       ),
     },
     confirmed: {
       icon: <Check className="h-10 w-10 text-accent-foreground" />,
       title: "You're booked!",
-      body: <>Booking {ref} is confirmed. A confirmation has been emailed to you.</>,
+      body: <>Booking {ref} is confirmed. {booking.emailed === false ? myBookings : <>A confirmation has been emailed to you.</>}</>,
     },
     completed: {
       icon: <Check className="h-10 w-10 text-accent-foreground" />,

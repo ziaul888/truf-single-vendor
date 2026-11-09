@@ -8,11 +8,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { PortalApiError, saveCustomerProfile } from "@/lib/portal-bookings";
 import type { CustomerSession } from "@/types/booking";
+import { OptionalEmailSchema } from "@/validations/customer";
 import { CUSTOMER_SESSION_KEY } from "./use-customer-session";
 
 const ProfileSchema = z.object({
   name: z.string().trim().min(2, "Enter your name").max(100),
-  email: z.string().trim().email("Enter a valid email"),
+  /** Optional; "" for none. A blank one never clears the stored email (the API keeps it). */
+  email: OptionalEmailSchema,
 });
 type ProfileValues = z.infer<typeof ProfileSchema>;
 
@@ -43,7 +45,8 @@ export function CustomerProfileForm({ initial, submitLabel, onSaved, children }:
     try {
       const session = await saveCustomerProfile(values);
       queryClient.setQueryData(CUSTOMER_SESSION_KEY, session);
-      form.reset(values);
+      // The saved details: a blank email keeps the one on file, so show that.
+      form.reset({ name: session.name ?? values.name, email: session.email ?? "" });
       onSaved(session);
     } catch (err) {
       setError(err instanceof PortalApiError ? err.details?.[0]?.message ?? err.message : "Something went wrong. Please try again.");
@@ -58,9 +61,11 @@ export function CustomerProfileForm({ initial, submitLabel, onSaved, children }:
         {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>}
       </div>
       <div>
-        <label htmlFor="email" className={LABEL}>Email</label>
+        <label htmlFor="email" className={LABEL}>Email (optional)</label>
         <input id="email" type="email" autoComplete="email" aria-invalid={!!errors.email} className={INPUT} {...form.register("email")} />
-        {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
+        {errors.email
+          ? <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
+          : <p className="mt-1 text-[11px] text-muted-foreground">Without one you won&apos;t get confirmation emails; your bookings are under My bookings.</p>}
       </div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <button type="submit" disabled={isSubmitting || (!!initial?.name && !isDirty)}

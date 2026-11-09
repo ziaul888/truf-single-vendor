@@ -47,8 +47,9 @@ export interface Booking {
   cancelRequestedAt: string | null;
   ground: { id: string; name: string; sport: Sport };
   slot: { id: string; date: string; startHour: number; endHour: number };
-  customer: { id: string; name: string; phone: string; email: string };
-  contact: { name: string; email: string; phone: string };
+  /** `email` null: the customer has no email (no customer emails are sent). */
+  customer: { id: string; name: string; phone: string; email: string | null };
+  contact: { name: string; email: string | null; phone: string };
   amount: number;
   serviceFee: number;
   total: number;
@@ -121,7 +122,8 @@ export interface BookingPage {
 
 export interface CreateBookingInput {
   slotId: string;
-  customer: { id?: string; name: string; phone: string; email: string };
+  /** `email` optional: left out, the customer's stored one is used, else none. */
+  customer: { id?: string; name: string; phone: string; email?: string };
   payment:
     | { type: "full"; method: OfflineMethod; reference?: string; note?: string }
     | { type: "partial"; method: OfflineMethod; amount: number; dueDate?: string; reference?: string; note?: string }
@@ -176,6 +178,8 @@ export interface PublicBooking {
   cancelRequested: boolean;
   /** They can ask now ("Request cancellation"): payment under review, no request yet, before the cutoff. */
   canRequestCancel: boolean;
+  /** False when the booking has no email, so nothing was emailed. Missing (older API): treat as true. */
+  emailed?: boolean;
 }
 
 export interface PayResult {
@@ -195,7 +199,8 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
-  email: string;
+  /** Null: no email on file. */
+  email: string | null;
   adminNote: string | null;
   /** "Customer since". */
   createdAt: string;

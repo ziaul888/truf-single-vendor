@@ -92,9 +92,15 @@ export function BookingCustomerCard({ booking }: { booking: BookingDetail }) {
           </a>
         </DetailRow>
         <DetailRow label="Email">
-          <a href={`mailto:${contact.email}`} className="flex items-center gap-1 hover:underline">
-            <Mail className="h-3.5 w-3.5 text-muted-foreground" />{contact.email}
-          </a>
+          {contact.email ? (
+            <a href={`mailto:${contact.email}`} className="flex items-center gap-1 hover:underline">
+              <Mail className="h-3.5 w-3.5 text-muted-foreground" />{contact.email}
+            </a>
+          ) : (
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Mail className="h-3.5 w-3.5" />No email
+            </span>
+          )}
         </DetailRow>
       </CardContent>
     </Card>
