@@ -11,7 +11,7 @@ import { DayPanel }   from "@/components/features/booking-calendar/day-panel";
 import type { CalendarSlot, CalendarGround } from "@/types";
 import type { CalendarApiSlot } from "@/types/slot";
 import { useSlotCalendar } from "@/hooks/useSlots";
-import { useGrounds } from "@/hooks/useGrounds";
+import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
 import { fromMinorUnits, hourToTime } from "@/lib/ground-format";
 import { addDays, venueToday } from "@/lib/slot-format";
 import {
@@ -139,20 +139,22 @@ export default function CalendarPage() {
 
       {/* Controls bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Ground filter */}
-        <FilterMenu activeCount={groundFilter !== "all" ? 1 : 0}>
-          <Select value={groundFilter} onValueChange={(v) => { setGroundFilter(v); }}>
-            <SelectTrigger className="w-44 h-9">
-              <SelectValue placeholder="All Grounds" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Grounds</SelectItem>
-              {grounds.map((g) => (
-                <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FilterMenu>
+        {/* Ground filter (a spacer with one ground keeps the navigation on the right) */}
+        {hasGroundChoice(groundList) ? (
+          <FilterMenu activeCount={groundFilter !== "all" ? 1 : 0}>
+            <Select value={groundFilter} onValueChange={(v) => { setGroundFilter(v); }}>
+              <SelectTrigger className="w-44 h-9">
+                <SelectValue placeholder="All Grounds" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Grounds</SelectItem>
+                {grounds.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterMenu>
+        ) : <div />}
 
         {/* Navigation */}
         <div className="flex items-center gap-2">

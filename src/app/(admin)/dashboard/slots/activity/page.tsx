@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { pageWindow } from "@/components/features/slots/slot-list-section";
 import { useSlotEvents } from "@/hooks/useSlots";
-import { useGrounds } from "@/hooks/useGrounds";
+import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
 import { useMe } from "@/hooks/useMe";
 import { useUsers } from "@/hooks/useUsers";
 import { toApiFailure } from "@/lib/api-error";
@@ -70,13 +70,15 @@ export default function SlotActivityPage() {
 
       <div className="flex flex-wrap items-center gap-2">
         <FilterMenu activeCount={(groundId !== "all" ? 1 : 0) + (action !== "all" ? 1 : 0) + (userId !== "all" ? 1 : 0) + (from || to ? 1 : 0)}>
-          <Select value={groundId} onValueChange={reset(setGroundId)}>
-            <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All grounds</SelectItem>
-              {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          {hasGroundChoice(grounds) && (
+            <Select value={groundId} onValueChange={reset(setGroundId)}>
+              <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All grounds</SelectItem>
+                {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={action} onValueChange={reset((v: string) => setAction(v as SlotEventAction | "all"))}>
             <SelectTrigger className="h-9 w-48"><SelectValue /></SelectTrigger>
             <SelectContent>

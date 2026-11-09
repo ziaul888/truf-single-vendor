@@ -46,10 +46,13 @@ function usePublicClosures(from: string, to: string) {
 const closureFor = (closures: PublicClosure[], groundId: string, date: string) =>
   closures.find((c) => date >= c.fromDate && date <= c.toDate && (c.groundIds.length === 0 || c.groundIds.includes(groundId)));
 
-export function SlotPicker({ ground }: { ground: Ground }) {
+/** `initialDate` ("YYYY-MM-DD", e.g. from the home search) is preselected when it is in the strip. */
+export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDate?: string }) {
   const router = useRouter();
   const dates = useMemo(() => buildDates(DAYS_SHOWN), []);
-  const [activeDate, setActiveDate] = useState(dates[0].iso);
+  const [activeDate, setActiveDate] = useState(
+    dates.find((d) => d.iso === initialDate)?.iso ?? dates[0].iso,
+  );
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
 
   const { data: allSlots, isLoading, isError } = usePublicSlots(ground.id, dates[0].iso, dates[dates.length - 1].iso);

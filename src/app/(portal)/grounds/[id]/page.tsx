@@ -6,7 +6,7 @@ import { ChevronRight, Heart, MapPin, Share2 } from "lucide-react";
 import { SlotPicker } from "@/components/portal/slot-picker";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
-import { getPublicGround } from "@/services/portal-grounds";
+import { getPublicGround, listPublicGrounds } from "@/services/portal-grounds";
 import { getPublicVenue } from "@/services/website-settings";
 import { GroundLocation } from "@/components/portal/ground-location";
 import { GroundRules } from "@/components/portal/ground-rules";
@@ -29,18 +29,20 @@ export async function generateMetadata({
 
 export default async function GroundDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ date?: string | string[] }>;
 }) {
-  const { id } = await params;
-  const [ground, venue] = await Promise.all([getPublicGround(id), getPublicVenue()]);
+  const [{ id }, { date }] = await Promise.all([params, searchParams]);
+  const [ground, venue, grounds] = await Promise.all([getPublicGround(id), getPublicVenue(), listPublicGrounds()]);
   if (!ground) notFound();
   // The ground's own address (set in the dashboard), else the venue's.
   const location = ground.address?.trim() || venue.address.trim();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <Breadcrumb name={ground.name} />
+      <Breadcrumb name={ground.name} single={grounds.length === 1} />
       <Gallery images={ground.images ?? []} />
 
       <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_400px]">
@@ -53,20 +55,25 @@ export default async function GroundDetailPage({
         </div>
 
         <aside className="lg:sticky lg:top-20 lg:self-start">
-          <SlotPicker ground={ground} />
+          <SlotPicker ground={ground} initialDate={typeof date === "string" ? date : undefined} />
         </aside>
       </div>
     </div>
   );
 }
 
-function Breadcrumb({ name }: { name: string }) {
+/** With a single ground, "Our grounds" would only lead back here, so it is left out. */
+function Breadcrumb({ name, single }: { name: string; single: boolean }) {
   return (
     <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
       <Link href="/" className="hover:text-foreground">Home</Link>
       <ChevronRight className="h-3 w-3" />
-      <Link href="/grounds" className="hover:text-foreground">Our grounds</Link>
-      <ChevronRight className="h-3 w-3" />
+      {!single && (
+        <>
+          <Link href="/grounds" className="hover:text-foreground">Our grounds</Link>
+          <ChevronRight className="h-3 w-3" />
+        </>
+      )}
       <span className="font-medium text-foreground">{name}</span>
     </nav>
   );

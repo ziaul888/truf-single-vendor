@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { getPublicSlots, listPublicGrounds } from "@/services/portal-grounds";
 import {
   parseGroundsQuery,
@@ -23,6 +24,9 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function GroundsPage({ searchParams }: { searchParams: SearchParams }) {
   const query = parseGroundsQuery(await searchParams);
+  // A venue with one ground has nothing to choose from: go straight to its slots (keeping the date).
+  const all = await listPublicGrounds();
+  if (all.length === 1) redirect(`/grounds/${all[0].id}${query.date ? `?date=${query.date}` : ""}`);
   const { sport, format, surface } = query;
   const sorted = sortGrounds(await listPublicGrounds({ sport, format, surface }), query.sort);
   const filtered = Boolean(sport || format || surface);

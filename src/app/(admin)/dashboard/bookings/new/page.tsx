@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm, type Resolver } from "react-hook-form";
@@ -84,6 +84,13 @@ export default function AddBookingPage() {
     watch("groundId"), watch("date"), watch("slotId"),
     watch("paymentType"), watch("paymentMethod"), Number(watch("advanceAmount") ?? 0),
   ];
+
+  // With one active ground there is nothing to choose, so it is picked already.
+  const activeGrounds = grounds?.filter((g) => g.isActive);
+  const onlyGroundId = activeGrounds?.length === 1 ? activeGrounds[0].id : null;
+  useEffect(() => {
+    if (onlyGroundId && !groundId) setValue("groundId", onlyGroundId);
+  }, [onlyGroundId, groundId, setValue]);
 
   const { data: slots, isLoading: slotsLoading, refetch: refetchSlots } = useAvailableSlots(groundId, date);
   const selectedGround = grounds?.find((g) => g.id === groundId);

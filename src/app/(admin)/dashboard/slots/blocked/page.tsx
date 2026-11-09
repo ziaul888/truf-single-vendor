@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Unlock, Ban, AlertCircle, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useSlots, useUnblockSlot, useUnblockDay } from "@/hooks/useSlots";
-import { useGrounds } from "@/hooks/useGrounds";
+import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
 import { toApiFailure } from "@/lib/api-error";
 import {
   BLOCK_REASON_LABEL, durationLabel, formatSlotDate, slotPriceLabel, slotTimeLabel, venueToday,
@@ -113,13 +113,15 @@ export default function BlockedSlotsPage() {
             onChange={(e) => { setDate(e.target.value); setPage(1); }}
             className="h-9 w-52"
           />
-          <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); }}>
-            <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All grounds</SelectItem>
-              {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          {hasGroundChoice(grounds) && (
+            <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); }}>
+              <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All grounds</SelectItem>
+                {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={reason} onValueChange={(v) => { setReason(v as BlockReason | "all"); setPage(1); }}>
             <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
