@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { Facebook, Instagram, LayoutDashboard, MessageCircle, Phone } from "lucide-react";
 import { getPublicWebsite } from "@/services/website-settings";
+import { bookingHref } from "@/services/portal-grounds";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import type { PublicVenue } from "@/types/settings";
 import { VenueMark } from "@/components/portal/venue-mark";
@@ -25,7 +26,8 @@ export default async function PortalLayout({ children }: { children: React.React
 }
 
 async function PortalHeader({ venue }: { venue: PublicVenue }) {
-  const isAdmin = Boolean((await cookies()).get("admin_token")?.value);
+  const [cookieStore, bookHref] = await Promise.all([cookies(), bookingHref()]);
+  const isAdmin = Boolean(cookieStore.get("admin_token")?.value);
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-sidebar text-sidebar-foreground">
@@ -39,7 +41,7 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm md:flex">
-          <Link href="/grounds" className="hover:text-accent">Our grounds</Link>
+          <Link href={bookHref} className="hover:text-accent">Our grounds</Link>
           <Link href="/#how" className="hover:text-accent">How it works</Link>
           <Link href="/my-bookings" className="hover:text-accent">My bookings</Link>
           <Link href="/#visit" className="hover:text-accent">Visit us</Link>
@@ -65,12 +67,12 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
           )}
           <CustomerNav />
           <Link
-            href="/grounds"
+            href={bookHref}
             className="inline-flex h-9 items-center whitespace-nowrap rounded-lg bg-accent px-3 text-sm font-semibold text-accent-foreground hover:opacity-90 sm:px-4"
           >
             Book now
           </Link>
-          <MobileMenu phone={venue.phone} isAdmin={isAdmin} />
+          <MobileMenu phone={venue.phone} isAdmin={isAdmin} bookHref={bookHref} />
         </div>
       </div>
     </header>

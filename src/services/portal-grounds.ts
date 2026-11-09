@@ -60,6 +60,15 @@ export async function listPublicGrounds(filters: GroundFilters = {}): Promise<Gr
   }
 }
 
+/**
+ * Where "Book now" goes: straight to the ground's slots when the venue has just one, else the list.
+ * Linking there directly avoids /grounds' loading screen flashing before its redirect.
+ */
+export async function bookingHref(): Promise<string> {
+  const grounds = await listPublicGrounds();
+  return grounds.length === 1 ? `/grounds/${grounds[0].id}` : "/grounds";
+}
+
 /** One active ground, or null when it doesn't exist or is inactive (404). Throws on other failures. */
 export async function getPublicGround(id: string): Promise<Ground | null> {
   const res = await fetch(`${API_TARGET}/api/v1/grounds/${encodeURIComponent(id)}`, {

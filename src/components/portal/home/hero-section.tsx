@@ -64,8 +64,8 @@ export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["
           </div>
         </div>
 
-        {/* Search box */}
-        <SearchBox />
+        {/* Search box (one ground: straight to its slots on the chosen date) */}
+        <SearchBox action={grounds.length === 1 ? `/grounds/${grounds[0].id}` : "/grounds"} />
 
         <TrustBadges />
       </div>
@@ -99,10 +99,10 @@ function Stat({ n, label }: { n: string; label: string }) {
 }
 
 /** Opens /grounds with every matching ground's free slots for that day. */
-function SearchBox() {
+function SearchBox({ action }: { action: string }) {
   return (
     <form
-      action="/grounds"
+      action={action}
       className="relative mt-10 max-w-3xl rounded-2xl bg-card/95 p-3 shadow-2xl backdrop-blur sm:p-4"
     >
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:gap-3">
