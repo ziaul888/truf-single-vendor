@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { WebsiteSections } from "@/validations/website-settings";
+import { bookingHref } from "@/services/portal-grounds";
 
-export function HowItWorksSection({ content }: { content: WebsiteSections["howItWorks"] }) {
+export async function HowItWorksSection({ content }: { content: WebsiteSections["howItWorks"] }) {
   return (
     <section id="how" className="bg-sidebar py-16 text-sidebar-foreground">
       <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
@@ -25,7 +26,7 @@ export function HowItWorksSection({ content }: { content: WebsiteSections["howIt
         </div>
         <div className="mt-12">
           <Link
-            href="/grounds"
+            href={await bookingHref()}
             className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-accent-foreground hover:opacity-90"
           >
             {content.buttonLabel} <ArrowRight className="h-4 w-4" />
