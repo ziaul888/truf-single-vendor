@@ -131,7 +131,8 @@ export function BookingDetailSidebar({
               <Banknote className="h-4 w-4" />Collect Payment
             </Button>
           )}
-          {booking.status === "confirmed" && (
+          {/* No email on the booking: nothing to resend to (the API says 409 NO_EMAIL). */}
+          {booking.status === "confirmed" && booking.contact.email && (
             <Button variant="outline" className="w-full justify-start gap-2" onClick={handleResend} disabled={resend.isPending}>
               <Mail className="h-4 w-4" />{resend.isPending ? "Sending…" : "Resend Confirmation Email"}
             </Button>

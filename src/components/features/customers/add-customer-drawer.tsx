@@ -20,7 +20,7 @@ export function AddCustomerDrawer({ open, onOpenChange }: { open: boolean; onOpe
   const onSubmit = form.handleSubmit((d) => {
     const adminNote = d.adminNote.trim();
     create.mutate(
-      { name: d.name, phone: d.phone, email: d.email, ...(adminNote ? { adminNote } : {}) },
+      { name: d.name, phone: d.phone, ...(d.email ? { email: d.email } : {}), ...(adminNote ? { adminNote } : {}) },
       {
         onSuccess: (customer) => {
           toast.success(`${customer.name} added successfully`);

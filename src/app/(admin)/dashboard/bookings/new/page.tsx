@@ -47,11 +47,13 @@ const toFormFailure = (f: ApiFailure): ApiFailure => ({
 
 function toCreateInput(data: AddBookingFormData, known: KnownCustomer | null): CreateBookingInput {
   const phone = toApiPhone(data.customerPhone);
+  const email = data.customerEmail.trim();
   const customer = {
     ...(known && samePhone(known.phone, phone) ? { id: known.id } : {}),
     name: data.customerName.trim(),
     phone,
-    email: data.customerEmail.trim(),
+    // Blank: the API uses the customer's stored email, else none.
+    ...(email ? { email } : {}),
   };
   const note = data.partialNote?.trim() || undefined;
   const reference = isWalletMethod(data.paymentMethod) && data.paymentReference ? data.paymentReference : undefined;

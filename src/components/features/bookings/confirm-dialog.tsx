@@ -62,9 +62,11 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
   // The customer asked to cancel: verifying is usually the step before cancelling with a refund, so a
   // "you're booked" email would confuse them.
   const cancelAsked = verify && booking.cancelRequestedAt !== null;
+  // No email on the booking: there is nobody to email, so the toggle is hidden and off.
+  const hasEmail = booking.contact.email !== null;
   const { control, watch, register, handleSubmit, formState: { errors } } = useForm<ConfirmForm>({
     resolver: zodResolver(ConfirmSchema),
-    defaultValues: { markPaid: false, method: "cash", reference: "", notifyCustomer: !cancelAsked },
+    defaultValues: { markPaid: false, method: "cash", reference: "", notifyCustomer: hasEmail && !cancelAsked },
   });
   const markPaid = watch("markPaid");
   const wallet = isWalletMethod(useWatch({ control, name: "method" }));
@@ -146,19 +148,23 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
               <TrxIdField id="confirm-reference" registration={register("reference")} error={errors.reference?.message} />
             )}
           </div>
-          <div className="flex items-start gap-3 rounded-md border p-3">
-            <Controller control={control} name="notifyCustomer" render={({ field }) => (
-              <Checkbox id="sendEmail" className="mt-0.5" checked={field.value} onCheckedChange={(v) => field.onChange(Boolean(v))} />
-            )} />
-            <div>
-              <Label htmlFor="sendEmail" className="cursor-pointer font-medium">Send confirmation email</Label>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {cancelAsked
-                  ? "Off by default: the customer asked to cancel. Verify, then cancel with a refund; they get the cancellation email instead."
-                  : "Notify the customer with booking details"}
-              </p>
+          {hasEmail ? (
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Controller control={control} name="notifyCustomer" render={({ field }) => (
+                <Checkbox id="sendEmail" className="mt-0.5" checked={field.value} onCheckedChange={(v) => field.onChange(Boolean(v))} />
+              )} />
+              <div>
+                <Label htmlFor="sendEmail" className="cursor-pointer font-medium">Send confirmation email</Label>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {cancelAsked
+                    ? "Off by default: the customer asked to cancel. Verify, then cancel with a refund; they get the cancellation email instead."
+                    : "Notify the customer with booking details"}
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p className="rounded-md border p-3 text-xs text-muted-foreground">No email on this booking, so the customer won&apos;t be emailed.</p>
+          )}
         </div>
       </div>
 

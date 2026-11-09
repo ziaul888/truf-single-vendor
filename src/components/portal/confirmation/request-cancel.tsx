@@ -17,6 +17,8 @@ export function RequestCancel({
   booking: PublicBooking; token: string; onRequested: (b: PublicBooking) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  // No email on the booking: the answer shows here (and under My bookings) instead.
+  const tellBy = booking.emailed === false ? "on this page" : "by email";
   const request = useMutation({
     mutationFn: () => requestCancellation(booking.id, token),
     onSuccess: (updated) => { setConfirming(false); onRequested(updated); },
@@ -25,7 +27,7 @@ export function RequestCancel({
   if (booking.cancelRequested) {
     return (
       <p className="mt-3 rounded-lg border px-3 py-2.5 text-sm">
-        <strong>Cancellation requested.</strong> The venue will check your payment and let you know by email.
+        <strong>Cancellation requested.</strong> The venue will check your payment and let you know {tellBy}.
       </p>
     );
   }
@@ -34,6 +36,7 @@ export function RequestCancel({
     return (
       <AskToCancel
         pending={request.isPending}
+        tellBy={tellBy}
         error={request.isError ? request.error.message : null}
         onYes={() => request.mutate()}
         onNo={() => { setConfirming(false); request.reset(); }}
@@ -55,11 +58,13 @@ export function RequestCancel({
 }
 
 /** "Are you sure?": the request can only be sent once. */
-function AskToCancel({ pending, error, onYes, onNo }: { pending: boolean; error: string | null; onYes: () => void; onNo: () => void }) {
+function AskToCancel({ pending, tellBy, error, onYes, onNo }: {
+  pending: boolean; tellBy: string; error: string | null; onYes: () => void; onNo: () => void;
+}) {
   return (
     <div role="alertdialog" aria-label="Request cancellation" className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
       <p className="font-semibold">Ask the venue to cancel?</p>
-      <p className="mt-1 text-muted-foreground">You can only ask once. The venue checks your payment, then cancels with a refund or tells you by email.</p>
+      <p className="mt-1 text-muted-foreground">You can only ask once. The venue checks your payment, then cancels with a refund or tells you {tellBy}.</p>
       {error && <p role="alert" className="mt-2 text-destructive">{error}</p>}
       <div className="mt-3 flex gap-2">
         <button

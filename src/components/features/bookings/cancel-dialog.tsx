@@ -52,10 +52,12 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
   const reject = isAwaitingWalletVerification(booking);
   const verb = reject ? "Reject" : mode === "decline" ? "Decline" : "Cancel";
   const pastVerb = { Reject: "rejected", Decline: "declined", Cancel: "cancelled" }[verb];
+  // No email on the booking: nobody to notify, so the toggle is hidden and off.
+  const hasEmail = booking.contact.email !== null;
   const form = useForm<CancelForm>({
     resolver: zodResolver(CancelSchema),
     // Cancellation means a full refund of what was paid, so refund is on by default.
-    defaultValues: { reason: "", refund: hasPaid, notifyCustomer: true },
+    defaultValues: { reason: "", refund: hasPaid, notifyCustomer: hasEmail },
   });
   const { control, register, handleSubmit, formState: { errors } } = form;
 
@@ -112,8 +114,12 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
           hint={hasPaid
             ? `Refund ${slotPriceLabel(booking.paid)}. Card payments go back through Stripe; cash, bank transfers, bKash and Nagad are marked refunded, so pay them back by hand.`
             : "No payment on record"} />
-        <CheckRow control={control} name="notifyCustomer" title="Notify customer via email"
-          hint="Send a cancellation email with the reason" />
+        {hasEmail ? (
+          <CheckRow control={control} name="notifyCustomer" title="Notify customer via email"
+            hint="Send a cancellation email with the reason" />
+        ) : (
+          <p className="rounded-md border p-3 text-xs text-muted-foreground">No email on this booking, so the customer won&apos;t be emailed.</p>
+        )}
       </div>
 
       <DialogFooter>

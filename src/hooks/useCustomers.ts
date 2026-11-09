@@ -52,13 +52,13 @@ function useCustomerMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResul
 }
 
 export function useCreateCustomer() {
-  return useCustomerMutation(async (body: { name: string; phone: string; email: string; adminNote?: string }) =>
+  return useCustomerMutation(async (body: { name: string; phone: string; email?: string; adminNote?: string }) =>
     (await api.post("/admin/customers", body)).data.data as Customer);
 }
 
 export function useUpdateCustomer() {
   return useCustomerMutation(
-    async ({ id, ...body }: { id: string; name?: string; phone?: string; email?: string; adminNote?: string | null }) =>
+    async ({ id, ...body }: { id: string; name?: string; phone?: string; email?: string | null; adminNote?: string | null }) =>
       (await api.patch(`/admin/customers/${id}`, body)).data.data as Customer,
   );
 }

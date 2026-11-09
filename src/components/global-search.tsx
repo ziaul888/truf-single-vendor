@@ -166,7 +166,7 @@ function SearchPalette({ onSelect }: { onSelect: () => void }) {
                 onSelect={() => go(`/dashboard/customers/${c.id}`)}
                 icon={<Users className="h-4 w-4 text-pink-500" />}
                 label={c.name}
-                hint={`${c.phone} · ${c.email}`}
+                hint={c.email ? `${c.phone} · ${c.email}` : c.phone}
               />
             ))}
           </Command.Group>

@@ -52,7 +52,7 @@ export function CustomerSection({ form, onCustomerFound }: CustomerSectionProps)
         return;
       }
       setValue("customerName", customer.name);
-      setValue("customerEmail", customer.email);
+      setValue("customerEmail", customer.email ?? "");
       setValue("customerPhone", toLocalPhone(customer.phone));
       clearErrors(["customerName", "customerEmail", "customerPhone"]);
       onCustomerFound({ id: customer.id, phone: customer.phone });
@@ -92,9 +92,13 @@ export function CustomerSection({ form, onCustomerFound }: CustomerSectionProps)
           </div>
         </div>
         <div className="space-y-2">
-          <Label className="text-sm font-medium" htmlFor="customerEmail">Email Address <span className="text-destructive">*</span></Label>
+          <Label className="text-sm font-medium" htmlFor="customerEmail">
+            Email Address <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+          </Label>
           <Input id="customerEmail" type="email" className="h-10" placeholder="customer@example.com" {...register("customerEmail")} />
-          {errors.customerEmail && <p className="text-xs text-destructive">{errors.customerEmail.message}</p>}
+          {errors.customerEmail
+            ? <p className="text-xs text-destructive">{errors.customerEmail.message}</p>
+            : <p className="text-[11px] text-muted-foreground">No email: the customer won&apos;t get confirmation emails</p>}
         </div>
       </div>
     </SectionCard>
