@@ -10,6 +10,15 @@ export function venueToday(offsetDays = 0): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: VENUE_TIME_ZONE }).format(d);
 }
 
+/** The time now at the venue in hours, e.g. 18.5 at 18:30. */
+export function venueHourNow(): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: VENUE_TIME_ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date());
+  const part = (type: "hour" | "minute") => Number(parts.find((p) => p.type === type)?.value);
+  return part("hour") + part("minute") / 60;
+}
+
 /** Adds days to a "YYYY-MM-DD" date without timezone drift. */
 export function addDays(date: string, days: number): string {
   const d = new Date(`${date}T00:00:00Z`);
