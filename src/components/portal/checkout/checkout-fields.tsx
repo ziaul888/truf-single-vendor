@@ -1,7 +1,9 @@
 "use client";
 
 import type { InputHTMLAttributes } from "react";
-import { Banknote, CreditCard } from "lucide-react";
+import Link from "next/link";
+import { Banknote, CreditCard, Smartphone } from "lucide-react";
+import type { CheckoutMethod, CheckoutOptions } from "@/types/booking";
 
 const INPUT_CLASS =
   "mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive";
@@ -24,25 +26,52 @@ export function Field({
   );
 }
 
-type Method = "card" | "cash";
+/** Shown instead of the submit button: cash, bKash and Nagad need the customer signed in with their phone. */
+export function SignInNotice({ href }: { href: string }) {
+  return (
+    <div role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">
+      <p>Sign in with your phone number to pay at the venue or by bKash / Nagad. Card payment works without signing in.</p>
+      <Link
+        href={href}
+        className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90"
+      >
+        <Smartphone className="h-4 w-4" /> Sign in with phone
+      </Link>
+    </div>
+  );
+}
 
-/** Card (Stripe Checkout) and, when the venue allows it, cash at the venue. */
+type Method = CheckoutMethod;
+
+export const WALLET_LABEL = { bkash: "bKash", nagad: "Nagad" } as const;
+
+/** Card (Stripe Checkout), cash at the venue, bKash and Nagad, each only when it's available. */
 export function PaymentChoice({
-  value, onChange, cashEnabled, holdMinutes,
+  value, onChange, cardEnabled, cashEnabled, wallets, holdMinutes,
 }: {
-  value: Method; onChange: (m: Method) => void; cashEnabled: boolean; holdMinutes?: number;
+  value: Method; onChange: (m: Method) => void; cardEnabled: boolean; cashEnabled: boolean;
+  wallets: CheckoutOptions["wallets"]; holdMinutes?: number;
 }) {
+  if (!cardEnabled && !cashEnabled && wallets.length === 0) {
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        Online booking isn&apos;t available right now. Please call the venue to book.
+      </p>
+    );
+  }
   return (
     <div role="radiogroup" aria-label="Payment method" className="space-y-2">
-      <Option
-        selected={value === "card"}
-        onSelect={() => onChange("card")}
-        icon={<CreditCard className="h-4 w-4" />}
-        title="Card"
-        description={`Pay securely on Stripe's checkout page.${
-          holdMinutes ? ` Your slot is held for ${holdMinutes} minutes once you continue.` : ""
-        }`}
-      />
+      {cardEnabled && (
+        <Option
+          selected={value === "card"}
+          onSelect={() => onChange("card")}
+          icon={<CreditCard className="h-4 w-4" />}
+          title="Card"
+          description={`Pay securely on Stripe's checkout page.${
+            holdMinutes ? ` Your slot is held for ${holdMinutes} minutes once you continue.` : ""
+          }`}
+        />
+      )}
       {cashEnabled && (
         <Option
           selected={value === "cash"}
@@ -52,6 +81,16 @@ export function PaymentChoice({
           description="Reserve now and pay in cash when you arrive. The venue confirms your booking."
         />
       )}
+      {wallets.map(({ method, number }) => (
+        <Option
+          key={method}
+          selected={value === method}
+          onSelect={() => onChange(method)}
+          icon={<Smartphone className="h-4 w-4" />}
+          title={WALLET_LABEL[method]}
+          description={`Send money to ${number} from your ${WALLET_LABEL[method]} app, then enter the TrxID. The venue verifies it and confirms your booking.`}
+        />
+      ))}
     </div>
   );
 }

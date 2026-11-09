@@ -39,7 +39,8 @@ export interface PaymentStatus {
     webhook: { configured: boolean; lastEventAt: string | null; lastEventOk: boolean | null };
     currency: string;
   };
-  methods: { card: boolean; cash: boolean; bankTransfer: boolean };
+  /** bkash / nagad: offered on the portal (the admin has set that number). */
+  methods: { card: boolean; cash: boolean; bankTransfer: boolean; bkash: boolean; nagad: boolean };
   portalCashEnabled: boolean;
 }
 
@@ -78,7 +79,7 @@ export interface NotificationsInput {
 
 export type EmailKind =
   | "booking_confirmed" | "booking_received" | "booking_cancelled" | "refund_issued" | "payment_due"
-  | "staff_new_booking" | "staff_customer_cancelled" | "staff_due_digest" | "test";
+  | "staff_new_booking" | "staff_customer_cancelled" | "staff_cancel_requested" | "staff_due_digest" | "test";
 
 export interface EmailLogEntry {
   id: string;

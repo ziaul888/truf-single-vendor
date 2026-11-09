@@ -1,5 +1,5 @@
 import type {
-  CheckoutOptions, CheckoutResult, CustomerBooking, CustomerSession, PayResult, PublicBooking,
+  CheckoutMethod, CheckoutOptions, CheckoutResult, CustomerBooking, CustomerSession, PayResult, PublicBooking,
 } from "@/types/booking";
 
 // Portal calls to turf-api through the /api/v1 proxy. Customers have no login: a booking is
@@ -38,7 +38,10 @@ export const startCheckout = (body: {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  paymentMethod: "card" | "cash";
+  paymentMethod: CheckoutMethod;
+  /** bKash / Nagad: the TrxID and the number the money was sent from. */
+  reference?: string;
+  payerNumber?: string;
 }) => call<CheckoutResult>("/checkout", { method: "POST", body: JSON.stringify(body) });
 
 const withToken = (path: string, token: string) => `${path}?token=${encodeURIComponent(token)}`;
@@ -48,6 +51,10 @@ export const getPublicBooking = (id: string, token: string) =>
 
 export const cancelPublicBooking = (id: string, token: string) =>
   call<PublicBooking>(withToken(`/bookings/${id}/cancel`, token), { method: "POST" });
+
+/** While a bKash / Nagad payment is being verified: ask the venue to cancel. 409 CANCEL_ALREADY_REQUESTED. */
+export const requestCancellation = (id: string, token: string) =>
+  call<PublicBooking>(withToken(`/bookings/${id}/cancel-request`, token), { method: "POST" });
 
 /**
  * "Pay now": a Stripe checkout for whatever is due (unpaid staff booking, pay-at-venue, the rest

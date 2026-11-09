@@ -5,6 +5,7 @@ import { AlarmClock, AlertTriangle, CalendarCheck, CreditCard, Wallet } from "lu
 import { cn } from "@/lib/utils";
 import { slotPriceLabel } from "@/lib/slot-format";
 import { useDashboardAttention } from "@/hooks/useDashboard";
+import type { DashboardAttention } from "@/types/dashboard";
 
 type Tone = "warn" | "crit" | "info";
 
@@ -23,6 +24,15 @@ interface AttentionCard {
   Icon: React.ElementType;
 }
 
+/** "2 pay at venue · 1 to verify": what's behind the To confirm count. */
+function toConfirmSub(data: DashboardAttention) {
+  const parts = [
+    data.toConfirm.payAtVenue ? `${data.toConfirm.payAtVenue} pay at venue` : "",
+    data.toVerify?.count ? `${data.toVerify.count} to verify` : "",
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : "Waiting for staff";
+}
+
 /** The action cards at the top: each one turns colored while it has something to do, and links to the list that clears it. */
 export function AttentionCards() {
   const { data, isLoading } = useDashboardAttention();
@@ -34,7 +44,7 @@ export function AttentionCards() {
   const cards: AttentionCard[] = [
     {
       label: "To confirm", count: data.toConfirm.count, tone: "warn", Icon: CalendarCheck, href: "/dashboard/bookings/confirmed",
-      sub: data.toConfirm.payAtVenue ? `${data.toConfirm.payAtVenue} pay at venue` : "Waiting for staff",
+      sub: toConfirmSub(data),
     },
     { label: "Overdue", count: data.overdue.count, tone: "crit", Icon: AlertTriangle, href: "/dashboard/bookings?due=overdue", sub: `${slotPriceLabel(data.overdue.amount)} to collect` },
     { label: "Due today", count: data.dueToday.count, tone: "warn", Icon: Wallet, href: "/dashboard/bookings?due=today", sub: `${slotPriceLabel(data.dueToday.amount)} to collect` },

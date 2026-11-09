@@ -16,7 +16,8 @@ export interface ReportSummary {
   revenueTrend: Trend;
   received: number;
   refunds: number;
-  revenueByMethod: Record<PaymentMethod, number>;
+  /** bkash / nagad are missing from older APIs: read them as 0. */
+  revenueByMethod: Partial<Record<PaymentMethod, number>>;
   bookings: number;
   bookingsTrend: Trend;
   avgBookingValue: number;

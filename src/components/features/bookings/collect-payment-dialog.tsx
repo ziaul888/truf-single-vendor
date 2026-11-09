@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Controller, type Resolver } from "react-hook-form";
+import { useForm, useWatch, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,12 @@ import { useRecordPayment } from "@/hooks/useBookings";
 import { applyApiErrors, toApiFailure } from "@/lib/api-error";
 import { fromMinorUnits, toMinorUnits } from "@/lib/ground-format";
 import { slotPriceLabel } from "@/lib/slot-format";
-import { OFFLINE_METHODS, type Booking } from "@/types/booking";
+import { OFFLINE_METHODS, isWalletMethod, type Booking } from "@/types/booking";
+import { OptionalTrxIdSchema } from "@/validations/wallet";
 import { Banknote } from "lucide-react";
 import { toast } from "sonner";
-import { PAYMENT_METHOD_LABEL } from "./booking-status-helpers";
+import { PAYMENT_METHOD_LABEL, isAwaitingWalletVerification } from "./booking-status-helpers";
+import { TrxIdField } from "./trx-id-field";
 
 const paymentSchema = (dueMajor: number) =>
   z.object({
@@ -26,6 +28,7 @@ const paymentSchema = (dueMajor: number) =>
       .positive("Enter an amount above 0")
       .max(dueMajor, `Can't be more than the ${slotPriceLabel(toMinorUnits(dueMajor))} due`),
     method: z.enum(OFFLINE_METHODS),
+    reference: OptionalTrxIdSchema,
     note: z.string().trim().max(500, "Keep the note under 500 characters"),
   });
 type PaymentForm = z.infer<ReturnType<typeof paymentSchema>>;
@@ -36,12 +39,14 @@ interface CollectPaymentDialogProps {
   onOpenChange: (v: boolean) => void;
 }
 
-/** Records cash or a bank transfer against what's still due. */
+/** Records cash, a bank transfer, bKash or Nagad (with an optional TrxID) against what's still due. */
 export function CollectPaymentDialog({ booking, open, onOpenChange }: CollectPaymentDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        {open && <CollectPaymentForm booking={booking} onClose={() => onOpenChange(false)} />}
+        {open && (isAwaitingWalletVerification(booking)
+          ? <UnderReview onClose={() => onOpenChange(false)} />
+          : <CollectPaymentForm booking={booking} onClose={() => onOpenChange(false)} />)}
       </DialogContent>
     </Dialog>
   );
@@ -52,13 +57,15 @@ function CollectPaymentForm({ booking, onClose }: { booking: Booking; onClose: (
   const dueMajor = fromMinorUnits(booking.due);
   const form = useForm<PaymentForm>({
     resolver: zodResolver(paymentSchema(dueMajor)) as Resolver<PaymentForm>,
-    defaultValues: { amount: dueMajor, method: "cash", note: "" },
+    defaultValues: { amount: dueMajor, method: "cash", reference: "", note: "" },
   });
   const { register, control, handleSubmit, formState: { errors } } = form;
+  const wallet = isWalletMethod(useWatch({ control, name: "method" }));
 
   function onSubmit(values: PaymentForm) {
+    const reference = isWalletMethod(values.method) && values.reference ? values.reference : undefined;
     record.mutate(
-      { id: booking.id, amount: toMinorUnits(values.amount), method: values.method, note: values.note || undefined },
+      { id: booking.id, amount: toMinorUnits(values.amount), method: values.method, reference, note: values.note || undefined },
       {
         onSuccess: () => {
           toast.success(`${slotPriceLabel(toMinorUnits(values.amount))} recorded on ${booking.bookingNumber}`);
@@ -66,7 +73,7 @@ function CollectPaymentForm({ booking, onClose }: { booking: Booking; onClose: (
         },
         onError: (err) => {
           const failure = toApiFailure(err);
-          if (!applyApiErrors(form, failure, { PAYMENT_EXCEEDS_DUE: "amount" })) toast.error(failure.error);
+          if (!applyApiErrors(form, failure, { PAYMENT_EXCEEDS_DUE: "amount", REFERENCE_ALREADY_USED: "reference" })) toast.error(failure.error);
         },
       },
     );
@@ -105,6 +112,7 @@ function CollectPaymentForm({ booking, onClose }: { booking: Booking; onClose: (
             )} />
           </div>
         </div>
+        {wallet && <TrxIdField id="pay-reference" registration={register("reference")} error={errors.reference?.message} />}
         <div className="space-y-1.5">
           <Label htmlFor="pay-note">Note <span className="font-normal text-muted-foreground">(optional)</span></Label>
           <Textarea id="pay-note" rows={2} className="resize-none text-sm" placeholder="e.g. Paid at the counter" {...register("note")} />
@@ -117,5 +125,20 @@ function CollectPaymentForm({ booking, onClose }: { booking: Booking; onClose: (
         <Button type="submit" disabled={record.isPending}>{record.isPending ? "Recording…" : "Record Payment"}</Button>
       </DialogFooter>
     </form>
+  );
+}
+
+/** A bKash / Nagad payment is waiting to be verified: collecting now would charge twice. */
+function UnderReview({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Payment being verified</DialogTitle>
+        <DialogDescription>
+          The customer sent a bKash / Nagad payment for this booking. Verify or reject it on Confirm Bookings before collecting anything.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter><Button type="button" variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+    </>
   );
 }

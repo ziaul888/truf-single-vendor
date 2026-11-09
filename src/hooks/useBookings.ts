@@ -77,26 +77,32 @@ export function useCreateBooking() {
     (await api.post("/admin/bookings", body)).data.data as Booking);
 }
 
-/** Pending staff bookings and portal pay-at-venue bookings. Portal card bookings confirm by payment. */
+/**
+ * Pending staff bookings, portal pay-at-venue bookings, and "Verify" on portal bKash / Nagad
+ * bookings (marks their pending payment received). Portal card bookings confirm by payment.
+ */
 export function useConfirmBooking() {
   return useBookingMutation(
-    async ({ id, ...body }: { id: string; markPaid?: boolean; method?: OfflineMethod; notifyCustomer?: boolean }) =>
+    async ({ id, ...body }: { id: string; markPaid?: boolean; method?: OfflineMethod; reference?: string; notifyCustomer?: boolean }) =>
       (await api.post(`/admin/bookings/${id}/confirm`, body)).data.data as Booking,
   );
 }
 
-/** Cancel, or "Decline" a pending booking. Card payments are refunded through Stripe; cash is marked refunded. */
+/**
+ * Cancel, or "Decline" a pending booking (also "Reject" for an unverified bKash / Nagad payment, which
+ * becomes failed). Card payments are refunded through Stripe; cash, bank, bKash and Nagad are marked refunded.
+ */
 export function useCancelBooking() {
   return useBookingMutation(
-    async ({ id, ...body }: { id: string; refund: boolean; reason?: string; notifyCustomer?: boolean }) =>
+    async ({ id, ...body }: { id: string; refund: boolean; reason?: string; notifyCustomer?: boolean; rejectWalletPayment?: boolean }) =>
       (await api.post(`/admin/bookings/${id}/cancel`, body)).data.data as Booking,
   );
 }
 
-/** Records cash or a bank transfer against a booking (collecting a due amount). */
+/** Records cash, a bank transfer, bKash or Nagad against a booking (collecting a due amount). */
 export function useRecordPayment() {
   return useBookingMutation(
-    async ({ id, ...body }: { id: string; amount: number; method: OfflineMethod; note?: string }) =>
+    async ({ id, ...body }: { id: string; amount: number; method: OfflineMethod; reference?: string; note?: string }) =>
       (await api.post(`/admin/bookings/${id}/payments`, body)).data.data as Booking,
   );
 }

@@ -17,7 +17,7 @@ import { ConfirmDialog } from "@/components/features/bookings/confirm-dialog";
 import { CancelDialog } from "@/components/features/bookings/cancel-dialog";
 import { PendingBookingCard } from "@/components/features/bookings/pending-booking-card";
 import { BookingsPagination } from "@/components/features/bookings/bookings-pagination";
-import { timeAgo } from "@/components/features/bookings/booking-status-helpers";
+import { isAwaitingWalletVerification, timeAgo } from "@/components/features/bookings/booking-status-helpers";
 
 const PAGE_SIZE = 20;
 /** The stat cards read up to this many pending bookings (the API's page maximum). */
@@ -62,7 +62,9 @@ export default function ConfirmedPage() {
 
   const pendingRows = all?.data ?? [];
   const awaiting = all?.total ?? 0;
-  const dueAtStake = pendingRows.reduce((s, b) => s + b.due, 0);
+  // bKash / Nagad payments being verified are counted apart: they aren't money owed.
+  const toVerify = pendingRows.filter(isAwaitingWalletVerification).length;
+  const dueAtStake = pendingRows.filter((b) => !isAwaitingWalletVerification(b)).reduce((s, b) => s + b.due, 0);
   const oldest = pendingRows.reduce<Booking | null>((min, b) => (!min || b.createdAt < min.createdAt ? b : min), null);
   const rows = data?.data ?? [];
   const isFiltered = debouncedSearch !== "" || groundId !== "all";
@@ -81,7 +83,7 @@ export default function ConfirmedPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard icon={AlertCircle} tone="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-          value={statsLoading ? "—" : String(awaiting)} label="Awaiting Review" />
+          value={statsLoading ? "—" : String(awaiting)} label={toVerify > 0 ? `Awaiting Review · ${toVerify} to verify` : "Awaiting Review"} />
         <StatCard icon={TrendingUp} tone="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
           value={statsLoading ? "—" : slotPriceLabel(dueAtStake)}
           label={awaiting > STATS_LIMIT ? `Amount Due (first ${STATS_LIMIT} requests)` : "Amount Due Across Requests"} />

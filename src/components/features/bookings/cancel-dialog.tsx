@@ -17,6 +17,7 @@ import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format
 import type { Booking } from "@/types/booking";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { isAwaitingWalletVerification } from "./booking-status-helpers";
 
 const CancelSchema = z.object({
   reason: z.string().trim().max(500, "Keep the reason under 500 characters"),
@@ -47,7 +48,10 @@ export function CancelDialog({ booking, open, onOpenChange, mode = "cancel" }: C
 function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cancel" | "decline"; onClose: () => void }) {
   const cancel = useCancelBooking();
   const hasPaid = booking.paid > 0;
-  const verb = mode === "decline" ? "Decline" : "Cancel";
+  // An unverified bKash / Nagad payment: the review queue's "Reject" (cancel only while it's still unverified).
+  const reject = isAwaitingWalletVerification(booking);
+  const verb = reject ? "Reject" : mode === "decline" ? "Decline" : "Cancel";
+  const pastVerb = { Reject: "rejected", Decline: "declined", Cancel: "cancelled" }[verb];
   const form = useForm<CancelForm>({
     resolver: zodResolver(CancelSchema),
     // Cancellation means a full refund of what was paid, so refund is on by default.
@@ -57,11 +61,14 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
 
   function onSubmit(values: CancelForm) {
     cancel.mutate(
-      { id: booking.id, refund: hasPaid && values.refund, reason: values.reason || undefined, notifyCustomer: values.notifyCustomer },
+      {
+        id: booking.id, refund: hasPaid && values.refund, reason: values.reason || undefined, notifyCustomer: values.notifyCustomer,
+        ...(reject && { rejectWalletPayment: true }),
+      },
       {
         onSuccess: () => {
           const refunded = hasPaid && values.refund ? " with refund" : "";
-          toast.success(`Booking ${booking.bookingNumber} ${mode === "decline" ? "declined" : "cancelled"}${refunded}`);
+          toast.success(`Booking ${booking.bookingNumber} ${pastVerb}${refunded}`);
           onClose();
         },
         onError: (err) => toast.error(toApiFailure(err).error),
@@ -78,6 +85,7 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
         <DialogDescription>
           {verb} booking <span className="font-mono font-medium">{booking.bookingNumber}</span> for{" "}
           <span className="font-medium">{booking.contact.name}</span>? The slot becomes available again.
+          {booking.walletPayment?.status === "pending" && " The customer's unverified bKash / Nagad payment is marked rejected."}
         </DialogDescription>
       </DialogHeader>
 
@@ -102,7 +110,7 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
 
         <CheckRow control={control} name="refund" disabled={!hasPaid} title="Issue full refund"
           hint={hasPaid
-            ? `Refund ${slotPriceLabel(booking.paid)}. Card payments go back through Stripe; cash or bank transfers are marked refunded, so pay them back by hand.`
+            ? `Refund ${slotPriceLabel(booking.paid)}. Card payments go back through Stripe; cash, bank transfers, bKash and Nagad are marked refunded, so pay them back by hand.`
             : "No payment on record"} />
         <CheckRow control={control} name="notifyCustomer" title="Notify customer via email"
           hint="Send a cancellation email with the reason" />
@@ -113,7 +121,7 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
           {mode === "decline" ? "Keep Pending" : "Keep Booking"}
         </Button>
         <Button type="submit" variant="destructive" disabled={cancel.isPending}>
-          {cancel.isPending ? `${verb === "Cancel" ? "Cancelling" : "Declining"}…` : `${verb} Booking`}
+          {cancel.isPending ? `${{ Reject: "Rejecting", Decline: "Declining", Cancel: "Cancelling" }[verb]}…` : `${verb} Booking`}
         </Button>
       </DialogFooter>
     </form>

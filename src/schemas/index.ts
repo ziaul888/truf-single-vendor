@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { OFFLINE_METHODS } from "@/types/booking";
 import { venueToday } from "@/lib/slot-format";
+import { OptionalTrxIdSchema } from "@/validations/wallet";
 
 /**
  * Staff (walk-in / phone) booking. Amounts are whole currency units here; the page converts
@@ -18,6 +19,8 @@ export const AddBookingSchema = z
     /** full → confirmed + paid · partial → confirmed + partial · none → pending + unpaid */
     paymentType: z.enum(["full", "partial", "none"]),
     paymentMethod: z.enum(OFFLINE_METHODS),
+    /** bKash / Nagad TrxID, optional; "" for none. */
+    paymentReference: OptionalTrxIdSchema.optional(),
     advanceAmount: z.coerce.number().min(0).optional(),
     dueDate: z.string().optional(),
     partialNote: z.string().trim().max(500, "Keep the note under 500 characters").optional(),

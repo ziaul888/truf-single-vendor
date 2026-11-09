@@ -11,7 +11,9 @@ import { formatEventTime } from "@/lib/slot-format";
 import type { BookingDetail } from "@/types/booking";
 import { Banknote, ExternalLink, History, Layers, Mail, MapPin, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { EVENT_DOT_CLASS, EVENT_LABEL, eventDetailLabel, isCancellable } from "./booking-status-helpers";
+import {
+  EVENT_DOT_CLASS, EVENT_LABEL, canCollectPayment, eventDetailLabel, isCancellable,
+} from "./booking-status-helpers";
 
 interface BookingDetailSidebarProps {
   booking: BookingDetail;
@@ -95,7 +97,8 @@ function ActivityCard({ events }: { events: BookingDetail["events"] }) {
 
 export function BookingDetailSidebar({ booking, onCancelClick, onCollectClick }: BookingDetailSidebarProps) {
   const resend = useResendConfirmation();
-  const canCollect = booking.due > 0 && booking.status !== "cancelled";
+  // Not while a bKash / Nagad payment is waiting to be verified: verify or reject it first.
+  const canCollect = canCollectPayment(booking);
 
   function handleResend() {
     resend.mutate(booking.id, {

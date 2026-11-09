@@ -9,6 +9,7 @@ import { confirmationState, MAX_POLLS, paymentLanded, POLL_INTERVAL_MS } from ".
 import { ConfirmationHero, ConfirmationMessage } from "./confirmation-hero";
 import { BookingDetailsCard } from "./booking-details-card";
 import { CancelBooking } from "./cancel-booking";
+import { RequestCancel } from "./request-cancel";
 import { PayNow } from "./pay-now";
 
 const NOT_FOUND_BODY = "Use the link in your email.";
@@ -69,6 +70,7 @@ export function ConfirmationView({ id, token, venueName }: { id: string; token?:
         {booking.canCancel && state !== "confirming" && (
           <CancelBooking booking={booking} token={token} onCancelled={onCancelled} />
         )}
+        {state === "verifying" && <RequestCancel booking={booking} token={token} onRequested={onCancelled} />}
       </BookingDetailsCard>
     </Shell>
   );

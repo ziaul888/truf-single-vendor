@@ -28,20 +28,22 @@ export function VisitUsSection({
 }
 
 function ContactDetails({ venue }: { venue: PublicVenue }) {
+  // Only what the admin has entered on Settings → General.
+  const reception = [venue.phone, venue.email].filter(Boolean).join(" · ");
   return (
     <dl className="mt-6 space-y-4 text-sm">
-      <Detail Icon={MapPin} label="Address">
-        {venue.address}
-        {venue.mapUrl && (
-          <a href={venue.mapUrl} target="_blank" rel="noopener noreferrer" className="ml-1 text-xs text-primary underline">
-            Get directions →
-          </a>
-        )}
-      </Detail>
-      <Detail Icon={Calendar} label="Open hours">Every day · {venue.openHours}</Detail>
-      <Detail Icon={ShieldCheck} label="Reception">
-        {venue.phone} · {venue.email}
-      </Detail>
+      {(venue.address || venue.mapUrl) && (
+        <Detail Icon={MapPin} label="Address">
+          {venue.address}
+          {venue.mapUrl && (
+            <a href={venue.mapUrl} target="_blank" rel="noopener noreferrer" className="ml-1 text-xs text-primary underline">
+              Get directions →
+            </a>
+          )}
+        </Detail>
+      )}
+      {venue.openHours && <Detail Icon={Calendar} label="Open hours">Every day · {venue.openHours}</Detail>}
+      {reception && <Detail Icon={ShieldCheck} label="Reception">{reception}</Detail>}
     </dl>
   );
 }

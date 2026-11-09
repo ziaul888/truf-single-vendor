@@ -39,6 +39,8 @@ export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   card: "Card",
   cash: "Cash",
   bank_transfer: "Bank transfer",
+  bkash: "bKash",
+  nagad: "Nagad",
 };
 
 export const EVENT_LABEL: Record<BookingEventType, string> = {
@@ -49,6 +51,7 @@ export const EVENT_LABEL: Record<BookingEventType, string> = {
   refunded: "Refund issued",
   email_sent: "Email sent",
   completed: "Booking completed",
+  cancel_requested: "Cancellation requested",
 };
 
 export const EVENT_DOT_CLASS: Record<BookingEventType, string> = {
@@ -59,6 +62,7 @@ export const EVENT_DOT_CLASS: Record<BookingEventType, string> = {
   refunded: "bg-red-400",
   email_sent: "bg-purple-500",
   completed: "bg-gray-400",
+  cancel_requested: "bg-amber-500",
 };
 
 /**
@@ -75,8 +79,16 @@ export const takaLabel = (major: number) => slotPriceLabel(toMinorUnits(major));
 export const isCancellable = (b: Pick<Booking, "status">) => b.status === "pending" || b.status === "confirmed";
 
 /** Portal card bookings confirm when Stripe payment succeeds; staff can't confirm them by hand. */
-export const isAwaitingCardPayment = (b: Pick<Booking, "source" | "payAtVenue" | "status">) =>
-  b.status === "pending" && b.source === "portal" && !b.payAtVenue;
+export const isAwaitingCardPayment = (b: Pick<Booking, "source" | "payAtVenue" | "status" | "walletPayment">) =>
+  b.status === "pending" && b.source === "portal" && !b.payAtVenue && !b.walletPayment;
+
+/** A portal bKash / Nagad payment staff still have to check in their own app (Verify or Reject). */
+export const isAwaitingWalletVerification = (b: Pick<Booking, "status" | "walletPayment">) =>
+  b.status === "pending" && b.walletPayment?.status === "pending";
+
+/** Money is due and staff may take it: not while a card or bKash / Nagad payment is still on its way. */
+export const canCollectPayment = (b: Pick<Booking, "due" | "source" | "payAtVenue" | "status" | "walletPayment">) =>
+  b.due > 0 && b.status !== "cancelled" && !isAwaitingCardPayment(b) && !isAwaitingWalletVerification(b);
 
 export function timeAgo(isoString: string): string {
   const diff = Date.now() - new Date(isoString).getTime();

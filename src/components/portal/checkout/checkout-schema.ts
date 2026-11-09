@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { TrxIdSchema } from "@/validations/wallet";
+
+const isWallet = (m: string) => m === "bkash" || m === "nagad";
 
 export const CheckoutFormSchema = z.object({
   customerName: z.string().trim().min(2, "Enter your full name (at least 2 characters)").max(100),
@@ -7,11 +10,21 @@ export const CheckoutFormSchema = z.object({
     .string()
     .trim()
     .refine((v) => v.replace(/\D/g, "").length >= 10, "Enter a phone number with at least 10 digits"),
-  paymentMethod: z.enum(["card", "cash"]),
+  paymentMethod: z.enum(["card", "cash", "bkash", "nagad"]),
+  /** bKash / Nagad only: the TrxID and the number the money was sent from. */
+  reference: z.string(),
+  payerNumber: z.string(),
   acceptTerms: z.boolean().refine((v) => v, "Please accept the terms to continue"),
+}).superRefine((v, ctx) => {
+  if (!isWallet(v.paymentMethod)) return;
+  const trx = TrxIdSchema.safeParse(v.reference);
+  if (!trx.success) ctx.addIssue({ code: "custom", path: ["reference"], message: trx.error.issues[0]?.message ?? "Enter the TrxID" });
+  if (v.payerNumber.replace(/\D/g, "").length < 10) {
+    ctx.addIssue({ code: "custom", path: ["payerNumber"], message: "Enter the number you sent the money from" });
+  }
 });
 
 export type CheckoutFormValues = z.infer<typeof CheckoutFormSchema>;
 
 /** API validation `details[].field` names that map onto form fields. */
-export const CHECKOUT_FIELDS = ["customerName", "customerEmail", "customerPhone", "paymentMethod"] as const;
+export const CHECKOUT_FIELDS = ["customerName", "customerEmail", "customerPhone", "paymentMethod", "reference", "payerNumber"] as const;

@@ -127,6 +127,9 @@ export interface SlotSettings {
   serviceFee: number;
   /** Lets portal customers choose "pay at venue". */
   portalCashEnabled: boolean;
+  /** The venue's bKash / Nagad number for portal payments; null = not offered. Saved on Settings → Payments. */
+  bkashNumber: string | null;
+  nagadNumber: string | null;
   updatedAt: string | null;
   updatedBy: StaffRef | null;
 }

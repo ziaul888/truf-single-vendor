@@ -24,6 +24,19 @@ export function blockedToast(reason: BlockReason, cancelledBooking: boolean, boo
 }
 
 /**
+ * Error toast for blocking over a booking. A bKash / Nagad payment that isn't verified yet can't be
+ * refunded, so staff must verify or reject that booking first (409 VERIFY_OR_REJECT).
+ */
+export function blockErrorToast(err: unknown, bookingNumber?: string) {
+  const failure = toApiFailure(err);
+  if (failure.code !== "VERIFY_OR_REJECT") return toast.error(failure.error);
+  toast.error("Verify or reject the payment first", {
+    description: `Booking ${bookingNumber ? `#${bookingNumber} ` : ""}has a bKash / Nagad payment that isn't verified yet. `
+      + "Verify it or reject it on Confirm Bookings, then block the slot.",
+  });
+}
+
+/**
  * Blocking a booked slot: pick a reason and confirm that the booking is cancelled with a full refund.
  * Same look as ConfirmDialog, with form fields (ConfirmDialog's description is a <p>, so it can't hold them).
  */
@@ -45,7 +58,7 @@ export function BlockBookedSlotDialog({ slot, onClose }: { slot: Slot | null; on
       { id: slot.id, reason, cancelBooking: true },
       {
         onSuccess: (res) => { blockedToast(reason, res.cancelledBooking, bookingNumber); close(); },
-        onError: (err) => toast.error(toApiFailure(err).error),
+        onError: (err) => blockErrorToast(err, bookingNumber),
       },
     );
   }

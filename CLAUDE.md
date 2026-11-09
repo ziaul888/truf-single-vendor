@@ -189,7 +189,10 @@ npm run test:coverage     # Coverage report
 - Slots auto-generated hourly from ground opening/closing time
 - Slot cannot be double-booked — check `status === 'available'` inside a DB transaction
 - Admin-blocked slots are permanently unavailable to customers
-- Cancellation = full refund to original payment method only
+- Cancellation = full refund to original payment method only (card via Stripe; cash, bank transfer, bKash and Nagad marked refunded and paid back by hand; an unverified bKash / Nagad payment is marked failed)
+- Portal payment: card (Stripe Checkout), cash at the venue, or manual bKash / Nagad. bKash / Nagad show only when the admin has set that number (Settings → Payments); the customer sends the total (service fee included) and enters the TrxID and sender number; the booking stays pending until staff Verify (confirm) or Reject (cancel with `rejectWalletPayment`) it on Confirm Bookings. While under review it isn't money owed (no dues, no Collect payment) and the customer can't cancel directly: before the cutoff they send a cancel request, and staff verify and cancel with a refund, or reject. A verified payment counts as revenue on the day it is verified. No bKash / Nagad API integration
+- Portal cash and bKash / Nagad need the customer signed in with their phone (card stays open to guests); at most 3 open unpaid portal bookings per phone; checkout is rate limited (5 per 10 minutes per phone)
+- Staff can record cash, bank transfer, bKash or Nagad (optional TrxID); a TrxID can't be used twice for the same method while its payment is pending or verified (a rejected one can be reused)
 - Pricing is per-ground, per-hour — fixed, no dynamic pricing in v1
 - Soft-delete only — never hard-delete bookings, payments, or customers
 
@@ -198,7 +201,7 @@ npm run test:coverage     # Coverage report
 - Coupon or discount codes
 - SMS notifications (email only)
 - Loyalty or points system
-- UPI, wallets, or multiple payment methods
+- UPI, or any wallet or payment method beyond card, cash, bank transfer and manual bKash / Nagad (no bKash / Nagad API, no paying a due by wallet through the booking link)
 - Multi-vendor / multi-branch support
 - Advanced analytics beyond daily/weekly revenue CSV
 

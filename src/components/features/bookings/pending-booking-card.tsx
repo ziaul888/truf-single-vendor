@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import type { Booking } from "@/types/booking";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
 import { Phone, MapPin, CalendarDays, Banknote, Clock, StickyNote, CheckCircle2, XCircle, CreditCard } from "lucide-react";
-import { PAYMENT_STATUS_LABEL, isAwaitingCardPayment, paymentStatusVariant, timeAgo } from "./booking-status-helpers";
+import {
+  PAYMENT_STATUS_LABEL, isAwaitingCardPayment, isAwaitingWalletVerification, paymentStatusVariant, timeAgo,
+} from "./booking-status-helpers";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
+import { CancelRequestedBadge, WalletBadge, WalletPaymentNotice } from "./wallet-payment-info";
 
 export function PendingBookingCard({
   booking,
@@ -20,6 +23,7 @@ export function PendingBookingCard({
   onDecline: (b: Booking) => void;
 }) {
   const awaitingCard = isAwaitingCardPayment(booking);
+  const verify = isAwaitingWalletVerification(booking);
 
   return (
     <Card className="transition-shadow hover:shadow-md">
@@ -38,6 +42,8 @@ export function PendingBookingCard({
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 {booking.payAtVenue && <PayAtVenueBadge />}
+                {booking.walletPayment && <WalletBadge payment={booking.walletPayment} />}
+                {booking.cancelRequestedAt && booking.status === "pending" && <CancelRequestedBadge />}
                 <Badge variant={paymentStatusVariant(booking.paymentStatus)} className="text-xs">
                   {PAYMENT_STATUS_LABEL[booking.paymentStatus]}
                 </Badge>
@@ -68,6 +74,8 @@ export function PendingBookingCard({
               </div>
             )}
 
+            {booking.walletPayment && <WalletPaymentNotice payment={booking.walletPayment} />}
+
             {awaitingCard && (
               <div className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
                 <CreditCard className="h-3.5 w-3.5 shrink-0" />Customer is paying by card. It confirms automatically when payment succeeds.
@@ -83,11 +91,11 @@ export function PendingBookingCard({
           <div className="flex gap-2 sm:flex-col sm:items-stretch">
             {!awaitingCard && (
               <Button size="sm" className="flex-1 bg-green-600 text-white hover:bg-green-700 sm:flex-none" onClick={() => onConfirm(booking)}>
-                <CheckCircle2 className="mr-1.5 h-4 w-4" />Confirm
+                <CheckCircle2 className="mr-1.5 h-4 w-4" />{verify ? "Verify" : "Confirm"}
               </Button>
             )}
             <Button size="sm" variant="outline" className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive sm:flex-none" onClick={() => onDecline(booking)}>
-              <XCircle className="mr-1.5 h-4 w-4" />Decline
+              <XCircle className="mr-1.5 h-4 w-4" />{verify ? "Reject" : "Decline"}
             </Button>
             <Button size="sm" variant="ghost" className="flex-1 text-xs sm:flex-none" asChild>
               <Link href={`/dashboard/bookings/${booking.id}`}>View</Link>

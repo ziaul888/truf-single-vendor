@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Building, CreditCard, Wallet } from "lucide-react";
+import { Banknote, Building, CreditCard, Smartphone, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { SettingToggle } from "@/components/features/slots/setting-fields";
@@ -40,11 +40,15 @@ export function PaymentMethodsCard({ status, portalCash, canEdit, onSaved }: {
 
   const { methods } = status;
   return (
-    <SettingsSection title="Payment methods" icon={Wallet} description="Card is the only online method in v1">
+    <SettingsSection title="Payment methods" icon={Wallet} description="Card online; bKash and Nagad sent by hand and verified by staff">
       <MethodRow icon={CreditCard} label="Card (Stripe)" on={methods.card}
         desc={methods.card ? "Customers pay online at checkout." : "Needs Stripe keys in turf-api."} />
       <MethodRow icon={Banknote} label="Cash" on={methods.cash} desc="Staff record cash payments on a booking." />
       <MethodRow icon={Building} label="Bank transfer" on={methods.bankTransfer} desc="Staff record bank transfers on a booking." />
+      <MethodRow icon={Smartphone} label="bKash" on={methods.bkash}
+        desc={methods.bkash ? "Customers send money and enter the TrxID; staff verify it." : "Set the bKash number below to offer it to customers."} />
+      <MethodRow icon={Smartphone} label="Nagad" on={methods.nagad}
+        desc={methods.nagad ? "Customers send money and enter the TrxID; staff verify it." : "Set the Nagad number below to offer it to customers."} />
       <div className="border-t pt-4">
         <SettingToggle
           label="Let customers pay at the venue"

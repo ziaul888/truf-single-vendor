@@ -127,31 +127,12 @@ function Header({ ground, location }: { ground: Ground; location: string }) {
   );
 }
 
-const SMALL_SIDED: string[] = ["4x4", "5x5", "6x6", "7x7", "8x8", "9x9"];
-
 function About({ ground }: { ground: Ground }) {
-  // turf-api grounds carry their own description; the canned copy below is for demo grounds only.
-  if (ground.description) {
-    return (
-      <section className="mt-8 border-b pb-8">
-        <h2 className="mb-2 font-bold">About this ground</h2>
-        <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{ground.description}</p>
-      </section>
-    );
-  }
-  if (!ground.format) return null;
+  if (!ground.description) return null;
   return (
     <section className="mt-8 border-b pb-8">
       <h2 className="mb-2 font-bold">About this ground</h2>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        {SMALL_SIDED.includes(ground.format)
-          ? "FIFA-grade artificial turf with under-soil drainage — playable through monsoon. Full floodlight coverage for evening matches and a covered spectator area. Sits at the front of the venue, closest to parking and the locker rooms."
-          : ground.format === "11x11"
-          ? "Match-grade full-size pitch with dugouts on both sides and seating for 200 spectators. The surface drains in under 10 minutes after heavy rain. Booked weeks in advance during the regular season — book early."
-          : ground.format === "net"
-          ? "Two adjacent lanes of turf wicket with a Bola bowling machine on a track. Floodlit, covered overhead, and ventilated. Helmets and pads available on request — bring your own bat for personal feel."
-          : "Indoor wooden-floor court with air conditioning and competition-grade Yonex shuttles. Rackets and shoes available for rent at reception. The most-booked weekend afternoon court — reserve at least three days ahead."}
-      </p>
+      <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{ground.description}</p>
     </section>
   );
 }

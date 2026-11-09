@@ -10,6 +10,7 @@ import { fromMinorUnits } from "@/lib/ground-format";
 import { formatSlotDate, slotTimeLabel } from "@/lib/slot-format";
 import { listMyBookings, toAppPath } from "@/lib/portal-bookings";
 import type { CustomerBooking } from "@/types/booking";
+import { isUnderReview } from "@/components/portal/confirmation/confirmation-state";
 import { useCustomerSession, useCustomerSignOut } from "./use-customer-session";
 
 type Scope = "upcoming" | "past";
@@ -110,6 +111,9 @@ function BookingRow({ booking: b }: { booking: CustomerBooking }) {
           <p className="truncate font-bold">{b.ground.name}</p>
           <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", status.cls)}>{status.label}</span>
           {b.canPay && <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold">Payment due</span>}
+          {isUnderReview(b) && (
+            <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold">Verifying payment</span>
+          )}
         </div>
         <p className="mt-0.5 text-sm text-muted-foreground">
           {formatSlotDate(b.slot.date)} · {slotTimeLabel(b.slot)} · #{b.bookingNumber}
@@ -117,7 +121,7 @@ function BookingRow({ booking: b }: { booking: CustomerBooking }) {
       </div>
       <div className="text-right">
         <p className="font-bold">৳{fromMinorUnits(b.total).toLocaleString()}</p>
-        {b.due > 0 && b.status !== "cancelled" && (
+        {b.due > 0 && b.status !== "cancelled" && !isUnderReview(b) && (
           <p className="text-xs text-muted-foreground">৳{fromMinorUnits(b.due).toLocaleString()} due</p>
         )}
       </div>

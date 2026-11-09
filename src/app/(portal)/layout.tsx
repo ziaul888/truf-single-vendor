@@ -46,12 +46,14 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <a
-            href={`tel:${venue.phone.replace(/\s/g, "")}`}
-            className="mr-2 hidden items-center gap-1 text-xs opacity-80 hover:text-accent sm:inline-flex"
-          >
-            <Phone className="h-3.5 w-3.5" /> {venue.phone}
-          </a>
+          {venue.phone && (
+            <a
+              href={`tel:${venue.phone.replace(/\s/g, "")}`}
+              className="mr-2 hidden items-center gap-1 text-xs opacity-80 hover:text-accent sm:inline-flex"
+            >
+              <Phone className="h-3.5 w-3.5" /> {venue.phone}
+            </a>
+          )}
           {isAdmin && (
             <Link
               href="/dashboard"
@@ -110,10 +112,10 @@ function PortalFooter({
           </div>
         )}
         <div className="flex flex-wrap gap-x-6 gap-y-2">
-          <Link href="#" className="hover:text-accent">Cancellation policy</Link>
-          <Link href="#" className="hover:text-accent">Terms</Link>
-          <Link href="#" className="hover:text-accent">Privacy</Link>
-          <Link href="#" className="hover:text-accent">Contact</Link>
+          {venue.phone && (
+            <a href={`tel:${venue.phone.replace(/\s/g, "")}`} className="hover:text-accent">Call {venue.phone}</a>
+          )}
+          {venue.email && <a href={`mailto:${venue.email}`} className="hover:text-accent">{venue.email}</a>}
           {process.env.NODE_ENV !== "production" && (
             <Link
               href="/login"

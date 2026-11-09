@@ -17,7 +17,7 @@ import { WEEKDAYS, type Weekday } from "@/types/ground";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/features/confirm-dialog";
 import { Ban } from "lucide-react";
-import { blockedToast } from "./block-booked-slot-dialog";
+import { blockErrorToast, blockedToast } from "./block-booked-slot-dialog";
 import { BlockSummary, BlockWarning } from "./block-slot-summary";
 
 const BLOCK_TYPES = [
@@ -105,7 +105,7 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
       { id: slot.id, reason, note: note.trim() || undefined, cancelBooking: true },
       {
         onSuccess: (res) => { blockedToast(reason, res.cancelledBooking, slot.booking?.bookingNumber); setCancelBooking(false); onSuccess?.(); },
-        onError: (err) => toast.error(toApiFailure(err).error),
+        onError: (err) => blockErrorToast(err, slot.booking?.bookingNumber),
       },
     );
   }
