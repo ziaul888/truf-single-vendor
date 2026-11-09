@@ -48,6 +48,11 @@ export function ConfirmationHero({ state, booking }: { state: ConfirmationState;
       title: "Hope you enjoyed the game!",
       body: <>Booking {ref} is completed.</>,
     },
+    no_show: {
+      icon: <X className="h-10 w-10 text-accent-foreground" />,
+      title: "Marked as a no-show",
+      body: <>The venue marked booking {ref} as a no-show. Please contact the venue if this isn&apos;t right.</>,
+    },
     cancelled: {
       icon: <X className="h-10 w-10 text-accent-foreground" />,
       title: "Booking cancelled",

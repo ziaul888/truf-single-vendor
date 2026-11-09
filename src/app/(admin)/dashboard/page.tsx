@@ -12,6 +12,7 @@ import { StatCard } from "@/components/features/dashboard/stat-card";
 import { WeeklyRevenueChart, BookingsByStatusChart } from "@/components/features/dashboard/dashboard-charts";
 import { DashboardDataTable, upcomingColumns } from "@/components/features/dashboard/dashboard-data-table";
 import { AttentionCards } from "@/components/features/dashboard/attention-cards";
+import { NeedsOutcomeCard } from "@/components/features/dashboard/needs-outcome-card";
 import { TodayGrounds } from "@/components/features/dashboard/today-grounds";
 import { TodayMoney } from "@/components/features/dashboard/today-money";
 import { RecentActivity } from "@/components/features/dashboard/recent-activity";
@@ -49,8 +50,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <section aria-label="Needs attention">
+      <section aria-label="Needs attention" className="space-y-3">
         <AttentionCards />
+        <NeedsOutcomeCard />
       </section>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

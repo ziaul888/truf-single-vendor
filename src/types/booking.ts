@@ -3,7 +3,7 @@
 
 import type { Sport, GroundFormat } from "./ground";
 
-export const BOOKING_STATUSES = ["pending", "confirmed", "cancelled", "completed"] as const;
+export const BOOKING_STATUSES = ["pending", "confirmed", "cancelled", "completed", "no_show"] as const;
 export const PAYMENT_STATUSES = ["unpaid", "partial", "paid", "refunded", "failed"] as const;
 export const PAYMENT_METHODS = ["card", "cash", "bank_transfer", "bkash", "nagad"] as const;
 /** Methods staff can record by hand (card payments only come through Stripe). */
@@ -83,7 +83,8 @@ export interface BookingPayment {
 }
 
 export type BookingEventType =
-  | "created" | "payment_received" | "confirmed" | "cancelled" | "refunded" | "email_sent" | "completed" | "cancel_requested";
+  | "created" | "payment_received" | "confirmed" | "cancelled" | "refunded" | "email_sent" | "completed" | "cancel_requested"
+  | "no_show";
 
 export interface BookingEvent {
   id: string;
@@ -100,7 +101,14 @@ export interface BookingDetail extends Booking {
   events: BookingEvent[];
 }
 
-export interface BookingCounts { pending: number; confirmed: number; cancelled: number; completed: number }
+export interface BookingCounts {
+  pending: number;
+  confirmed: number;
+  cancelled: number;
+  completed: number;
+  /** Missing from older APIs. */
+  no_show?: number;
+}
 
 export interface BookingPage {
   data: Booking[];

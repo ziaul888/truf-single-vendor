@@ -22,11 +22,14 @@ export interface ReportSummary {
   bookingsTrend: Trend;
   avgBookingValue: number;
   avgBookingValueTrend: Trend;
-  /** 0–100; null when no slot in the range has ended. */
+  /** completed / (completed + no-show), 0–100; null when no booking in the range has an outcome yet. */
   completionRate: number | null;
   completionRateTrend: Trend;
   cancellationRate: number;
+  /** `no_show` is missing from older APIs. */
   statusCounts: Record<BookingStatus, number>;
+  /** Bookings marked no-show. Missing from older APIs. */
+  noShows?: number;
 }
 
 export interface RevenuePoint {

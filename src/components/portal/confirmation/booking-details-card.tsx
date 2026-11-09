@@ -13,6 +13,7 @@ const STATUS_PILL: Record<ConfirmationState, { label: string; className: string 
   verifying: { label: "Verifying payment", className: "bg-warning/15 text-warning" },
   confirmed: { label: "Confirmed", className: "bg-success/15 text-success" },
   completed: { label: "Completed", className: "bg-muted text-muted-foreground" },
+  no_show: { label: "No-show", className: "bg-destructive/15 text-destructive" },
   cancelled: { label: "Cancelled", className: "bg-destructive/15 text-destructive" },
 };
 

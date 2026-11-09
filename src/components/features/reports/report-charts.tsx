@@ -14,10 +14,11 @@ export const STATUS_COLORS: Record<BookingStatus, string> = {
   confirmed: "#22c55e",
   pending:   "#f59e0b",
   cancelled: "#ef4444",
+  no_show:   "#f97316",
 };
 
 const STATUS_NAME: Record<BookingStatus, string> = {
-  completed: "Completed", confirmed: "Confirmed", pending: "Pending", cancelled: "Cancelled",
+  completed: "Completed", confirmed: "Confirmed", pending: "Pending", cancelled: "Cancelled", no_show: "No-show",
 };
 
 /** Axis ticks from minor units: ৳12k, ৳1.2k, ৳800. */

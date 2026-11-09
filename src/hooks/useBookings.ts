@@ -99,6 +99,21 @@ export function useCancelBooking() {
   );
 }
 
+/**
+ * "Mark no-show" once the slot has started: payments stay (an advance is still revenue), the rest of
+ * the due is written off. The shared refresh already covers the dashboard's attention cards.
+ */
+export function useMarkNoShow() {
+  return useBookingMutation(async ({ id, ...body }: { id: string; reason?: string }) =>
+    (await api.post(`/admin/bookings/${id}/no-show`, body)).data.data as Booking);
+}
+
+/** Back to completed (slot ended) or confirmed; the due comes back. */
+export function useUndoNoShow() {
+  return useBookingMutation(async (id: string) =>
+    (await api.post(`/admin/bookings/${id}/undo-no-show`)).data.data as Booking);
+}
+
 /** Records cash, a bank transfer, bKash or Nagad against a booking (collecting a due amount). */
 export function useRecordPayment() {
   return useBookingMutation(

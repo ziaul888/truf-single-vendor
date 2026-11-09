@@ -20,6 +20,7 @@ const STATUS: Record<CustomerBooking["status"], { label: string; cls: string }> 
   pending:   { label: "Pending",   cls: "bg-warning/15 text-warning" },
   confirmed: { label: "Confirmed", cls: "bg-success/15 text-success" },
   completed: { label: "Completed", cls: "bg-muted text-muted-foreground" },
+  no_show:   { label: "No-show",   cls: "bg-destructive/15 text-destructive" },
   cancelled: { label: "Cancelled", cls: "bg-destructive/15 text-destructive" },
 };
 

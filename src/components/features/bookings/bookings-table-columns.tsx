@@ -6,13 +6,17 @@ import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Booking } from "@/types/booking";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
-import { Phone, XCircle } from "lucide-react";
-import { PAYMENT_STATUS_LABEL, isAwaitingWalletVerification, isCancellable, paymentStatusVariant } from "./booking-status-helpers";
+import { Phone, UserX, XCircle } from "lucide-react";
+import {
+  PAYMENT_STATUS_LABEL, canMarkNoShow, isAwaitingWalletVerification, isCancellable, paymentStatusVariant,
+} from "./booking-status-helpers";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
 import { WalletBadge } from "./wallet-payment-info";
 
-export function getBookingColumns(setCancelTarget: (b: Booking) => void): ColumnDef<Booking>[] {
+export function getBookingColumns(
+  setCancelTarget: (b: Booking) => void, setNoShowTarget: (b: Booking) => void,
+): ColumnDef<Booking>[] {
   return [
     {
       id: "bookingNumber",
@@ -80,6 +84,11 @@ export function getBookingColumns(setCancelTarget: (b: Booking) => void): Column
             {isCancellable(b) && (
               <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setCancelTarget(b)}>
                 <XCircle className="mr-1 h-3.5 w-3.5" />Cancel
+              </Button>
+            )}
+            {canMarkNoShow(b) && (
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setNoShowTarget(b)}>
+                <UserX className="mr-1 h-3.5 w-3.5" />No-show
               </Button>
             )}
           </div>

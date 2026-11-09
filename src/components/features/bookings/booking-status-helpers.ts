@@ -2,14 +2,14 @@ import type {
   Booking, BookingEventType, BookingStatus, PaymentMethod, PaymentStatus,
 } from "@/types/booking";
 import { toMinorUnits } from "@/lib/ground-format";
-import { slotPriceLabel } from "@/lib/slot-format";
+import { slotPriceLabel, venueHourNow, venueToday } from "@/lib/slot-format";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
 export function bookingStatusVariant(status: BookingStatus): BadgeVariant {
   if (status === "confirmed") return "default";
   if (status === "pending") return "secondary";
-  if (status === "cancelled") return "destructive";
+  if (status === "cancelled" || status === "no_show") return "destructive";
   return "outline";
 }
 
@@ -25,6 +25,7 @@ export const BOOKING_STATUS_LABEL: Record<BookingStatus, string> = {
   confirmed: "Confirmed",
   cancelled: "Cancelled",
   completed: "Completed",
+  no_show: "No-show",
 };
 
 export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
@@ -52,6 +53,7 @@ export const EVENT_LABEL: Record<BookingEventType, string> = {
   email_sent: "Email sent",
   completed: "Booking completed",
   cancel_requested: "Cancellation requested",
+  no_show: "Marked no-show",
 };
 
 export const EVENT_DOT_CLASS: Record<BookingEventType, string> = {
@@ -63,14 +65,17 @@ export const EVENT_DOT_CLASS: Record<BookingEventType, string> = {
   email_sent: "bg-purple-500",
   completed: "bg-gray-400",
   cancel_requested: "bg-amber-500",
+  no_show: "bg-orange-500",
 };
 
 /**
- * Event details are stored with amounts in the smallest unit ("Received 50000 by cash");
- * this shows them in taka ("Received ৳ 500 by cash").
+ * Event details are stored with amounts in the smallest unit ("Received 50000 by cash",
+ * "No-show: 60000 due written off"); this shows them in taka ("Received ৳ 500 by cash").
  */
 export const eventDetailLabel = (detail: string) =>
-  detail.replace(/\b(Received|Paid|Refunded) (\d+)\b/g, (_, verb: string, minor: string) => `${verb} ${slotPriceLabel(Number(minor))}`);
+  detail
+    .replace(/\b(Received|Paid|Refunded) (\d+)\b/g, (_, verb: string, minor: string) => `${verb} ${slotPriceLabel(Number(minor))}`)
+    .replace(/\b(\d+) due written off\b/g, (_, minor: string) => `${slotPriceLabel(Number(minor))} due written off`);
 
 /** "৳ 1,500" from whole currency units (form values). */
 export const takaLabel = (major: number) => slotPriceLabel(toMinorUnits(major));
@@ -85,6 +90,20 @@ export const isAwaitingCardPayment = (b: Pick<Booking, "source" | "payAtVenue" |
 /** A portal bKash / Nagad payment staff still have to check in their own app (Verify or Reject). */
 export const isAwaitingWalletVerification = (b: Pick<Booking, "status" | "walletPayment">) =>
   b.status === "pending" && b.walletPayment?.status === "pending";
+
+/** The slot has started, venue time (a no-show can only be marked from then). */
+export const slotHasStarted = (slot: Pick<Booking["slot"], "date" | "startHour">) => {
+  const today = venueToday();
+  return slot.date < today || (slot.date === today && venueHourNow() >= slot.startHour);
+};
+
+/**
+ * "Mark no-show": pending, confirmed or completed, once the slot has started. Not while a card
+ * checkout is in Stripe or a bKash / Nagad payment is waiting to be verified (verify or reject it first).
+ */
+export const canMarkNoShow = (b: Pick<Booking, "status" | "slot" | "source" | "payAtVenue" | "walletPayment">) =>
+  (b.status === "pending" || b.status === "confirmed" || b.status === "completed")
+  && slotHasStarted(b.slot) && !isAwaitingCardPayment(b) && !isAwaitingWalletVerification(b);
 
 /** Money is due and staff may take it: not while a card or bKash / Nagad payment is still on its way. */
 export const canCollectPayment = (b: Pick<Booking, "due" | "source" | "payAtVenue" | "status" | "walletPayment">) =>

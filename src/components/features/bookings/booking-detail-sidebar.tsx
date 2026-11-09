@@ -9,16 +9,18 @@ import { useResendConfirmation } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
 import { formatEventTime } from "@/lib/slot-format";
 import type { BookingDetail } from "@/types/booking";
-import { Banknote, ExternalLink, History, Layers, Mail, MapPin, Users, XCircle } from "lucide-react";
+import { Banknote, ExternalLink, History, Layers, Mail, MapPin, Undo2, UserX, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
-  EVENT_DOT_CLASS, EVENT_LABEL, canCollectPayment, eventDetailLabel, isCancellable,
+  EVENT_DOT_CLASS, EVENT_LABEL, canCollectPayment, canMarkNoShow, eventDetailLabel, isCancellable,
 } from "./booking-status-helpers";
 
 interface BookingDetailSidebarProps {
   booking: BookingDetail;
   onCancelClick: () => void;
   onCollectClick: () => void;
+  onNoShowClick: () => void;
+  onUndoNoShowClick: () => void;
 }
 
 function GroundCard({ groundId, fallbackName }: { groundId: string; fallbackName: string }) {
@@ -95,7 +97,9 @@ function ActivityCard({ events }: { events: BookingDetail["events"] }) {
   );
 }
 
-export function BookingDetailSidebar({ booking, onCancelClick, onCollectClick }: BookingDetailSidebarProps) {
+export function BookingDetailSidebar({
+  booking, onCancelClick, onCollectClick, onNoShowClick, onUndoNoShowClick,
+}: BookingDetailSidebarProps) {
   const resend = useResendConfirmation();
   // Not while a bKash / Nagad payment is waiting to be verified: verify or reject it first.
   const canCollect = canCollectPayment(booking);
@@ -137,6 +141,16 @@ export function BookingDetailSidebar({ booking, onCancelClick, onCollectClick }:
               <ExternalLink className="h-4 w-4" />View Customer History
             </Link>
           </Button>
+          {booking.status === "no_show" && (
+            <Button variant="outline" className="w-full justify-start gap-2" onClick={onUndoNoShowClick}>
+              <Undo2 className="h-4 w-4" />Undo No-show
+            </Button>
+          )}
+          {canMarkNoShow(booking) && (
+            <Button variant="outline" className="w-full justify-start gap-2 text-destructive hover:text-destructive" onClick={onNoShowClick}>
+              <UserX className="h-4 w-4" />Mark No-show
+            </Button>
+          )}
           {isCancellable(booking) && (
             <Button variant="destructive" className="w-full justify-start gap-2" onClick={onCancelClick}>
               <XCircle className="h-4 w-4" />{booking.paid > 0 ? "Cancel & Refund" : "Cancel Booking"}
