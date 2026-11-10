@@ -13,6 +13,7 @@ import { useUpdateWebsite, useVenue, useWebsiteSettings, type WebsiteSection } f
 import { applyApiErrors, toApiFailure } from "@/lib/api-error";
 import { SettingsPageHeader } from "@/components/features/settings/settings-page-header";
 import { ReadOnlyNotice } from "@/components/features/settings/read-only-notice";
+import { SettingsSaveActions, SettingsSaveBar } from "@/components/features/settings/settings-save-actions";
 import {
   HeroFields, SocialFields, VenueSummary,
 } from "@/components/features/website-settings/website-form-sections";
@@ -77,10 +78,10 @@ export default function WebsiteSettingsPage() {
         </Button>
         {canEdit && (
           <>
-            <Button type="button" size="sm" variant="outline" disabled={!isDirty || save.isPending} onClick={() => reset(toForm(data))}>
+            <Button type="button" size="sm" variant="outline" className="hidden md:inline-flex" disabled={!isDirty || save.isPending} onClick={() => reset(toForm(data))}>
               <RotateCcw className="mr-1.5 h-4 w-4" />Discard
             </Button>
-            <Button type="submit" size="sm" disabled={!isDirty || save.isPending}>
+            <Button type="submit" size="sm" className="hidden md:inline-flex" disabled={!isDirty || save.isPending}>
               {save.isPending
                 ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Saving…</>
                 : <><Save className="mr-1.5 h-4 w-4" />Save changes</>}
@@ -107,6 +108,11 @@ export default function WebsiteSettingsPage() {
           <WebsitePreview control={form.control} isDirty={isDirty} venue={venue} />
         </aside>
       </div>
+      {canEdit && (
+        <SettingsSaveBar>
+          <SettingsSaveActions dirty={isDirty} saving={save.isPending} onDiscard={() => reset(toForm(data))} />
+        </SettingsSaveBar>
+      )}
     </form>
   );
 }

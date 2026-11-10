@@ -73,7 +73,7 @@ export function ConfirmationHero({ state, booking }: { state: ConfirmationState;
   return (
     <>
       <div className={`${ICON_WRAP} bg-accent`}>{icon}</div>
-      <h1 className="mt-6 text-4xl font-extrabold tracking-tight">{title}</h1>
+      <h1 className="mt-6 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h1>
       <p className="mt-2 opacity-80">{body}</p>
     </>
   );

@@ -30,7 +30,63 @@ function initials(name: string) {
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
-export function UsersTable({ users, currentUserId, onEdit, onResetPassword, onToggleActive }: UsersTableProps) {
+function UserActions({ user, onEdit, onResetPassword }: { user: StaffUser } & Pick<UsersTableProps, "onEdit" | "onResetPassword">) {
+  return (
+    <>
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
+        onClick={() => onEdit(user)} aria-label={`Edit ${user.name}`}>
+        <Pencil className="h-3.5 w-3.5" />
+      </Button>
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
+        onClick={() => onResetPassword(user)} aria-label={`Reset password for ${user.name}`}>
+        <KeyRound className="h-3.5 w-3.5" />
+      </Button>
+    </>
+  );
+}
+
+/** Staff as stacked rows for phones, where the table would scroll sideways. */
+function UsersList({ users, currentUserId, onEdit, onResetPassword, onToggleActive }: UsersTableProps) {
+  return (
+    <ul className="divide-y">
+      {users.map((u) => {
+        const isSelf = u.id === currentUserId;
+        return (
+          <li key={u.id} className={cn("flex items-center gap-3 px-4 py-3", !u.isActive && "opacity-60")}>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: avatarColor(u.id) }}>
+              {initials(u.name)}
+            </div>
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="truncate font-medium leading-tight">
+                {u.name} {isSelf && <span className="text-xs font-normal text-muted-foreground">(you)</span>}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+              <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold", ROLE_META[u.role].badge)}>
+                {ROLE_META[u.role].label}
+              </span>
+            </div>
+            <Switch checked={u.isActive} onCheckedChange={() => onToggleActive(u)} disabled={isSelf}
+              aria-label={`${u.isActive ? "Deactivate" : "Activate"} ${u.name}`} />
+            <div className="flex shrink-0 items-center">
+              <UserActions user={u} onEdit={onEdit} onResetPassword={onResetPassword} />
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export function UsersTable(props: UsersTableProps) {
+  return (
+    <>
+      <div className="md:hidden"><UsersList {...props} /></div>
+      <div className="hidden md:block"><UsersDataTable {...props} /></div>
+    </>
+  );
+}
+
+function UsersDataTable({ users, currentUserId, onEdit, onResetPassword, onToggleActive }: UsersTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -79,14 +135,7 @@ export function UsersTable({ users, currentUserId, onEdit, onResetPassword, onTo
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-0.5">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    onClick={() => onEdit(u)} aria-label={`Edit ${u.name}`}>
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    onClick={() => onResetPassword(u)} aria-label={`Reset password for ${u.name}`}>
-                    <KeyRound className="h-3.5 w-3.5" />
-                  </Button>
+                  <UserActions user={u} onEdit={onEdit} onResetPassword={onResetPassword} />
                 </div>
               </TableCell>
             </TableRow>

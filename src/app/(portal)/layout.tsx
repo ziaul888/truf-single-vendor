@@ -17,7 +17,8 @@ import { CustomerNav } from "@/components/portal/account/customer-nav";
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const { venue, social } = await getPublicWebsite();
   return (
-    <div className="pitch flex min-h-screen flex-col bg-background text-foreground">
+    // Below lg, room at the bottom for a page's fixed action bar (`data-mobile-cta`) so it doesn't cover the footer.
+    <div className="pitch flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <PortalHeader venue={venue} />
       <main className="flex-1">{children}</main>
       <PortalFooter venue={venue} social={social} />
@@ -59,7 +60,7 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
           {isAdmin && (
             <Link
               href="/dashboard"
-              className="hidden h-9 items-center gap-1.5 rounded-lg border border-accent/40 px-3 text-sm font-semibold text-accent hover:bg-accent hover:text-accent-foreground md:inline-flex"
+              className="hidden h-10 items-center gap-1.5 rounded-lg border border-accent/40 px-3 text-sm font-semibold text-accent hover:bg-accent hover:text-accent-foreground md:inline-flex"
             >
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -68,7 +69,7 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
           <CustomerNav />
           <Link
             href={bookHref}
-            className="inline-flex h-9 items-center whitespace-nowrap rounded-lg bg-accent px-3 text-sm font-semibold text-accent-foreground hover:opacity-90 sm:px-4"
+            className="inline-flex h-10 items-center whitespace-nowrap rounded-lg bg-accent px-3 text-sm font-semibold text-accent-foreground hover:opacity-90 sm:px-4"
           >
             Book now
           </Link>

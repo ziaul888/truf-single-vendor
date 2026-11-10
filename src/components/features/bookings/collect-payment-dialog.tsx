@@ -21,6 +21,7 @@ import { Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { PAYMENT_METHOD_LABEL, isAwaitingWalletVerification } from "./booking-status-helpers";
 import { TrxIdField } from "./trx-id-field";
+import { keepKeyboardClosed } from "./keep-keyboard-closed";
 
 const paymentSchema = (dueMajor: number) =>
   z.object({
@@ -43,7 +44,7 @@ interface CollectPaymentDialogProps {
 export function CollectPaymentDialog({ booking, open, onOpenChange }: CollectPaymentDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={keepKeyboardClosed}>
         {open && (isAwaitingWalletVerification(booking)
           ? <UnderReview onClose={() => onOpenChange(false)} />
           : <CollectPaymentForm booking={booking} onClose={() => onOpenChange(false)} />)}
@@ -115,7 +116,7 @@ function CollectPaymentForm({ booking, onClose }: { booking: Booking; onClose: (
         {wallet && <TrxIdField id="pay-reference" registration={register("reference")} error={errors.reference?.message} />}
         <div className="space-y-1.5">
           <Label htmlFor="pay-note">Note <span className="font-normal text-muted-foreground">(optional)</span></Label>
-          <Textarea id="pay-note" rows={2} className="resize-none text-sm" placeholder="e.g. Paid at the counter" {...register("note")} />
+          <Textarea id="pay-note" rows={2} className="resize-none" placeholder="e.g. Paid at the counter" {...register("note")} />
           {errors.note && <p className="text-xs text-destructive">{errors.note.message}</p>}
         </div>
       </div>

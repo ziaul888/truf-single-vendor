@@ -89,30 +89,14 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Select date
       </p>
-      {/* Thin, theme-coloured scrollbar that only shows on hover (no white track on the dark card) */}
-      <div className="scrollbar-hover -mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2">
-        {dates.map((d) => (
-          <button
-            key={d.iso}
-            onClick={() => { setActiveDate(d.iso); setSelectedHour(null); }}
-            className={cn(
-              "min-w-16 shrink-0 snap-start rounded-xl border p-2.5 text-center text-xs",
-              activeDate === d.iso ? "bg-primary text-primary-foreground border-primary" : "hover:border-primary/40"
-            )}
-          >
-            <p className="opacity-70">{d.dow}</p>
-            <p className="text-lg font-bold">{d.day}</p>
-            <p className="text-[10px] opacity-70">{d.mon}</p>
-          </button>
-        ))}
-      </div>
+      <DateStrip dates={dates} active={activeDate} onPick={(iso) => { setActiveDate(iso); setSelectedHour(null); }} />
 
       <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Available hours
       </p>
       {isLoading ? (
         <div className="grid grid-cols-3 gap-2">
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonBlock key={i} className="h-10 rounded-lg" />)}
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonBlock key={i} className="h-11 rounded-lg" />)}
         </div>
       ) : isError ? (
         <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">Couldn&apos;t load slots. Please refresh.</p>
@@ -121,26 +105,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
           {closure ? closure.label : "Closed on this day."}
         </p>
       ) : (
-        <div className="grid grid-cols-3 gap-2">
-          {daySlots.map(({ startHour, available, isPeak }) => {
-            const isSelected = selectedHour === startHour;
-            return (
-              <button
-                key={startHour}
-                disabled={!available}
-                onClick={() => setSelectedHour(startHour)}
-                className={cn(
-                  "rounded-lg border px-2 py-2.5 text-sm transition",
-                  !available && "cursor-not-allowed bg-muted/50 text-muted-foreground line-through",
-                  available && !isSelected && "hover:border-primary",
-                  isSelected && "bg-primary text-primary-foreground border-primary"
-                )}
-              >
-                {pad(startHour)}:00 {isPeak && <span className="text-accent">★</span>}
-              </button>
-            );
-          })}
-        </div>
+        <HourGrid slots={daySlots} selected={selectedHour} onPick={setSelectedHour} />
       )}
 
       {total != null && (
@@ -151,6 +116,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
         </div>
       )}
 
+      {/* Once an hour is picked, phones continue from the sticky bar instead */}
       <button
         disabled={!selected}
         onClick={handleContinue}
@@ -158,11 +124,100 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
           "mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold",
           !selected
             ? "cursor-not-allowed bg-muted text-muted-foreground"
-            : "bg-accent text-accent-foreground hover:opacity-90"
+            : "max-lg:hidden bg-accent text-accent-foreground hover:opacity-90"
         )}
       >
         Continue to payment <ArrowRight className="h-4 w-4" />
       </button>
+      {selected && total != null && (
+        <MobileContinueBar time={`${pad(selected.startHour)}:00`} total={total} onContinue={handleContinue} />
+      )}
+    </div>
+  );
+}
+
+/** The 7-day strip; on phones a fade at the right edge hints that it scrolls. */
+function DateStrip({
+  dates, active, onPick,
+}: {
+  dates: ReturnType<typeof buildDates>; active: string; onPick: (iso: string) => void;
+}) {
+  return (
+    <div className="relative">
+      {/* Thin, theme-coloured scrollbar that only shows on hover (no white track on the dark card) */}
+      <div className="scrollbar-hover -mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2">
+        {dates.map((d) => (
+          <button
+            key={d.iso}
+            onClick={() => onPick(d.iso)}
+            className={cn(
+              "min-w-16 shrink-0 snap-start rounded-xl border p-2.5 text-center text-xs",
+              active === d.iso ? "bg-primary text-primary-foreground border-primary" : "hover:border-primary/40"
+            )}
+          >
+            <p className="opacity-70">{d.dow}</p>
+            <p className="text-lg font-bold">{d.day}</p>
+            <p className="text-[10px] opacity-70">{d.mon}</p>
+          </button>
+        ))}
+      </div>
+      <div aria-hidden className="pointer-events-none absolute inset-y-0 -right-1 w-8 bg-linear-to-l from-card to-transparent lg:hidden" />
+    </div>
+  );
+}
+
+function HourGrid({
+  slots, selected, onPick,
+}: {
+  slots: PublicSlot[]; selected: number | null; onPick: (hour: number) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {slots.map(({ startHour, available, isPeak }) => {
+        const isSelected = selected === startHour;
+        return (
+          <button
+            key={startHour}
+            disabled={!available}
+            onClick={() => onPick(startHour)}
+            className={cn(
+              "min-h-11 rounded-lg border px-2 py-2.5 text-sm transition",
+              !available && "cursor-not-allowed bg-muted/50 text-muted-foreground line-through",
+              available && !isSelected && "hover:border-primary",
+              isSelected && "bg-primary text-primary-foreground border-primary"
+            )}
+          >
+            {pad(startHour)}:00 {isPeak && <span className="text-accent">★</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Phones only: the picked hour, the total and Continue, pinned to the bottom of the screen.
+ * `data-mobile-cta` lets the portal layout pad its bottom so the bar never covers the footer.
+ */
+function MobileContinueBar({ time, total, onContinue }: { time: string; total: number; onContinue: () => void }) {
+  return (
+    <div
+      data-mobile-cta
+      className="fixed inset-x-0 bottom-0 z-30 border-t bg-card px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden"
+    >
+      <div className="mx-auto flex max-w-xl items-center gap-3">
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="text-xs text-muted-foreground">{time} · total</p>
+          <p className="text-lg font-bold">৳{total.toLocaleString()}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onContinue}
+          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-bold text-accent-foreground hover:opacity-90"
+        >
+          Continue <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }

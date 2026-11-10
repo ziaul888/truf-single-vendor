@@ -21,13 +21,13 @@ export function GroundsDateBar({ query }: { query: GroundsQuery }) {
         required
         min={venueToday()}
         defaultValue={query.date ?? venueToday()}
-        className="rounded-md border bg-background px-2 py-1 text-sm"
+        className="rounded-md border bg-background px-2 py-1 text-base pointer-coarse:min-h-11 sm:text-sm"
       />
       {(["sport", "format", "surface"] as const).map((k) =>
         query[k] ? <input key={k} type="hidden" name={k} value={query[k]} /> : null,
       )}
       {query.sort !== "recommended" && <input type="hidden" name="sort" value={query.sort} />}
-      <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90">
+      <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold pointer-coarse:min-h-11 text-primary-foreground hover:opacity-90">
         {query.date ? "Change" : "Show slots"}
       </button>
       {query.date && (

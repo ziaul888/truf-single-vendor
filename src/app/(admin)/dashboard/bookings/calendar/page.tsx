@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { FilterMenu } from "@/components/features/filter-menu";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,15 @@ export default function CalendarPage() {
   const [currentDate,  setCurrentDate]  = useState(today);
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [groundFilter, setGroundFilter] = useState("all");
+  const dayPanelRef = useRef<HTMLDivElement>(null);
+
+  // Below lg the day's bookings sit under the grid, so a tap on a day scrolls to them.
+  function selectDate(date: string) {
+    setSelectedDate(date);
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      requestAnimationFrame(() => dayPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+  }
 
   const year  = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -181,7 +190,7 @@ export default function CalendarPage() {
               type="button"
               onClick={() => setView(v)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-sm font-medium capitalize transition-all",
+                "px-3 py-1.5 pointer-coarse:py-2.5 rounded-md text-sm font-medium capitalize transition-all",
                 view === v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
               )}
             >
@@ -207,7 +216,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar body */}
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         {/* Main grid */}
         <div className="flex-1 min-w-0">
           {isLoading ? (
@@ -218,14 +227,14 @@ export default function CalendarPage() {
               selectedDate={selectedDate}
               currentMonth={currentDate}
               totalSlotsFor={totalSlotsFor}
-              onSelectDate={setSelectedDate}
+              onSelectDate={selectDate}
             />
           ) : view === "week" ? (
             <WeekGrid
               slots={slots}
               selectedDate={selectedDate}
               currentWeekDate={currentDate}
-              onSelectDate={(d) => { setSelectedDate(d); setCurrentDate(new Date(d + "T00:00:00")); }}
+              onSelectDate={(d) => { selectDate(d); setCurrentDate(new Date(d + "T00:00:00")); }}
             />
           ) : (
             /* Day view — reuse DayPanel full-width */
@@ -251,9 +260,9 @@ export default function CalendarPage() {
           )}
         </div>
 
-        {/* Right sidebar — hidden on day view */}
+        {/* Right sidebar (under the grid below lg) — hidden on day view */}
         {view !== "day" && (
-          <div className="w-64 xl:w-72 shrink-0 hidden lg:flex flex-col gap-0">
+          <div ref={dayPanelRef} className="flex shrink-0 scroll-mt-4 flex-col gap-0 lg:w-64 xl:w-72">
             <DayPanel
               slots={slots}
               selectedDate={selectedDate}

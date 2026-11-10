@@ -13,12 +13,13 @@ import { cn } from "@/lib/utils";
 import { toApiFailure } from "@/lib/api-error";
 import { BLOCK_REASON_LABEL, addDays, formatSlotDate, slotTimeLabel, venueToday } from "@/lib/slot-format";
 import { BLOCK_REASONS, type BlockReason, type BulkBlockInput } from "@/types/slot";
-import { WEEKDAYS, type Weekday } from "@/types/ground";
+import type { Weekday } from "@/types/ground";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/features/confirm-dialog";
 import { Ban } from "lucide-react";
 import { blockErrorToast, blockedToast } from "./block-booked-slot-dialog";
 import { BlockSummary, BlockWarning } from "./block-slot-summary";
+import { WeekdayPicker } from "./weekday-picker";
 
 const BLOCK_TYPES = [
   { value: "single", label: "Single slot" },
@@ -136,14 +137,15 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
     : slotHour && slotHour !== WHOLE_DAY && selectedSlot ? slotTimeLabel(selectedSlot) : "Whole day";
 
   return (
-    <Card>
+    // In the sheet on phones the card's own border and padding would double the sheet's.
+    <Card className={cn(compact && "max-sm:border-0 max-sm:bg-transparent max-sm:shadow-none")}>
       {!compact && (
         <CardHeader className="pb-3">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Block slot</p>
           <CardTitle className="text-base mt-0.5">Block a time slot</CardTitle>
         </CardHeader>
       )}
-      <CardContent className={cn("space-y-4", compact && "pt-4")}>
+      <CardContent className={cn("space-y-4", compact && "pt-4 max-sm:p-0")}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Ground <span className="text-destructive">*</span></Label>
@@ -168,7 +170,7 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
             )}
           </div>
 
-          <div className={cn("grid gap-3", blockType === "fullDay" ? "grid-cols-1" : "grid-cols-2")}>
+          <div className={cn("grid gap-3", blockType !== "fullDay" && "sm:grid-cols-2")}>
             <div className="space-y-1.5">
               <Label>{blockType === "recurringWeekly" ? "Starting" : "Date"} <span className="text-destructive">*</span></Label>
               <Input type="date" min={venueToday()} value={date} onChange={(e) => { setDate(e.target.value); pickSlot(""); }} />
@@ -200,17 +202,7 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
             <>
               <div className="space-y-2">
                 <Label>Repeat on <span className="text-destructive">*</span></Label>
-                <div className="flex flex-wrap gap-2">
-                  {WEEKDAYS.map((day) => {
-                    const checked = weekdays.includes(day);
-                    return (
-                      <label key={day} className={cn("flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium capitalize transition-colors", checked ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted")}>
-                        <Checkbox checked={checked} onCheckedChange={(v) => toggleWeekday(day, v === true)} className="h-3.5 w-3.5" />
-                        {day}
-                      </label>
-                    );
-                  })}
-                </div>
+                <WeekdayPicker value={weekdays} onToggle={toggleWeekday} />
               </div>
               <div className="space-y-1.5">
                 <Label>Until <span className="text-destructive">*</span></Label>
@@ -238,7 +230,7 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
               placeholder="Additional details about this block (admin only)..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
             />
           </div>
 
@@ -270,10 +262,14 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
             <BlockWarning>{`${bookedThatDay} booked slot${bookedThatDay === 1 ? "" : "s"} that day will be left as they are.`}</BlockWarning>
           )}
 
-          <Button type="submit" variant="destructive" className="w-full" disabled={pending || !body || slotUnavailable || (needsCancel && !cancelBooking)}>
-            <Ban className="mr-1.5 h-4 w-4" />
-            {pending ? "Blocking…" : needsCancel ? "Cancel booking and block" : single ? "Block slot" : "Block slots"}
-          </Button>
+          {/* Pinned to the bottom of the sheet on phones, so it's in reach without scrolling.
+              -bottom-4 reaches past the sheet body's padding; the extra bottom padding fills it. */}
+          <div className={cn(compact && "max-sm:sticky max-sm:-bottom-4 max-sm:z-10 max-sm:bg-background max-sm:pt-3 max-sm:pb-[calc(1.75rem_+_env(safe-area-inset-bottom))]")}>
+            <Button type="submit" variant="destructive" className="w-full" disabled={pending || !body || slotUnavailable || (needsCancel && !cancelBooking)}>
+              <Ban className="mr-1.5 h-4 w-4" />
+              {pending ? "Blocking…" : needsCancel ? "Cancel booking and block" : single ? "Block slot" : "Block slots"}
+            </Button>
+          </div>
           <ConfirmDialog
             open={confirming}
             title={blockType === "fullDay" ? `Block all of ${formatSlotDate(date)}?` : "Block these slots every week?"}

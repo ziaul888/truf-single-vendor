@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { getPublicVenue } from "@/services/website-settings";
@@ -6,6 +6,9 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+
+/** Phones first: `cover` lets sticky bottom bars pad for the home indicator with env(safe-area-inset-bottom). */
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 /** The tab title and icon follow the venue's name and logo (Settings → General), on the portal and admin alike. */
 export async function generateMetadata(): Promise<Metadata> {

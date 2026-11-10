@@ -19,11 +19,12 @@ import { RecentActivity } from "@/components/features/dashboard/recent-activity"
 import { UpcomingList } from "@/components/features/dashboard/upcoming-list";
 import { CollectPaymentDialog } from "@/components/features/bookings/collect-payment-dialog";
 
+// onPhone: also shown below md, under the attention cards; the rest are desktop setup tasks.
 const quickActions = [
-  { label: "New Booking",  icon: CalendarPlus, href: "/dashboard/bookings/new"     },
-  { label: "Add Ground",   icon: Plus,         href: "/dashboard/grounds/new"      },
-  { label: "Add Customer", icon: UserPlus,     href: "/dashboard/customers?add=1"  },
-  { label: "All Bookings", icon: CalendarDays, href: "/dashboard/bookings"         },
+  { label: "New Booking",  icon: CalendarPlus, href: "/dashboard/bookings/new",    onPhone: true  },
+  { label: "Add Ground",   icon: Plus,         href: "/dashboard/grounds/new",     onPhone: false },
+  { label: "Add Customer", icon: UserPlus,     href: "/dashboard/customers?add=1", onPhone: false },
+  { label: "All Bookings", icon: CalendarDays, href: "/dashboard/bookings",        onPhone: true  },
 ];
 
 const TREND_LABEL = "vs last week";
@@ -41,7 +42,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Overview of today&apos;s activity</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="hidden flex-wrap gap-2 md:flex">
           {quickActions.map(({ label, icon: Icon, href }) => (
             <Button key={href} variant="outline" size="sm" asChild>
               <Link href={href} className="flex items-center gap-2"><Icon className="h-4 w-4" />{label}</Link>
@@ -54,6 +55,14 @@ export default function DashboardPage() {
         <AttentionCards />
         <NeedsOutcomeCard />
       </section>
+
+      <div className="grid grid-cols-2 gap-2 md:hidden">
+        {quickActions.filter((a) => a.onPhone).map(({ label, icon: Icon, href }) => (
+          <Button key={href} variant="outline" className="h-10" asChild>
+            <Link href={href}><Icon className="h-4 w-4" />{label}</Link>
+          </Button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard title="Today's Sales"  value={s ? slotPriceLabel(s.todayRevenue) : "—"} icon={DollarSign}   trend={s?.todayRevenueTrend}   trendLabel={TREND_LABEL} loading={stats.isLoading} />

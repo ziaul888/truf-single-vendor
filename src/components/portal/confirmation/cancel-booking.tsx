@@ -26,7 +26,7 @@ export function CancelBooking({
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="mt-3 w-full rounded-lg border border-destructive/30 px-3 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/5"
+        className="mt-3 min-h-11 w-full rounded-lg border border-destructive/30 px-3 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/5"
       >
         Cancel booking
       </button>
@@ -41,12 +41,12 @@ export function CancelBooking({
       {cancel.isError && (
         <p role="alert" className="mt-2 text-destructive">{cancel.error.message}</p>
       )}
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
           onClick={() => cancel.mutate()}
           disabled={cancel.isPending}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-destructive px-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
         >
           {cancel.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Yes, cancel
@@ -55,7 +55,7 @@ export function CancelBooking({
           type="button"
           onClick={() => { setConfirming(false); cancel.reset(); }}
           disabled={cancel.isPending}
-          className="flex-1 rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+          className="h-11 flex-1 rounded-lg border px-3 text-sm font-semibold hover:bg-muted disabled:opacity-60"
         >
           Keep booking
         </button>

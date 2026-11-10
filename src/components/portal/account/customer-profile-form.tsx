@@ -65,7 +65,7 @@ export function CustomerProfileForm({ initial, submitLabel, onSaved, children }:
         <input id="email" type="email" autoComplete="email" aria-invalid={!!errors.email} className={INPUT} {...form.register("email")} />
         {errors.email
           ? <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
-          : <p className="mt-1 text-[11px] text-muted-foreground">Without one you won&apos;t get confirmation emails; your bookings are under My bookings.</p>}
+          : <p className="mt-1 text-xs text-muted-foreground">Without one you won&apos;t get confirmation emails; your bookings are under My bookings.</p>}
       </div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <button type="submit" disabled={isSubmitting || (!!initial?.name && !isDirty)}

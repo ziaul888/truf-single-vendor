@@ -149,7 +149,7 @@ export function PaymentSection({ form, totalAmount }: PaymentSectionProps) {
             <div className="space-y-2">
               <Label className="text-sm font-medium" htmlFor="partialNote">Payment Note <span className="font-normal text-muted-foreground">(optional)</span></Label>
               <textarea id="partialNote" rows={2} placeholder="e.g. Rest at the counter before the game"
-                className="w-full resize-none rounded-lg border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+                className="w-full resize-none rounded-lg border bg-background px-3 py-2.5 text-base md:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
                 {...register("partialNote")} />
               {errors.partialNote && <p className="text-xs text-destructive">{errors.partialNote.message}</p>}
             </div>

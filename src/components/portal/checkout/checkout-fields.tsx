@@ -6,7 +6,7 @@ import { Banknote, CreditCard, Smartphone } from "lucide-react";
 import type { CheckoutMethod, CheckoutOptions } from "@/types/booking";
 
 const INPUT_CLASS =
-  "mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive";
+  "mt-1 w-full rounded-lg border bg-background px-3 py-2 text-base sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive";
 
 export function Field({
   label, id, error, hint, className, ...input
@@ -18,18 +18,18 @@ export function Field({
       </label>
       <input id={id} aria-invalid={!!error} className={INPUT_CLASS} {...input} />
       {error ? (
-        <p className="mt-1 text-[11px] text-destructive">{error}</p>
+        <p className="mt-1 text-xs text-destructive">{error}</p>
       ) : (
-        hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
+        hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
       )}
     </div>
   );
 }
 
-/** Shown instead of the submit button: cash, bKash and Nagad need the customer signed in with their phone. */
+/** Shown right under the payment choice: cash, bKash and Nagad need the customer signed in with their phone. */
 export function SignInNotice({ href }: { href: string }) {
   return (
-    <div role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">
+    <div role="status" className="mt-4 rounded-lg border bg-muted/40 p-4 text-sm">
       <p>Sign in with your phone number to pay at the venue or by bKash / Nagad. Card payment works without signing in.</p>
       <Link
         href={href}

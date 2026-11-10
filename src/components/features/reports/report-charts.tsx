@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Legend, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, Line,
@@ -27,6 +28,23 @@ export function compactTaka(minor: number) {
   if (Math.abs(taka) >= 1000) return `৳${(taka / 1000).toFixed(Math.abs(taka) >= 10_000 ? 0 : 1)}k`;
   return `৳${taka}`;
 }
+
+// Recharts sizes axes and labels in pixels, so phones need their own numbers.
+const NARROW_QUERY = "(max-width: 639px)";
+
+function subscribeNarrow(onChange: () => void) {
+  const mq = window.matchMedia(NARROW_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+
+/** True below Tailwind's `sm`; false on the server and while hydrating. */
+function useNarrow() {
+  return useSyncExternalStore(subscribeNarrow, () => window.matchMedia(NARROW_QUERY).matches, () => false);
+}
+
+const GROUND_TICK_CHARS = 10;
+const shortName = (name: string) => (name.length > GROUND_TICK_CHARS ? `${name.slice(0, GROUND_TICK_CHARS - 1)}…` : name);
 
 function ChartSkeleton({ height = 280 }: { height?: number }) {
   return <div className="animate-pulse rounded bg-muted" style={{ height }} />;
@@ -57,14 +75,16 @@ export function RevenueTrendChart({ data, loading }: { data?: RevenuePoint[]; lo
 }
 
 export function RevenueByGroundChart({ data, loading }: { data?: GroundReport[]; loading?: boolean }) {
+  const narrow = useNarrow();
   if (loading) return <ChartSkeleton />;
   if (!data?.length) return <EmptyChart />;
   return (
     <ResponsiveContainer width="100%" height={Math.max(200, data.length * 48)}>
-      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: narrow ? 12 : 24, left: narrow ? 0 : 8, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
         <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={compactTaka} />
-        <YAxis type="category" dataKey="groundName" tick={{ fontSize: 12 }} width={130} />
+        <YAxis type="category" dataKey="groundName" tick={{ fontSize: 12 }} width={narrow ? 80 : 130}
+          tickFormatter={narrow ? shortName : undefined} />
         <Tooltip formatter={(v: number) => slotPriceLabel(v)} />
         <Bar dataKey="revenue" name="Sales" fill="#22c55e" radius={[0, 4, 4, 0]} />
       </BarChart>
@@ -102,6 +122,7 @@ export function BookingTrendsChart({ data, loading }: { data?: BookingPoint[]; l
 
 /** Pie of `statusCounts` from the summary; empty statuses are left out. */
 export function BookingStatusPieChart({ counts, loading }: { counts?: Record<BookingStatus, number>; loading?: boolean }) {
+  const narrow = useNarrow();
   if (loading) return <ChartSkeleton height={240} />;
   const data = (Object.keys(STATUS_COLORS) as BookingStatus[])
     .map((k) => ({ key: k, name: STATUS_NAME[k], value: counts?.[k] ?? 0 }))
@@ -110,8 +131,9 @@ export function BookingStatusPieChart({ counts, loading }: { counts?: Record<Boo
   return (
     <ResponsiveContainer width="100%" height={240}>
       <PieChart>
+        {/* On phones the outside labels clip; the legend and tooltip still name each slice. */}
         <Pie data={data} cx="50%" cy="50%" outerRadius={90} dataKey="value"
-          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          label={narrow ? false : ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
           labelLine={false}>
           {data.map((d) => <Cell key={d.key} fill={STATUS_COLORS[d.key]} />)}
         </Pie>

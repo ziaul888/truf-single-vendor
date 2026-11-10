@@ -21,7 +21,7 @@ export function SlotPickerSkeleton() {
 
       <SkeletonLine className="mt-5 mb-2 h-4 w-28" />
       <div className="grid grid-cols-3 gap-2">
-        {Array.from({ length: 6 }).map((_, i) => <SkeletonBlock key={i} className="h-10 rounded-lg" />)}
+        {Array.from({ length: 6 }).map((_, i) => <SkeletonBlock key={i} className="h-11 rounded-lg" />)}
       </div>
 
       <SkeletonBlock className="mt-4 h-12 rounded-lg" />

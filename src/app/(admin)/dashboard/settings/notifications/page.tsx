@@ -11,6 +11,7 @@ import { useNotificationSettings, useUpdateNotifications } from "@/hooks/useSett
 import { applyApiErrors, toApiFailure } from "@/lib/api-error";
 import { SettingsPageHeader } from "@/components/features/settings/settings-page-header";
 import { ReadOnlyNotice } from "@/components/features/settings/read-only-notice";
+import { SettingsSaveActions, SettingsSaveBar } from "@/components/features/settings/settings-save-actions";
 import { EmailSenderSection } from "@/components/features/settings/notifications/email-sender-section";
 import { CustomerEmailsSection } from "@/components/features/settings/notifications/customer-emails-section";
 import { StaffEmailsSection } from "@/components/features/settings/notifications/staff-emails-section";
@@ -78,10 +79,10 @@ export default function NotificationsSettingsPage() {
         <SettingsPageHeader title={TITLE} description={DESCRIPTION} audit={settings}>
           {canEdit && (
             <>
-              <Button type="button" variant="outline" size="sm" disabled={!isDirty || save.isPending} onClick={() => form.reset(toNotificationsForm(settings))}>
+              <Button type="button" variant="outline" size="sm" className="hidden md:inline-flex" disabled={!isDirty || save.isPending} onClick={() => form.reset(toNotificationsForm(settings))}>
                 <Undo2 className="mr-1.5 h-4 w-4" /> Discard
               </Button>
-              <Button type="submit" size="sm" disabled={!isDirty || save.isPending}>
+              <Button type="submit" size="sm" className="hidden md:inline-flex" disabled={!isDirty || save.isPending}>
                 {save.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
                 {save.isPending ? "Saving…" : "Save changes"}
               </Button>
@@ -98,6 +99,11 @@ export default function NotificationsSettingsPage() {
             <StaffEmailsSection form={form} />
           </div>
         </fieldset>
+        {canEdit && (
+          <SettingsSaveBar>
+            <SettingsSaveActions dirty={isDirty} saving={save.isPending} onDiscard={() => form.reset(toNotificationsForm(settings))} />
+          </SettingsSaveBar>
+        )}
       </form>
 
       <TestEmailBox />

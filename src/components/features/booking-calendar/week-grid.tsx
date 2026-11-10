@@ -44,9 +44,10 @@ export function WeekGrid({ slots, selectedDate, currentWeekDate, onSelectDate }:
   const COLS = `60px repeat(7, 1fr)`;
 
   return (
-    <div className="rounded-xl border overflow-hidden bg-card">
+    // Phones scroll the week sideways (header and rows together) rather than squeezing seven days into ~40px columns.
+    <div className="rounded-xl border overflow-hidden bg-card max-lg:overflow-x-auto">
       {/* Column headers */}
-      <div className="grid border-b bg-muted/40 sticky top-0 z-10" style={{ gridTemplateColumns: COLS }}>
+      <div className="grid border-b bg-muted/40 sticky top-0 z-10 max-lg:min-w-[560px]" style={{ gridTemplateColumns: COLS }}>
         <div className="border-r py-3" />
         {weekDays.map(({ date, dateStr }, i) => {
           const isToday    = dateStr === todayStr;
@@ -78,7 +79,7 @@ export function WeekGrid({ slots, selectedDate, currentWeekDate, onSelectDate }:
       </div>
 
       {/* Time rows */}
-      <div className="overflow-y-auto max-h-[520px]">
+      <div className="overflow-y-auto max-h-[520px] max-lg:min-w-[560px]">
         {HOURS.map((hour) => (
           <div key={hour} className="grid border-b last:border-b-0" style={{ gridTemplateColumns: COLS }}>
             {/* Time label */}

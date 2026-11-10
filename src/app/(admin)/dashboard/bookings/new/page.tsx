@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MobileActionBar } from "@/components/features/mobile-action-bar";
 import { SectionCard } from "@/components/features/add-booking/section-card";
 import { GroundSlotSection } from "@/components/features/add-booking/ground-slot-section";
 import { PaymentSection } from "@/components/features/add-booking/payment-section";
@@ -21,6 +22,7 @@ import { useAvailableSlots } from "@/hooks/useAddBooking";
 import { useCreateBooking } from "@/hooks/useBookings";
 import { applyApiErrors, toApiFailure, type ApiFailure } from "@/lib/api-error";
 import { toMinorUnits } from "@/lib/ground-format";
+import { venueToday } from "@/lib/slot-format";
 import { AddBookingSchema, type AddBookingFormData } from "@/schemas";
 import { isWalletMethod, type CreateBookingInput } from "@/types/booking";
 import { ChevronLeft } from "lucide-react";
@@ -74,7 +76,8 @@ export default function AddBookingPage() {
     // Fields use z.coerce, so the schema's input type is looser than the form's.
     resolver: zodResolver(AddBookingSchema) as Resolver<AddBookingFormData>,
     defaultValues: {
-      groundId: "", date: "", slotId: "",
+      // Most walk-in and phone bookings are for today.
+      groundId: "", date: venueToday(), slotId: "",
       customerName: "", customerPhone: "", customerEmail: "",
       paymentType: "full", paymentMethod: "cash", paymentReference: "",
       advanceAmount: 0, dueDate: "", partialNote: "", notes: "",
@@ -138,7 +141,8 @@ export default function AddBookingPage() {
   const submitting = isSubmitting || createBooking.isPending;
 
   return (
-    <div className="space-y-6">
+    // Room below lg for the pinned submit bar.
+    <div className="space-y-6 max-lg:pb-28">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 rounded-xl" asChild>
           <Link href="/dashboard/bookings"><ChevronLeft className="h-4 w-4" /></Link>
@@ -183,12 +187,12 @@ export default function AddBookingPage() {
             <SectionCard n="4" title="Notes" desc="Optional note for staff; the customer doesn't see it">
               <div className="space-y-2">
                 <Label htmlFor="notes" className="sr-only">Notes</Label>
-                <Textarea id="notes" rows={3} className="resize-none text-sm" placeholder="e.g. Bringing their own ball" {...register("notes")} />
+                <Textarea id="notes" rows={3} className="resize-none" placeholder="e.g. Bringing their own ball" {...register("notes")} />
                 {errors.notes && <p className="text-xs text-destructive">{errors.notes.message}</p>}
               </div>
             </SectionCard>
 
-            <div className="flex items-center justify-end gap-3 pb-4">
+            <div className="hidden items-center justify-end gap-3 pb-4 lg:flex">
               <Button variant="outline" className="h-10 px-6" asChild>
                 <Link href="/dashboard/bookings">Cancel</Link>
               </Button>
@@ -196,6 +200,15 @@ export default function AddBookingPage() {
                 {submitting ? "Creating…" : "Create Booking"}
               </Button>
             </div>
+            {/* Inside the form, so it still submits it */}
+            <MobileActionBar className="flex gap-2">
+              <Button variant="outline" className="h-11 px-5" asChild>
+                <Link href="/dashboard/bookings">Cancel</Link>
+              </Button>
+              <Button type="submit" className="h-11 flex-1" disabled={submitting}>
+                {submitting ? "Creating…" : "Create Booking"}
+              </Button>
+            </MobileActionBar>
           </div>
 
           <div className="hidden lg:col-span-1 lg:block">

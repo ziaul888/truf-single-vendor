@@ -40,7 +40,7 @@ export function PendingBookingCard({
                   <Phone className="h-3 w-3" />{booking.contact.phone}
                 </a>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
                 {booking.payAtVenue && <PayAtVenueBadge />}
                 {booking.walletPayment && <WalletBadge payment={booking.walletPayment} />}
                 {booking.cancelRequestedAt && booking.status === "pending" && <CancelRequestedBadge />}

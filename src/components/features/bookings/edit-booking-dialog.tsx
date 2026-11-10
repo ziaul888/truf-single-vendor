@@ -15,6 +15,7 @@ import { applyApiErrors, toApiFailure } from "@/lib/api-error";
 import { venueToday } from "@/lib/slot-format";
 import type { Booking } from "@/types/booking";
 import { toast } from "sonner";
+import { keepKeyboardClosed } from "./keep-keyboard-closed";
 
 const EditSchema = z.object({
   notes: z.string().trim().max(1000, "Keep notes under 1000 characters"),
@@ -33,7 +34,7 @@ interface EditBookingDialogProps {
 export function EditBookingDialog({ booking, open, onOpenChange }: EditBookingDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={keepKeyboardClosed}>
         {open && <EditForm booking={booking} onClose={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
@@ -78,7 +79,7 @@ function EditForm({ booking, onClose }: { booking: Booking; onClose: () => void 
       <div className="space-y-4 py-4">
         <div className="space-y-1.5">
           <Label htmlFor="edit-notes">Notes</Label>
-          <Textarea id="edit-notes" rows={3} className="resize-none text-sm" placeholder="Internal note for staff" {...register("notes")} />
+          <Textarea id="edit-notes" rows={3} className="resize-none" placeholder="Internal note for staff" {...register("notes")} />
           {errors.notes && <p className="text-xs text-destructive">{errors.notes.message}</p>}
         </div>
         {hasDue && (

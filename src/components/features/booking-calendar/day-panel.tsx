@@ -114,8 +114,8 @@ export function DayPanel({ slots, selectedDate, grounds, groundFilter, totalSlot
         </div>
       )}
 
-      {/* Day detail */}
-      <div className="rounded-xl border bg-card p-4 flex-1">
+      {/* Day detail (first below lg, where the panel sits under the grid) */}
+      <div className="rounded-xl border bg-card p-4 flex-1 max-lg:order-first">
         <div className="mb-3 flex items-center gap-2">
           <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
           <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">

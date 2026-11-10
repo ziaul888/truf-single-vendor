@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useSyncExternalStore } from "react";
+import { Suspense } from "react";
 import { LoginForm } from "@/components/features/login/login-form";
 import {
   LoginBrandPanel,
@@ -31,33 +31,15 @@ const GLOBAL_STYLES = `
   ::-webkit-scrollbar { display: none; }
 `;
 
-/** The width the page renders with until it has mounted: on the server, while hydrating, and on client navigation. */
-const INITIAL_WIDTH = 1200;
-let currentWidth = INITIAL_WIDTH;
+// Phone, tablet and desktop layouts are picked by CSS breakpoints (md 768px, lg 1024px), so the
+// server-rendered first paint already matches the screen. Inline styles hold only what never changes.
+const ORBS = [
+  { sizeCls: "h-[250px] w-[250px] md:h-[400px] md:w-[400px]", pos: { top: "-10%", left: "-8%" }, color: "rgba(26,122,74,0.12)", delay: "0s" },
+  { sizeCls: "h-[200px] w-[200px] md:h-[300px] md:w-[300px]", pos: { bottom: "-5%", right: "-5%" }, color: "rgba(37,164,98,0.08)", delay: "3s" },
+  { sizeCls: "h-[150px] w-[150px] md:h-[200px] md:w-[200px]", pos: { top: "40%", right: "10%" }, color: "rgba(46,204,113,0.06)", delay: "1.5s" },
+];
 
-function subscribeToWidth(onChange: () => void) {
-  const handler = () => {
-    currentWidth = window.innerWidth;
-    onChange();
-  };
-  currentWidth = window.innerWidth;
-  window.addEventListener("resize", handler);
-  return () => {
-    window.removeEventListener("resize", handler);
-    currentWidth = INITIAL_WIDTH;
-  };
-}
-
-function useWindowWidth() {
-  return useSyncExternalStore(subscribeToWidth, () => currentWidth, () => INITIAL_WIDTH);
-}
-
-function Backdrop({ isMobile }: { isMobile: boolean }) {
-  const orbs = [
-    { size: isMobile ? 250 : 400, top: "-10%", left: "-8%", color: "rgba(26,122,74,0.12)", delay: "0s" },
-    { size: isMobile ? 200 : 300, bottom: "-5%", right: "-5%", color: "rgba(37,164,98,0.08)", delay: "3s" },
-    { size: isMobile ? 150 : 200, top: "40%", right: "10%", color: "rgba(46,204,113,0.06)", delay: "1.5s" },
-  ];
+function Backdrop() {
   return (
     <>
       <div
@@ -68,11 +50,12 @@ function Backdrop({ isMobile }: { isMobile: boolean }) {
             transparent 80px, transparent 160px)`,
         }}
       />
-      {orbs.map(({ size, color, delay, ...pos }, i) => (
+      {ORBS.map(({ sizeCls, pos, color, delay }, i) => (
         <div
           key={i}
+          className={sizeCls}
           style={{
-            position: "fixed", borderRadius: "50%", width: size, height: size, ...pos,
+            position: "fixed", borderRadius: "50%", ...pos,
             background: `radial-gradient(circle, ${color}, transparent 70%)`,
             animation: "drift 8s ease-in-out infinite", animationDelay: delay, zIndex: 0,
           }}
@@ -82,82 +65,75 @@ function Backdrop({ isMobile }: { isMobile: boolean }) {
   );
 }
 
-function FormHeader({ isMobile }: { isMobile: boolean }) {
+function FormHeader() {
   return (
-    <div style={{ marginBottom: isMobile ? 28 : 40, marginTop: isMobile ? 32 : 0 }}>
+    <div className="mt-8 mb-7 md:mt-0 md:mb-10">
       <div style={{ fontSize: 11, letterSpacing: 3, color: C.muted, textTransform: "uppercase", marginBottom: 8 }}>
         Secure Login
       </div>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: isMobile ? 28 : 32, letterSpacing: 2 }}>
+      <div className="text-[28px] md:text-[32px]" style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>
         ADMIN PANEL
       </div>
     </div>
   );
 }
 
+/** The form column: full width on phones, a 30% glass panel beside the branding from tablet up. */
+function FormColumn() {
+  return (
+    <div
+      className={
+        "flex w-full shrink-0 flex-col justify-start px-6 py-10 md:w-[30%] md:justify-center md:border-l md:border-l-[rgba(37,164,98,0.12)] " +
+        "md:bg-[rgba(17,26,21,0.8)] md:px-9 md:py-12 md:backdrop-blur-[20px] lg:px-12 lg:py-[60px]"
+      }
+      style={{ position: "relative", zIndex: 1, animation: "slideUp 0.6s ease" }}
+    >
+      <FormHeader />
+
+      {/* useSearchParams in LoginForm needs a Suspense boundary */}
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
+
+      <div
+        className="md:hidden"
+        style={{
+          marginTop: 28, padding: 16, background: "rgba(17,26,21,0.6)",
+          borderRadius: 10, border: "1px solid rgba(37,164,98,0.1)",
+        }}
+      >
+        <RoleCapabilities small />
+      </div>
+
+      <div
+        style={{
+          marginTop: 24, paddingTop: 20, borderTop: "1px solid rgba(37,164,98,0.1)",
+          textAlign: "center", fontSize: 11, color: C.faint, lineHeight: 2,
+        }}
+      >
+        Turf Management System · Initial Release v1.0<br />
+        Secured with SSL + JWT · Session: 8hrs
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
-  const windowWidth = useWindowWidth();
   const { data: venue } = usePublicVenue();
-  const isMobile = windowWidth < 768;
-  const isTablet = windowWidth >= 768 && windowWidth < 1024;
 
   return (
     <div
+      className="flex flex-col md:flex-row"
       style={{
-        minHeight: "100vh", background: "#060d09", display: "flex",
-        flexDirection: isMobile ? "column" : "row", fontFamily: "'DM Sans', sans-serif",
+        minHeight: "100vh", background: "#060d09", fontFamily: "'DM Sans', sans-serif",
         color: C.text, position: "relative", overflow: "hidden",
       }}
     >
       <style>{GLOBAL_STYLES}</style>
-      <Backdrop isMobile={isMobile} />
-
-      {isMobile ? <LoginMobileHeader venue={venue} /> : <LoginBrandPanel compact={isTablet} venue={venue} />}
-
-      <div
-        style={{
-          width: isMobile ? "100%" : "30%",
-          flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: isMobile ? "flex-start" : "center",
-          padding: isMobile ? "40px 24px" : isTablet ? "48px 36px" : "60px 48px",
-          background: isMobile ? "transparent" : "rgba(17,26,21,0.8)",
-          backdropFilter: isMobile ? "none" : "blur(20px)",
-          borderLeft: isMobile ? "none" : "1px solid rgba(37,164,98,0.12)",
-          position: "relative",
-          zIndex: 1,
-          animation: "slideUp 0.6s ease",
-        }}
-      >
-        <FormHeader isMobile={isMobile} />
-
-        {/* useSearchParams in LoginForm needs a Suspense boundary */}
-        <Suspense fallback={null}>
-          <LoginForm />
-        </Suspense>
-
-        {isMobile && (
-          <div
-            style={{
-              marginTop: 28, padding: 16, background: "rgba(17,26,21,0.6)",
-              borderRadius: 10, border: "1px solid rgba(37,164,98,0.1)",
-            }}
-          >
-            <RoleCapabilities small />
-          </div>
-        )}
-
-        <div
-          style={{
-            marginTop: 24, paddingTop: 20, borderTop: "1px solid rgba(37,164,98,0.1)",
-            textAlign: "center", fontSize: 11, color: C.faint, lineHeight: 2,
-          }}
-        >
-          Turf Management System · Initial Release v1.0<br />
-          Secured with SSL + JWT · Session: 8hrs
-        </div>
-      </div>
+      <Backdrop />
+      <LoginMobileHeader venue={venue} />
+      <LoginBrandPanel venue={venue} />
+      <FormColumn />
     </div>
   );
 }

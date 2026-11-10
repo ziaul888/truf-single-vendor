@@ -19,6 +19,7 @@ import {
 } from "@/lib/slot-format";
 import { BLOCK_REASONS, type BlockReason } from "@/types/slot";
 import { pageWindow } from "@/components/features/slots/slot-list-section";
+import { BlockedSlotCardList } from "@/components/features/slots/blocked-slot-card-list";
 import { ConfirmDialog } from "@/components/features/confirm-dialog";
 
 const PAGE_SIZE = 8;
@@ -95,9 +96,9 @@ export default function BlockedSlotsPage() {
           { label: "Other",          value: stats.other,       color: "text-purple-600 dark:text-purple-400" },
         ].map(({ label, value, color }) => (
           <Card key={label}>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <p className="text-xs text-muted-foreground mb-1">{label}</p>
-              <p className={cn("text-2xl font-bold", color)}>{isLoading ? "—" : value}</p>
+              <p className={cn("text-xl font-bold sm:text-2xl", color)}>{isLoading ? "—" : value}</p>
             </CardContent>
           </Card>
         ))}
@@ -143,7 +144,11 @@ export default function BlockedSlotsPage() {
           <div className="space-y-px p-4">{[...Array(6)].map((_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />)}</div>
         ) : (
           <>
-            <Table>
+            <div className="md:hidden">
+              <BlockedSlotCardList slots={pageRows} today={today} showGround={hasGroundChoice(grounds)}
+                busy={unblockMutation.isPending} onUnblock={unblock} />
+            </div>
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead>Slot time</TableHead>

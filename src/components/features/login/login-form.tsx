@@ -167,7 +167,8 @@ function LoginField({ label, icon, error, registration, trailing, ...input }: Lo
             border: `1.5px solid ${error ? C.danger : C.border}`,
             borderRadius: 8,
             color: C.text,
-            fontSize: 14,
+            // 16px: anything smaller makes iOS Safari zoom the page when the field is focused.
+            fontSize: 16,
             fontFamily: "'DM Sans', sans-serif",
             transition: "border-color 0.2s ease",
             opacity: input.disabled ? 0.5 : 1,

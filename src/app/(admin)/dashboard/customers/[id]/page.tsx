@@ -22,7 +22,7 @@ function DetailSkeleton() {
     <div className="space-y-5">
       <div className="h-8 w-40 animate-pulse rounded-lg bg-muted" />
       <div className="h-32 animate-pulse rounded-xl bg-muted" />
-      <div className="grid grid-cols-5 gap-3">{[...Array(5)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />)}</div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{[...Array(5)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />)}</div>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_300px]">
         <div className="space-y-5">{[1, 2, 3].map((i) => <div key={i} className="h-48 animate-pulse rounded-xl bg-muted" />)}</div>
         <div className="space-y-5">{[1, 2].map((i) => <div key={i} className="h-40 animate-pulse rounded-xl bg-muted" />)}</div>

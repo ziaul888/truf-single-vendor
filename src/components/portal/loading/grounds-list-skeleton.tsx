@@ -66,8 +66,9 @@ function DateBarSkeleton() {
     <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
       <SkeletonBlock className="h-4 w-4 rounded" />
       <SkeletonLine className="w-40" />
-      <SkeletonBlock className="h-7.5 w-36 rounded-md" />
-      <SkeletonBlock className="h-7 w-24 rounded-md" />
+      {/* Touch screens get 44px targets; the input is text-base on phones */}
+      <SkeletonBlock className="h-8.5 w-36 rounded-md pointer-coarse:h-11 sm:h-7.5" />
+      <SkeletonBlock className="h-7 w-24 rounded-md pointer-coarse:h-11" />
     </div>
   );
 }
@@ -83,7 +84,7 @@ function GroundRowSkeleton() {
         <SkeletonLine className="mt-1 h-[16.5px] w-32" />
         <div className="mt-auto flex items-center justify-between pt-3">
           <SkeletonLine className="h-6 w-20" />
-          <SkeletonBlock className="h-7 w-24 rounded-md" />
+          <SkeletonBlock className="h-7 w-24 rounded-md pointer-coarse:h-11" />
         </div>
       </div>
     </div>

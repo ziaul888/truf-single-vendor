@@ -2,8 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ChevronRight, Heart, MapPin, Share2 } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
 import { SlotPicker } from "@/components/portal/slot-picker";
+import { ShareButton } from "@/components/portal/share-button";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround, listPublicGrounds } from "@/services/portal-grounds";
@@ -45,18 +46,22 @@ export default async function GroundDetailPage({
       <Breadcrumb name={ground.name} single={grounds.length === 1} />
       <Gallery images={ground.images ?? []} />
 
-      <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_400px]">
-        <div>
+      {/* Phones: header, then the picker, then the details. From lg the picker sits in its own column beside both. */}
+      <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-[1fr_400px] lg:grid-rows-[auto_1fr] lg:gap-y-0">
+        <div className="lg:col-start-1 lg:row-start-1">
           <Header ground={ground} location={location} />
+        </div>
+
+        <aside className="lg:sticky lg:top-20 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+          <SlotPicker ground={ground} initialDate={typeof date === "string" ? date : undefined} />
+        </aside>
+
+        <div className="lg:col-start-1 lg:row-start-2">
           <About ground={ground} />
           <GroundRules rules={ground.rules} className="mt-6 border-b pb-8" />
           <Specs ground={ground} />
           <GroundLocation groundAddress={ground.address} venueAddress={venue.address} />
         </div>
-
-        <aside className="lg:sticky lg:top-20 lg:self-start">
-          <SlotPicker ground={ground} initialDate={typeof date === "string" ? date : undefined} />
-        </aside>
       </div>
     </div>
   );
@@ -83,9 +88,9 @@ function Gallery({ images }: { images: string[] }) {
   const [hero, ...rest] = images;
   if (!hero) return null;
   return (
-    <div className="grid h-[420px] grid-cols-1 grid-rows-2 gap-2 overflow-hidden rounded-2xl md:grid-cols-4">
+    <div className="grid h-56 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-2xl sm:h-72 md:h-[420px] md:grid-cols-4 md:grid-rows-2">
       <div className="relative md:col-span-2 md:row-span-2">
-        <Image src={hero} alt="" fill priority sizes="50vw" className="object-cover" />
+        <Image src={hero} alt="" fill priority sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
       </div>
       {rest.slice(0, 4).map((src, i) => (
         <div key={i} className="relative hidden md:block">
@@ -122,14 +127,7 @@ function Header({ ground, location }: { ground: Ground; location: string }) {
           </a>
         )}
       </div>
-      <div className="flex shrink-0 gap-2">
-        <button className="flex h-10 w-10 items-center justify-center rounded-full border hover:bg-muted">
-          <Share2 className="h-4 w-4" />
-        </button>
-        <button className="flex h-10 w-10 items-center justify-center rounded-full border hover:bg-muted">
-          <Heart className="h-4 w-4" />
-        </button>
-      </div>
+      <ShareButton title={ground.name} className="shrink-0" />
     </div>
   );
 }

@@ -25,7 +25,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-dvh overflow-hidden bg-background">
       {/* Mobile backdrop */}
       {mobileOpen && (
         <div
@@ -53,7 +53,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       {/* Main area */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar onMenuClick={() => setMobileOpen((o) => !o)} />
-        <main className="flex-1 overflow-y-auto px-6 py-4 md:px-10 md:py-6">{children}</main>
+        <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 md:px-10 md:py-6">{children}</main>
       </div>
     </div>
   );

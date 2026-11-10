@@ -13,6 +13,7 @@ import {
   BOOKING_STATUS_LABEL, bookingStatusVariant, canMarkNoShow, isAwaitingCardPayment, isAwaitingWalletVerification, isCancellable,
 } from "@/components/features/bookings/booking-status-helpers";
 import { BookingDetailSidebar } from "@/components/features/bookings/booking-detail-sidebar";
+import { BookingDetailActionBar, detailActions } from "@/components/features/bookings/booking-detail-action-bar";
 import {
   BookingCustomerCard, BookingInfoCard, BookingPaymentCard,
 } from "@/components/features/bookings/booking-detail-cards";
@@ -81,9 +82,12 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   }
 
   const canConfirm = booking.status === "pending" && !isAwaitingCardPayment(booking);
+  const barActions = detailActions(booking, canConfirm);
+  // Room below lg for the pinned action bar: one row of buttons, or two.
+  const barPadding = barActions.length === 0 ? "" : barActions.length > 2 ? "max-lg:pb-40" : "max-lg:pb-28";
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${barPadding}`}>
       <div className="flex flex-wrap items-center gap-4">
         <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4" />Back
@@ -119,6 +123,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           onUndoNoShowClick={() => setDialog("undoNoShow")}
         />
       </div>
+
+      <BookingDetailActionBar booking={booking} actions={barActions} onAction={setDialog} />
 
       {isCancellable(booking) && (
         <CancelDialog booking={booking} open={dialog === "cancel"} onOpenChange={closeDialog} />

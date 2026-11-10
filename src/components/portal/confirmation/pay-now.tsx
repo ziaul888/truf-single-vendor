@@ -36,7 +36,7 @@ export function PayNow({ booking, token, onNothingDue }: {
         type="button"
         onClick={() => pay.mutate()}
         disabled={busy}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-60"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
         {busy ? "Taking you to payment…" : `Pay ${due} now`}
