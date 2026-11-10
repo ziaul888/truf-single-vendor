@@ -10,11 +10,11 @@ import { StripeStatusCard } from "@/components/features/settings/stripe-status-c
 import { PaymentMethodsCard } from "@/components/features/settings/payment-methods-card";
 import { WalletNumbersForm } from "@/components/features/settings/wallet-numbers-form";
 
-// Read-only payment status. Stripe keys live in turf-api's .env; "pay at venue" and the bKash / Nagad
-// numbers are editable here (admin only).
+// Read-only payment status. Stripe keys live in turf-api's .env; the switches for what the booking
+// website offers (pay at venue, card, bKash, Nagad) and the bKash / Nagad numbers are editable here (admin only).
 export default function PaymentsSettingsPage() {
   const { data: status, isLoading, isError, refetch } = usePaymentStatus();
-  // "Pay at venue" is a slot setting; its cache updates as soon as the switch saves.
+  // The switches are slot settings; their cache updates as soon as one saves.
   const { data: slotSettings } = useSlotSettings();
   const { data: me } = useMe();
   const canEdit = me?.role === "admin";
@@ -30,7 +30,12 @@ export default function PaymentsSettingsPage() {
         <StripeStatusCard stripe={status.stripe} />
         <PaymentMethodsCard
           status={status}
-          portalCash={slotSettings?.portalCashEnabled ?? status.portalCashEnabled}
+          switches={{
+            portalCashEnabled: slotSettings?.portalCashEnabled ?? status.portalCashEnabled,
+            portalCardEnabled: slotSettings?.portalCardEnabled ?? true,
+            portalBkashEnabled: slotSettings?.portalBkashEnabled ?? true,
+            portalNagadEnabled: slotSettings?.portalNagadEnabled ?? true,
+          }}
           canEdit={canEdit}
           onSaved={() => refetch()}
         />
