@@ -35,7 +35,7 @@ const Skeleton = () => <div className="h-[240px] animate-pulse rounded bg-muted"
 export function WeeklyRevenueChart() {
   const { data, isLoading } = useRevenueSeries(periodFor("7d"), "day");
   return (
-    <ChartCard title="Weekly Revenue">
+    <ChartCard title="Weekly Sales">
       {isLoading ? <Skeleton /> : (
         <ResponsiveContainer width="100%" height={240}>
           <AreaChart data={data?.points ?? []} margin={{ top: 4, right: 8, left: -4, bottom: 0 }}>
@@ -49,7 +49,7 @@ export function WeeklyRevenueChart() {
             <XAxis dataKey="label" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 12 }} tickFormatter={compactTaka} />
             <Tooltip formatter={(v: number) => slotPriceLabel(v)} />
-            <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#22c55e" strokeWidth={2} fill="url(#revenueGradient)" />
+            <Area type="monotone" dataKey="revenue" name="Sales" stroke="#22c55e" strokeWidth={2} fill="url(#revenueGradient)" />
           </AreaChart>
         </ResponsiveContainer>
       )}

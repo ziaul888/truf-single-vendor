@@ -38,7 +38,7 @@ function StatCards({ stats, isLoading }: { stats: CustomerStats | undefined; isL
     { label: "New this month",    value: stats?.newThisMonth ?? "—",                         color: "text-green-600 dark:text-green-400" },
     { label: "With due payments", value: stats?.withDuePayments ?? "—",                      color: "text-orange-500" },
     { label: "Total due amount",  value: stats ? formatTaka(stats.totalDueAmount) : "—",     color: "text-amber-500" },
-    { label: "Total revenue",     value: stats ? formatTaka(stats.totalRevenue, true) : "—", color: "text-blue-600 dark:text-blue-400" },
+    { label: "Total sales",     value: stats ? formatTaka(stats.totalRevenue, true) : "—", color: "text-blue-600 dark:text-blue-400" },
   ];
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

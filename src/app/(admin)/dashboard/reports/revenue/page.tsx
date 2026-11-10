@@ -26,10 +26,10 @@ export default function RevenueReportPage() {
 
   return (
     <div className="space-y-6">
-      <ReportHeader title="Revenue Report" subtitle="Money received, minus refunds" range={range} period={period} onRange={setRange} />
+      <ReportHeader title="Sales Report" subtitle="Money received, minus refunds" range={range} period={period} onRange={setRange} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Net Revenue" value={s ? slotPriceLabel(s.revenue) : "—"} icon={Banknote}
+        <StatCard title="Net Sales" value={s ? slotPriceLabel(s.revenue) : "—"} icon={Banknote}
           trend={s?.revenueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
         <StatCard title="Avg Booking Value" value={s ? slotPriceLabel(s.avgBookingValue) : "—"} icon={Receipt}
           trend={s?.avgBookingValueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
@@ -41,7 +41,7 @@ export default function RevenueReportPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base font-medium">
-              {series.data ? GROUP_LABEL[series.data.groupBy] : ""} Revenue &amp; Bookings
+              {series.data ? GROUP_LABEL[series.data.groupBy] : ""} Sales &amp; Bookings
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -78,7 +78,7 @@ export default function RevenueReportPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-medium">Revenue by Ground</CardTitle>
+          <CardTitle className="text-base font-medium">Sales by Ground</CardTitle>
         </CardHeader>
         <CardContent>
           <RevenueByGroundChart data={grounds.data} loading={grounds.isLoading} />

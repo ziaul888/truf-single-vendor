@@ -27,7 +27,7 @@ export function GroundReportTable({ data, loading, mode }: GroundReportTableProp
           <TableRow>
             <TableHead>Ground</TableHead>
             <TableHead className="text-right">Bookings</TableHead>
-            <TableHead className="text-right">Revenue</TableHead>
+            <TableHead className="text-right">Sales</TableHead>
             {mode === "revenue" ? (
               <TableHead className="text-right">Share</TableHead>
             ) : (
