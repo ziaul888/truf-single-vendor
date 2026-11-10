@@ -9,7 +9,7 @@ const ROLE_PERMISSIONS: Record<(typeof USER_ROLES)[number], string[]> = {
     "Add, edit and deactivate staff accounts",
     "Reset staff passwords",
     "Manage grounds and pricing",
-    "Revenue reports and CSV export",
+    "Sales reports and CSV export",
   ],
   manager: [
     "View the dashboard",

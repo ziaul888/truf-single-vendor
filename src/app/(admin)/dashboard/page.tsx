@@ -56,7 +56,7 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatCard title="Today's Revenue"  value={s ? slotPriceLabel(s.todayRevenue) : "—"} icon={DollarSign}   trend={s?.todayRevenueTrend}   trendLabel={TREND_LABEL} loading={stats.isLoading} />
+        <StatCard title="Today's Sales"  value={s ? slotPriceLabel(s.todayRevenue) : "—"} icon={DollarSign}   trend={s?.todayRevenueTrend}   trendLabel={TREND_LABEL} loading={stats.isLoading} />
         <StatCard title="Today's Bookings" value={s ? String(s.todayBookings) : "—"}        icon={CalendarDays} trend={s?.todayBookingsTrend}  trendLabel={TREND_LABEL} loading={stats.isLoading} />
         <StatCard title="Total Customers"  value={s ? String(s.totalCustomers) : "—"}       icon={Users}        trend={s?.totalCustomersTrend} trendLabel={TREND_LABEL} loading={stats.isLoading} />
         <StatCard title="Active Grounds"   value={s ? String(s.activeGrounds) : "—"}        icon={MapPin}       trend={s?.activeGroundsTrend}  trendLabel={TREND_LABEL} loading={stats.isLoading} />

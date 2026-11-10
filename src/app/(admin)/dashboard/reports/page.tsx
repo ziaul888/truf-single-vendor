@@ -15,8 +15,8 @@ const TREND_LABEL = "vs previous period";
 
 const SUB_PAGES = [
   {
-    label: "Revenue Report",
-    description: "Revenue over time, ground performance and payment methods.",
+    label: "Sales Report",
+    description: "Sales over time, ground performance and payment methods.",
     href: "/dashboard/reports/revenue",
     icon: TrendingUp,
     iconCls: "text-violet-500",
@@ -52,7 +52,7 @@ export default function ReportsPage() {
       <ReportHeader title="Reports" subtitle="How the business is doing" range={range} period={period} onRange={setRange} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Revenue" value={s ? slotPriceLabel(s.revenue) : "—"} icon={Banknote}
+        <StatCard title="Sales" value={s ? slotPriceLabel(s.revenue) : "—"} icon={Banknote}
           trend={s?.revenueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
         <StatCard title="Bookings" value={s ? String(s.bookings) : "—"} icon={CalendarDays}
           trend={s?.bookingsTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
@@ -65,7 +65,7 @@ export default function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-medium">Revenue Trend</CardTitle>
+          <CardTitle className="text-base font-medium">Sales Trend</CardTitle>
         </CardHeader>
         <CardContent>
           <RevenueTrendChart data={revenue.data?.points} loading={revenue.isLoading} />

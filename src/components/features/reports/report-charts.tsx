@@ -47,9 +47,9 @@ export function RevenueTrendChart({ data, loading }: { data?: RevenuePoint[]; lo
         <XAxis dataKey="label" tick={{ fontSize: 12 }} minTickGap={16} />
         <YAxis yAxisId="rev" tick={{ fontSize: 12 }} tickFormatter={compactTaka} />
         <YAxis yAxisId="bk" orientation="right" allowDecimals={false} tick={{ fontSize: 12 }} />
-        <Tooltip formatter={(v: number, name: string) => (name === "Revenue" ? slotPriceLabel(v) : v)} />
+        <Tooltip formatter={(v: number, name: string) => (name === "Sales" ? slotPriceLabel(v) : v)} />
         <Legend />
-        <Bar yAxisId="rev" dataKey="revenue" name="Revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+        <Bar yAxisId="rev" dataKey="revenue" name="Sales" fill="#6366f1" radius={[4, 4, 0, 0]} />
         <Line yAxisId="bk" type="monotone" dataKey="bookings" name="Bookings" stroke="#f59e0b" strokeWidth={2} dot={false} />
       </ComposedChart>
     </ResponsiveContainer>
@@ -66,7 +66,7 @@ export function RevenueByGroundChart({ data, loading }: { data?: GroundReport[];
         <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={compactTaka} />
         <YAxis type="category" dataKey="groundName" tick={{ fontSize: 12 }} width={130} />
         <Tooltip formatter={(v: number) => slotPriceLabel(v)} />
-        <Bar dataKey="revenue" name="Revenue" fill="#22c55e" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="revenue" name="Sales" fill="#22c55e" radius={[0, 4, 4, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

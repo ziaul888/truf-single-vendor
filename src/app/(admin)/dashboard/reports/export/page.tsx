@@ -15,7 +15,7 @@ import type { ExportType } from "@/types/report";
 type Grouping = "day" | "week";
 
 const DATA_OPTIONS = [
-  { value: "revenue",   label: "Revenue",   description: "Daily or weekly money received, refunds and net, by payment method", icon: Banknote },
+  { value: "revenue",   label: "Sales",     description: "Daily or weekly money received, refunds and net, by payment method", icon: Banknote },
   { value: "bookings",  label: "Bookings",  description: "Every booking with its slot, amounts and statuses",                     icon: CalendarDays },
   { value: "customers", label: "Customers", description: "Customer profiles with bookings, spending and dues",                   icon: Users },
 ] as const;
