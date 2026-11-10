@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getPublicSlots, listPublicGrounds } from "@/services/portal-grounds";
+import { getPublicVenue } from "@/services/website-settings";
 import {
   parseGroundsQuery,
   sortGrounds,
@@ -15,10 +16,10 @@ import { GroundsDateBar } from "@/components/portal/grounds-date-bar";
 import { GroundFreeSlots } from "@/components/portal/ground-free-slots";
 import type { PublicSlot } from "@/types/slot";
 
-export const metadata: Metadata = {
-  title: "Our grounds",
-  description: "Browse the grounds at Champions Turf and book an hourly slot.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { name } = await getPublicVenue();
+  return { title: "Our grounds", description: `Browse the grounds at ${name} and book an hourly slot.` };
+}
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -28,7 +29,8 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
   const all = await listPublicGrounds();
   if (all.length === 1) redirect(`/grounds/${all[0].id}${query.date ? `?date=${query.date}` : ""}`);
   const { sport, format, surface } = query;
-  const sorted = sortGrounds(await listPublicGrounds({ sport, format, surface }), query.sort);
+  const [list, venue] = await Promise.all([listPublicGrounds({ sport, format, surface }), getPublicVenue()]);
+  const sorted = sortGrounds(list, query.sort);
   const filtered = Boolean(sport || format || surface);
   const slotsByGround = query.date
     ? await slotsFor(
@@ -48,7 +50,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
       <div>
         <GroundsDateBar query={query} />
         <div className="mt-4">
-          <ResultsHeader count={grounds.length} query={query} />
+          <ResultsHeader count={grounds.length} query={query} venueName={venue.name} />
         </div>
         <div className={`mt-4 grid grid-cols-1 gap-5 ${slotsByGround ? "" : "md:grid-cols-2"}`}>
           {grounds.length === 0 && (
@@ -121,7 +123,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
   );
 }
 
-function ResultsHeader({ count, query }: { count: number; query: GroundsQuery }) {
+function ResultsHeader({ count, query, venueName }: { count: number; query: GroundsQuery; venueName: string }) {
   return (
     <div className="flex items-center justify-between">
       <p className="text-muted-foreground text-sm">
@@ -129,7 +131,7 @@ function ResultsHeader({ count, query }: { count: number; query: GroundsQuery })
         <strong className="text-foreground">
           {count} {count === 1 ? "ground" : "grounds"}
         </strong>{" "}
-        at Champions Turf
+        at {venueName}
       </p>
       <GroundsSortSelect query={query} />
     </div>

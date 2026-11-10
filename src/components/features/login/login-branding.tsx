@@ -1,6 +1,21 @@
+import Image from "next/image";
+import type { PublicVenue } from "@/types/settings";
 import { LOGIN_COLORS as C, ROLE_CAPABILITIES } from "./login-theme";
 
-function LogoMark({ size }: { size: number }) {
+type Brand = Pick<PublicVenue, "name" | "logoUrl">;
+/** The venue's name, or "Turf" while it loads or if turf-api can't be reached. */
+const nameOf = (venue?: Brand) => venue?.name || "Turf";
+
+/** The venue's logo from Settings → General (the one the portal shows), or the default mark until one is uploaded. */
+function LogoMark({ size, venue }: { size: number; venue?: Brand }) {
+  if (venue?.logoUrl) {
+    return (
+      <span style={{ position: "relative", display: "block", width: size, height: size, borderRadius: size / 4, overflow: "hidden", background: "#fff" }}>
+        {/* Served by turf-api through the same-origin proxy; a new file name on every upload. */}
+        <Image src={venue.logoUrl} alt={`${venue.name} logo`} fill unoptimized sizes={`${size}px`} style={{ objectFit: "contain" }} />
+      </span>
+    );
+  }
   return (
     <div
       style={{
@@ -18,14 +33,14 @@ function LogoMark({ size }: { size: number }) {
 const subtitle = { color: C.muted, letterSpacing: 3, textTransform: "uppercase" as const };
 
 /** Compact logo row shown above the form on phones. */
-export function LoginMobileHeader() {
+export function LoginMobileHeader({ venue }: { venue?: Brand }) {
   return (
     <div style={{ padding: "28px 24px 0", position: "relative", zIndex: 1 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <LogoMark size={40} />
+        <LogoMark size={40} venue={venue} />
         <div>
           <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, lineHeight: 1 }}>
-            TURF <span style={{ color: C.accent }}>ADMIN</span>
+            {nameOf(venue).toUpperCase()} <span style={{ color: C.accent }}>ADMIN</span>
           </div>
           <div style={{ ...subtitle, fontSize: 10, letterSpacing: 2 }}>Code Cohen · v1.0</div>
         </div>
@@ -35,7 +50,7 @@ export function LoginMobileHeader() {
 }
 
 /** Left-hand branding panel on tablet and desktop. */
-export function LoginBrandPanel({ compact }: { compact: boolean }) {
+export function LoginBrandPanel({ compact, venue }: { compact: boolean; venue?: Brand }) {
   return (
     <div
       style={{
@@ -45,7 +60,7 @@ export function LoginBrandPanel({ compact }: { compact: boolean }) {
     >
       <div style={{ marginBottom: compact ? 36 : 48 }}>
         <div style={{ marginBottom: 32 }}>
-          <LogoMark size={56} />
+          <LogoMark size={56} venue={venue} />
         </div>
         <div
           style={{
@@ -53,7 +68,7 @@ export function LoginBrandPanel({ compact }: { compact: boolean }) {
             lineHeight: 1, letterSpacing: 3, color: C.text,
           }}
         >
-          TURF<br />
+          {nameOf(venue).toUpperCase()}<br />
           <span style={{ color: C.accent }}>ADMIN</span>
         </div>
         <div style={{ ...subtitle, fontSize: 13, marginTop: 8 }}>Code Cohen · v1.0</div>
