@@ -24,9 +24,13 @@ export type SlotSettingsForm = z.infer<typeof SlotSettingsSchema>;
 
 /**
  * The editable fields only; the audit fields stay out of the form (and out of the PUT). The bKash /
- * Nagad numbers are saved on Settings → Payments instead, so this form never sends them.
+ * Nagad numbers and the card / bKash / Nagad switches are saved on Settings → Payments instead, so
+ * this form never sends them.
  */
-export type SlotSettingsInput = Omit<SlotSettings, "updatedAt" | "updatedBy" | "bkashNumber" | "nagadNumber">;
+export type SlotSettingsInput = Omit<
+  SlotSettings,
+  "updatedAt" | "updatedBy" | "bkashNumber" | "nagadNumber" | "portalCardEnabled" | "portalBkashEnabled" | "portalNagadEnabled"
+>;
 
 export const toSlotSettingsForm = ({ updatedAt: _a, updatedBy: _b, ...s }: SlotSettings): SlotSettingsForm =>
   ({ ...s, serviceFee: fromMinorUnits(s.serviceFee) });

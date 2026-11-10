@@ -114,7 +114,7 @@ export function useUpdateSlotSettings() {
       (await api.put("/admin/settings/slots", body)).data.data as SlotSettings,
     onSuccess: (data) => {
       qc.setQueryData(SETTINGS_KEY, data);
-      // portalCashEnabled also shows on the Payments page's status.
+      // The portal method switches also show on the Payments page's status.
       qc.invalidateQueries({ queryKey: ["settings", "payments-status"] });
     },
   });
