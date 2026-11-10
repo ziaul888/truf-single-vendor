@@ -9,14 +9,14 @@ import { SlotPickerSkeleton } from "./slot-picker-skeleton";
 export function GroundDetailSkeleton() {
   return (
     <div className="page-loading mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" aria-busy="true" aria-label="Loading ground">
-      <SkeletonLine className="mb-4 h-4 w-56" />
+      <SkeletonLine className="mb-4 h-4 w-28" />
       <GallerySkeleton />
       <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_400px]">
         <div>
           <HeaderSkeleton />
           <section className="mt-8 border-b pb-8">
             <SkeletonLine className="mb-2 h-6 w-36" />
-            {["w-full", "w-full", "w-2/3"].map((w, i) => <SkeletonLine key={i} className={`h-5.75 ${w}`} />)}
+            <SkeletonLine className="h-5.75 w-1/2" />
           </section>
           <SpecsSkeleton />
           <LocationSkeleton />
@@ -29,12 +29,12 @@ export function GroundDetailSkeleton() {
   );
 }
 
-/** One large photo and four thumbnails from md; on phones only the large one (top row). */
+/** One large photo and two thumbnails from md (the venue ground has three photos); on phones only the large one. */
 function GallerySkeleton() {
   return (
     <div className="grid h-105 grid-cols-1 grid-rows-2 gap-2 overflow-hidden rounded-2xl md:grid-cols-4">
       <SkeletonBlock className="rounded-none md:col-span-2 md:row-span-2" />
-      {Array.from({ length: 4 }).map((_, i) => <SkeletonBlock key={i} className="hidden rounded-none md:block" />)}
+      {Array.from({ length: 2 }).map((_, i) => <SkeletonBlock key={i} className="hidden rounded-none md:block" />)}
     </div>
   );
 }
@@ -85,7 +85,6 @@ function LocationSkeleton() {
           <SkeletonBlock className="mt-0.5 h-5 w-5 shrink-0 rounded-md" />
           <div className="min-w-0 flex-1">
             <SkeletonLine className="w-56 max-w-full" />
-            <SkeletonLine className="h-4 w-28" />
           </div>
         </div>
         <SkeletonBlock className="h-10 shrink-0 rounded-lg sm:w-40" />
