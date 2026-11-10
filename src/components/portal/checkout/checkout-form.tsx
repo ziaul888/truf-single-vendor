@@ -19,9 +19,10 @@ import { WalletFields } from "./wallet-fields";
 interface FormError { message: string; slotTaken: boolean; myBookings?: boolean }
 
 export function CheckoutForm({
-  groundId, date, hour, slotPrice, disabled, initialMethod = "card",
+  groundId, date, hour, startMinute, slotPrice, disabled, initialMethod = "card",
 }: {
-  groundId: string; date: string; hour: number; slotPrice: number; disabled: boolean;
+  /** startMinute: 30 when a 90-minute slot starts on the half hour. */
+  groundId: string; date: string; hour: number; startMinute: number; slotPrice: number; disabled: boolean;
   /** The method chosen before signing in (`?method=` on the way back). */
   initialMethod?: CheckoutMethod;
 }) {
@@ -64,7 +65,8 @@ export function CheckoutForm({
   const busy = isSubmitting || leaving;
   // Cash, bKash and Nagad need a signed-in customer (turf-api: 401 SIGN_IN_REQUIRED); card stays open to guests.
   const needsSignIn = method !== "card" && !session;
-  const signInHref = `/sign-in?from=${encodeURIComponent(`/checkout?groundId=${groundId}&date=${date}&hour=${hour}&method=${method}`)}`;
+  const minuteParam = startMinute ? `&minute=${startMinute}` : "";
+  const signInHref = `/sign-in?from=${encodeURIComponent(`/checkout?groundId=${groundId}&date=${date}&hour=${hour}${minuteParam}&method=${method}`)}`;
 
   // Keep the form's value on the method shown, so the wallet fields are validated when they apply.
   useEffect(() => {
@@ -76,7 +78,7 @@ export function CheckoutForm({
     try {
       const { customerName, customerEmail, customerPhone, reference, payerNumber } = values;
       const result = await startCheckout({
-        groundId, date, hour, customerName, customerEmail, customerPhone, paymentMethod: method,
+        groundId, date, hour, startMinute, customerName, customerEmail, customerPhone, paymentMethod: method,
         ...(wallet && { reference: reference.trim().toUpperCase(), payerNumber: payerNumber.trim() }),
       });
       setLeaving(true);

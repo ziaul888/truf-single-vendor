@@ -12,8 +12,8 @@ import type { CalendarSlot, CalendarGround } from "@/types";
 import type { CalendarApiSlot } from "@/types/slot";
 import { useSlotCalendar } from "@/hooks/useSlots";
 import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
-import { fromMinorUnits, hourToTime } from "@/lib/ground-format";
-import { addDays, venueToday } from "@/lib/slot-format";
+import { fromMinorUnits } from "@/lib/ground-format";
+import { addDays, slotEndTime, slotStartTime, venueToday } from "@/lib/slot-format";
 import {
   ChevronLeft, ChevronRight, List, CalendarDays,
   CheckCircle2, CalendarClock, Ban, Wallet,
@@ -52,7 +52,7 @@ function toCalendarSlot(s: CalendarApiSlot): CalendarSlot {
   const partial = s.status === "booked" && paid > 0 && paid < amount;
   return {
     id: s.id, groundId: s.groundId, groundName: s.groundName, date: s.date,
-    startTime: hourToTime(s.startHour), endTime: hourToTime(s.endHour),
+    startTime: slotStartTime(s), endTime: slotEndTime(s),
     status: partial ? "partial" : s.status,
     note: s.note,
     bookingId: s.bookingId,

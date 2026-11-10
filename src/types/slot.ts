@@ -3,6 +3,17 @@
 
 import type { Weekday } from "./ground";
 
+/**
+ * Minutes and "HH:MM" times next to startHour/endHour (hour part only): a 90-minute slot can
+ * start or end on a half hour. Missing from older APIs; read them through lib/slot-format.
+ */
+export interface SlotMinutes {
+  startMinute?: 0 | 30;
+  endMinute?: 0 | 30;
+  startTime?: string;
+  endTime?: string;
+}
+
 /** `held`: a customer is paying in Stripe checkout (up to holdMinutes). */
 export const SLOT_STATUSES = ["available", "held", "booked", "blocked"] as const;
 export const BLOCK_REASONS = ["maintenance", "reserved", "event", "weather", "other"] as const;
@@ -17,8 +28,8 @@ export interface SlotBlock {
   blockedAt: string;
 }
 
-/** Admin slot. Times are venue-local (Asia/Dhaka): a calendar date plus whole hours. */
-export interface Slot {
+/** Admin slot. Times are venue-local (Asia/Dhaka): a calendar date plus hours (and minutes). */
+export interface Slot extends SlotMinutes {
   id: string;
   groundId: string;
   groundName: string;
@@ -26,7 +37,7 @@ export interface Slot {
   date: string;
   startHour: number;
   endHour: number;
-  durationMinutes: 60 | 120;
+  durationMinutes: 60 | 90 | 120;
   /** Smallest currency unit, fixed when the slot was created (peak hours included). */
   price: number;
   status: SlotStatus;
@@ -57,7 +68,7 @@ export interface SlotPage {
 }
 
 /** Customer view: never says why a slot is unavailable. */
-export interface PublicSlot {
+export interface PublicSlot extends SlotMinutes {
   id: string;
   date: string;
   startHour: number;
@@ -80,9 +91,9 @@ export type BulkBlockInput = {
   reason: BlockReason;
   note?: string;
 } & (
-  | { type: "single"; startHour: number }
+  | { type: "single"; startHour: number; startMinute?: number }
   | { type: "fullDay" }
-  | { type: "recurringWeekly"; weekdays: Weekday[]; untilDate: string; startHour?: number }
+  | { type: "recurringWeekly"; weekdays: Weekday[]; untilDate: string; startHour?: number; startMinute?: number }
 );
 
 export interface BulkBlockResult {
@@ -91,7 +102,7 @@ export interface BulkBlockResult {
   cancelledBookings: number;
 }
 
-export interface CalendarApiSlot {
+export interface CalendarApiSlot extends SlotMinutes {
   id: string;
   groundId: string;
   groundName: string;
@@ -166,7 +177,7 @@ export interface SlotEvent {
 }
 
 /** An event in the venue-wide log. `slotId` is null when the slot was later regenerated. */
-export interface SlotEventListItem extends SlotEvent {
+export interface SlotEventListItem extends SlotEvent, Pick<SlotMinutes, "startMinute" | "startTime"> {
   slotId: string | null;
   groundId: string;
   groundName: string;

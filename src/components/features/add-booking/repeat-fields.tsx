@@ -7,9 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { WeekdayPicker } from "@/components/features/slots/weekday-picker";
 import type { Ground } from "@/hooks/useGrounds";
-import { timeToHour } from "@/lib/ground-format";
-import { hourRangeLabel } from "@/lib/series-format";
-import { addDays } from "@/lib/slot-format";
+import { addDays, clockTime } from "@/lib/slot-format";
 import { cn } from "@/lib/utils";
 import { SERIES_MAX_DAYS, type AddBookingFormData } from "@/schemas";
 import { WEEKDAYS, type Weekday } from "@/types/ground";
@@ -21,12 +19,13 @@ type Form = UseFormReturn<AddBookingFormData>;
 const BY_DAY_INDEX: Weekday[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 const weekdayOf = (date: string) => BY_DAY_INDEX[new Date(`${date}T00:00:00Z`).getUTCDay()];
 
-/** Start hours of the ground's slots: opening to closing, one slot length apart. */
-export function groundStartHours(ground: Pick<Ground, "openingHour" | "closingHour" | "slotDurationMinutes">) {
-  const step = ground.slotDurationMinutes / 60;
-  const hours: number[] = [];
-  for (let h = ground.openingHour; h + step <= ground.closingHour; h += step) hours.push(h);
-  return hours;
+/** The ground's slots as "HH:MM" start and end: opening to closing, one slot length apart (90 → :30 starts). */
+export function groundSlotTimes(ground: Pick<Ground, "openingHour" | "closingHour" | "slotDurationMinutes">) {
+  const step = ground.slotDurationMinutes;
+  const at = (m: number) => clockTime(Math.floor(m / 60), m % 60);
+  const times: { start: string; end: string }[] = [];
+  for (let m = ground.openingHour * 60; m + step <= ground.closingHour * 60; m += step) times.push({ start: at(m), end: at(m + step) });
+  return times;
 }
 
 /** "Repeat" switch: the whole row is the tap target. Turning it on fills sensible defaults. */
@@ -42,8 +41,7 @@ export function RepeatToggle({ form, slotStartTime }: { form: Form; slotStartTim
     // Start from the picked date's weekday and slot, booked for four weeks.
     if (!weekdays?.length && date) setValue("weekdays", [weekdayOf(date)]);
     if (!untilDate && date) setValue("untilDate", addDays(date, 28));
-    const slotHour = slotStartTime ? timeToHour(slotStartTime) : null;
-    if (!startHour && slotHour !== null) setValue("startHour", String(slotHour));
+    if (!startHour && slotStartTime) setValue("startHour", slotStartTime);
   }
 
   return (
@@ -104,8 +102,7 @@ function DayChips({ form }: { form: Form }) {
 
 function HourSelect({ form, ground }: { form: Form; ground?: Ground }) {
   const { control, formState: { errors } } = form;
-  const hours = ground ? groundStartHours(ground) : [];
-  const step = (ground?.slotDurationMinutes ?? 60) / 60;
+  const times = ground ? groundSlotTimes(ground) : [];
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium">Time <span className="text-destructive">*</span></Label>
@@ -113,7 +110,7 @@ function HourSelect({ form, ground }: { form: Form; ground?: Ground }) {
         <Select value={field.value ?? ""} onValueChange={field.onChange} disabled={!ground}>
           <SelectTrigger className="h-10"><SelectValue placeholder={ground ? "Pick the time" : "Select a ground first"} /></SelectTrigger>
           <SelectContent>
-            {hours.map((h) => <SelectItem key={h} value={String(h)}>{hourRangeLabel(h, h + step)}</SelectItem>)}
+            {times.map((t) => <SelectItem key={t.start} value={t.start}>{t.start}–{t.end}</SelectItem>)}
           </SelectContent>
         </Select>
       )} />

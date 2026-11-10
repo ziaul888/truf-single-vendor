@@ -42,7 +42,7 @@ function groundToFormData(g: Ground): AddGroundFormData {
     amenities:     g.amenities,
     showOnPortal:  g.showOnPortal,
     internalNotes: g.internalNotes ?? "",
-    slotDuration:  g.slotDurationMinutes === 120 ? "120" : "60",
+    slotDuration:  String(g.slotDurationMinutes) as AddGroundFormData["slotDuration"],
     peakPrice:     g.peakPricePerHour ?? undefined,
     peakRanges:    g.peakRanges.length
       ? g.peakRanges.map((r) => ({ from: hourToTime(r.fromHour), to: toTimeInput(r.toHour) }))

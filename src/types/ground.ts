@@ -17,7 +17,8 @@ export type Surface = (typeof SURFACES)[number];
 export type Amenity = (typeof AMENITIES)[number];
 export type AvailableDays = (typeof AVAILABLE_DAYS)[number];
 export type Weekday = (typeof WEEKDAYS)[number];
-export const SLOT_DURATIONS = [60, 120] as const;
+/** 90-minute slots start on half hours (15:00, 16:30, 18:00…). */
+export const SLOT_DURATIONS = [60, 90, 120] as const;
 export type SlotDurationMinutes = (typeof SLOT_DURATIONS)[number];
 
 /** A peak period in whole hours: [fromHour, toHour). */

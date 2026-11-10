@@ -6,7 +6,7 @@ import { Banknote, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { hourLabel, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { slotEndHours, slotPriceLabel, slotStartHours, slotStartTime, slotTimeLabel, venueHourNow } from "@/lib/slot-format";
 import { useDashboardToday } from "@/hooks/useDashboard";
 import type { SlotStatus } from "@/types/slot";
 import type { TodayGround } from "@/types/dashboard";
@@ -21,14 +21,18 @@ const SLOT_CLS: Record<SlotStatus, string> = {
 const SLOT_NAME: Record<SlotStatus, string> = { available: "Free", held: "Paying", booked: "Booked", blocked: "Blocked" };
 
 function Timeline({ g, nowHour }: { g: TodayGround; nowHour: number }) {
+  // turf-api sends the whole hour; add the minutes so a 16:30 slot isn't "now" at 16:10.
+  const clock = venueHourNow();
+  const nowAt = Math.floor(clock) === nowHour ? clock : nowHour;
   return (
     <div className="flex h-6 gap-0.5" role="img" aria-label={`${g.groundName}: ${g.slots.booked} booked, ${g.slots.available} free, ${g.slots.blocked} blocked`}>
       {g.timeline.map((s) => {
-        const now = s.startHour <= nowHour && nowHour < s.endHour;
+        const [start, end] = [slotStartHours(s), slotEndHours(s)];
+        const now = start <= nowAt && nowAt < end;
         return (
-          <div key={s.startHour}
-            title={`${hourLabel(s.startHour)}–${hourLabel(s.endHour)} · ${SLOT_NAME[s.status]}`}
-            className={cn("flex-1 rounded-sm", SLOT_CLS[s.status], s.endHour <= nowHour && "opacity-40", now && "ring-2 ring-foreground ring-offset-1 ring-offset-card")} />
+          <div key={slotStartTime(s)}
+            title={`${slotTimeLabel(s)} · ${SLOT_NAME[s.status]}`}
+            className={cn("flex-1 rounded-sm", SLOT_CLS[s.status], end <= nowAt && "opacity-40", now && "ring-2 ring-foreground ring-offset-1 ring-offset-card")} />
         );
       })}
     </div>

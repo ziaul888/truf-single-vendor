@@ -9,6 +9,7 @@ import type { AddBookingFormData } from "@/schemas";
 import { PAYMENT_METHOD_LABEL, takaLabel } from "@/components/features/bookings/booking-status-helpers";
 import { PAYMENT_TYPES } from "./payment-section";
 import { cn } from "@/lib/utils";
+import { durationLabel } from "@/lib/slot-format";
 
 interface BookingSummarySidebarProps {
   ground?: Ground;
@@ -34,6 +35,7 @@ export function BookingSummarySidebar({
   const pricePerHour = ground?.pricePerHour ?? 0;
   const slotHours = (ground?.slotDurationMinutes ?? 60) / 60;
   const totalAmount = slot?.price ?? pricePerHour * slotHours;
+  const slotLength = durationLabel(ground?.slotDurationMinutes ?? 60);
   const dueAmount = Math.max(0, totalAmount - advanceAmount);
   const isPartial = paymentType === "partial";
   const typeLabel = PAYMENT_TYPES.find((t) => t.value === paymentType)?.label ?? "";
@@ -88,7 +90,7 @@ export function BookingSummarySidebar({
           {slot ? (
             <span className="font-medium">
               {slot.startTime} – {slot.endTime}
-              <span className="ml-2 text-xs font-normal text-muted-foreground">{slotHours === 1 ? "1 hour" : `${slotHours} hours`}</span>
+              <span className="ml-2 text-xs font-normal text-muted-foreground">{slotLength}</span>
             </span>
           ) : (
             <span className="text-muted-foreground italic">No slot selected</span>
@@ -103,7 +105,7 @@ export function BookingSummarySidebar({
           Amount Breakdown
         </div>
         <Row label="Price / hour" value={ground ? takaLabel(pricePerHour) : "—"} />
-        <Row label="Duration" value={slot ? (slotHours === 1 ? "1 hour" : `${slotHours} hours`) : "—"} />
+        <Row label="Duration" value={slot ? slotLength : "—"} />
         <Separator />
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold">Total</span>

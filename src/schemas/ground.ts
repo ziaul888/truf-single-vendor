@@ -2,7 +2,7 @@ import { z } from "zod";
 import { timeToHour, toMinorUnits } from "@/lib/ground-format";
 import {
   AMENITIES, AVAILABLE_DAYS, FORMATS, SPORTS, SURFACES, WEEKDAYS,
-  type GroundWriteInput, type PeakRange,
+  type GroundWriteInput, type PeakRange, type SlotDurationMinutes,
 } from "@/types/ground";
 
 const wholeHour = (label: string, isClosing = false) =>
@@ -55,7 +55,7 @@ export const AddGroundSchema = z
     showOnPortal: z.boolean(),
     internalNotes: z.string().max(2000).optional(),
 
-    slotDuration: z.enum(["60", "120"] as const),
+    slotDuration: z.enum(["60", "90", "120"] as const),
     /** Peak pricing is optional; when the price is set, hourly price above is the off-peak price. */
     peakPrice: optionalNumber(z.number("Peak price must be a number").positive("Peak price must be above 0").max(100_000, "Price is too high")),
     peakRanges: z.array(PeakRangeSchema).max(6, "At most 6 peak ranges"),
@@ -113,7 +113,7 @@ export function toGroundWriteInput(data: AddGroundFormData): GroundWriteInput {
     customDays: data.availableDays === "custom" ? data.customDays : [],
     showOnPortal: data.showOnPortal,
     internalNotes: data.internalNotes?.trim() || null,
-    slotDurationMinutes: data.slotDuration === "120" ? 120 : 60,
+    slotDurationMinutes: Number(data.slotDuration) as SlotDurationMinutes,
     // Both or neither: null + [] turns peak pricing off.
     peakPrice: data.peakPrice === undefined ? null : toMinorUnits(data.peakPrice),
     peakRanges: data.peakPrice === undefined ? [] : filledPeakRanges(data.peakRanges),

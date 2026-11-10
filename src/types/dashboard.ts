@@ -2,7 +2,7 @@
 // Money is in the smallest currency unit; dates and hours are venue-local.
 
 import type { BookingEventType, WalletMethod, WalletPayment } from "./booking";
-import type { SlotStatus } from "./slot";
+import type { SlotMinutes, SlotStatus } from "./slot";
 
 export interface DashboardAttention {
   toConfirm: { count: number; payAtVenue: number };
@@ -22,7 +22,7 @@ export interface NeedsOutcomeBooking {
   bookingNumber: string;
   customerName: string;
   groundName: string;
-  slot: { date: string; startHour: number; endHour: number };
+  slot: { date: string; startHour: number; endHour: number } & SlotMinutes;
   total: number;
   /** Received so far: what stays if it's marked no-show. */
   paid: number;
@@ -33,7 +33,7 @@ export interface NeedsOutcomeBooking {
   walletPayment: { method: WalletMethod; status: WalletPayment["status"] } | null;
 }
 
-export interface TodayBookingRef {
+export interface TodayBookingRef extends SlotMinutes {
   bookingId: string;
   bookingNumber: string;
   customerName: string;
@@ -56,7 +56,7 @@ export interface TodayGround {
   revenueToday: number;
   current: TodayBookingRef | null;
   next: (TodayBookingRef & { due: number }) | null;
-  timeline: { startHour: number; endHour: number; status: SlotStatus }[];
+  timeline: ({ startHour: number; endHour: number; status: SlotStatus } & SlotMinutes)[];
 }
 
 export interface DashboardToday {

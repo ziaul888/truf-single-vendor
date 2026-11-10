@@ -3,6 +3,7 @@
 
 import type { BookingStatus, OfflineMethod } from "./booking";
 import type { Weekday } from "./ground";
+import type { SlotMinutes } from "./slot";
 
 export type SeriesStatus = "active" | "stopped";
 /** fixed: until a date (at most 30 days) · ongoing: keeps booking new dates until stopped. */
@@ -14,6 +15,8 @@ export type SeriesSkipReason = "booked" | "blocked" | "held" | "closed" | "ended
 export interface SeriesPatternInput {
   groundId: string;
   startHour: number;
+  /** 30 for a half-hour start (90-minute slots). */
+  startMinute: number;
   weekdays: Weekday[];
   fromDate: string;
   /** null: ongoing. */
@@ -64,7 +67,7 @@ export interface SeriesBooking extends SeriesMoney {
   status: BookingStatus;
 }
 
-export interface BookingSeries {
+export interface BookingSeries extends SlotMinutes {
   id: string;
   status: SeriesStatus;
   ground: { id: string; name: string };
