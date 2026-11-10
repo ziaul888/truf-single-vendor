@@ -1,4 +1,4 @@
-import { hourToTime } from "@/lib/ground-format";
+import { slotClockLabel, type SlotTimes } from "@/lib/slot-format";
 import type { BookingSeries, SeriesSkipReason } from "@/types/booking-series";
 import type { Weekday } from "@/types/ground";
 
@@ -28,12 +28,9 @@ export const dayDate = (date: string) =>
 export const monthLabel = (month: string) =>
   new Date(`${month}-01T00:00:00`).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 
-/** "21:00–22:00". */
-export const hourRangeLabel = (startHour: number, endHour: number) => `${hourToTime(startHour)}–${hourToTime(endHour)}`;
-
 /** "Every Sat, Mon, Wed · 21:00–22:00 · from 1 Dec, keeps going" (or "… until 31 Dec"). */
-export function seriesPatternLabel(s: Pick<BookingSeries, "weekdays" | "startHour" | "endHour" | "fromDate" | "untilDate">) {
+export function seriesPatternLabel(s: Pick<BookingSeries, "weekdays" | "fromDate" | "untilDate"> & SlotTimes) {
   const days = s.weekdays.length === 7 ? "Every day" : `Every ${s.weekdays.map((d) => WEEKDAY_LABEL[d]).join(", ")}`;
   const until = s.untilDate ? `until ${shortDate(s.untilDate)}` : "keeps going";
-  return `${days} · ${hourRangeLabel(s.startHour, s.endHour)} · from ${shortDate(s.fromDate)}, ${until}`;
+  return `${days} · ${slotClockLabel(s)} · from ${shortDate(s.fromDate)}, ${until}`;
 }

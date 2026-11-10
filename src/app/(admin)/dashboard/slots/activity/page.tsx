@@ -141,7 +141,7 @@ export default function SlotActivityPage() {
                   </TableCell>
                   <TableCell className="text-sm">
                     <span className="font-medium">{e.groundName}</span>
-                    <span className="block text-xs text-muted-foreground">{formatSlotDate(e.date)} · {hourLabel(e.startHour)}</span>
+                    <span className="block text-xs text-muted-foreground">{formatSlotDate(e.date)} · {hourLabel(e.startHour, e.startMinute ?? (Number(e.startTime?.slice(3, 5)) || 0))}</span>
                   </TableCell>
                   <TableCell className="text-sm">
                     {e.reason ? BLOCK_REASON_LABEL[e.reason] : <span className="text-muted-foreground">—</span>}

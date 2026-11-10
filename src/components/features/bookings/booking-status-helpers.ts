@@ -2,7 +2,7 @@ import type {
   Booking, BookingEventType, BookingStatus, PaymentMethod, PaymentStatus,
 } from "@/types/booking";
 import { toMinorUnits } from "@/lib/ground-format";
-import { slotPriceLabel, venueHourNow, venueToday } from "@/lib/slot-format";
+import { slotPriceLabel, slotStartHours, venueHourNow, venueToday, type SlotTimes } from "@/lib/slot-format";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -92,9 +92,9 @@ export const isAwaitingWalletVerification = (b: Pick<Booking, "status" | "wallet
   b.status === "pending" && b.walletPayment?.status === "pending";
 
 /** The slot has started, venue time (a no-show can only be marked from then). */
-export const slotHasStarted = (slot: Pick<Booking["slot"], "date" | "startHour">) => {
+export const slotHasStarted = (slot: Pick<Booking["slot"], "date"> & SlotTimes) => {
   const today = venueToday();
-  return slot.date < today || (slot.date === today && venueHourNow() >= slot.startHour);
+  return slot.date < today || (slot.date === today && venueHourNow() >= slotStartHours(slot));
 };
 
 /**

@@ -27,7 +27,9 @@ export function toPatternInput(v: PatternFields): SeriesPatternInput | null {
   if (!ongoing && (!v.untilDate || v.untilDate < v.date || v.untilDate > addDays(v.date, SERIES_MAX_DAYS))) return null;
   return {
     groundId: v.groundId,
-    startHour: Number(v.startHour),
+    // The select holds "HH:MM": 90-minute slots start on half hours.
+    startHour: Number(v.startHour.slice(0, 2)),
+    startMinute: Number(v.startHour.slice(3, 5)) || 0,
     weekdays: v.weekdays,
     fromDate: v.date,
     untilDate: ongoing ? null : (v.untilDate ?? null),

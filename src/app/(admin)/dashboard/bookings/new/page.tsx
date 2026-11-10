@@ -23,7 +23,7 @@ import { useCreateBooking } from "@/hooks/useBookings";
 import { useCreateSeries, useSeriesPreview } from "@/hooks/useBookingSeries";
 import { applyApiErrors, toApiFailure, type ApiFailure } from "@/lib/api-error";
 import { fromMinorUnits, toMinorUnits } from "@/lib/ground-format";
-import { venueToday } from "@/lib/slot-format";
+import { durationLabel, venueToday } from "@/lib/slot-format";
 import { AddBookingSchema, RepeatBookingSchema, type AddBookingFormData } from "@/schemas";
 import { isWalletMethod, type CreateBookingInput } from "@/types/booking";
 import { ChevronLeft } from "lucide-react";
@@ -46,6 +46,7 @@ const API_FIELD: Record<string, keyof AddBookingFormData> = {
   untilDate: "untilDate",
   weekdays: "weekdays",
   startHour: "startHour",
+  startMinute: "startHour",
 };
 
 const toFormFailure = (f: ApiFailure): ApiFailure => ({
@@ -119,7 +120,7 @@ export default function AddBookingPage() {
   // The slot's own price covers slot length and peak hours; fall back to the hourly price.
   // Repeat: the total of every free date.
   const totalAmount    = repeat ? fromMinorUnits(seriesPreview?.total ?? 0) : selectedSlot?.price ?? selectedGround?.pricePerHour ?? 0;
-  const slotHours      = (selectedGround?.slotDurationMinutes ?? 60) / 60;
+  const slotLength     = durationLabel(selectedGround?.slotDurationMinutes ?? 60);
 
   function handleApiError(err: unknown) {
     const failure = toApiFailure(err);
@@ -220,7 +221,7 @@ export default function AddBookingPage() {
                     <div className="h-8 w-px bg-border" />
                     <div>
                       <p className="text-xs text-muted-foreground">Duration</p>
-                      <p className="mt-0.5 text-lg font-semibold">{selectedSlot ? (slotHours === 1 ? "1 hour" : `${slotHours} hours`) : "—"}</p>
+                      <p className="mt-0.5 text-lg font-semibold">{selectedSlot ? slotLength : "—"}</p>
                     </div>
                   </div>
                   <div className="text-right">

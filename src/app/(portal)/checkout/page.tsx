@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround, getPublicSlots } from "@/services/portal-grounds";
-import { formatSlotDate, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotStartMinute, slotTimeLabel } from "@/lib/slot-format";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { CheckoutStepper } from "@/components/portal/checkout/checkout-stepper";
 import { CheckoutForm } from "@/components/portal/checkout/checkout-form";
@@ -15,15 +15,17 @@ import type { PublicSlot } from "@/types/slot";
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ groundId?: string; date?: string; hour?: string; method?: string }>;
+  searchParams: Promise<{ groundId?: string; date?: string; hour?: string; minute?: string; method?: string }>;
 }) {
-  const { groundId, date, hour, method } = await searchParams;
+  const { groundId, date, hour, minute, method } = await searchParams;
   const ground = groundId ? await getPublicGround(groundId) : null;
 
   const hourNum = hour && /^\d+$/.test(hour) ? Number(hour) : null;
+  // A 90-minute slot can start on the half hour (`minute=30`); older links have no minute.
+  const minuteNum = minute === "30" ? 30 : 0;
   // The slot's price comes from turf-api (peak hours included), so the portal doesn't calculate it.
   const slots = ground && date ? await getPublicSlots(ground.id, date) : [];
-  const slot = slots.find((s) => s.startHour === hourNum);
+  const slot = slots.find((s) => s.startHour === hourNum && slotStartMinute(s) === minuteNum);
   const unavailable = !!ground && hourNum != null && !slot?.available;
 
   return (
@@ -48,6 +50,7 @@ export default async function CheckoutPage({
             groundId={ground.id}
             date={date}
             hour={hourNum}
+            startMinute={minuteNum}
             slotPrice={slot.price}
             disabled={unavailable}
             initialMethod={CHECKOUT_METHODS.find((m) => m === method)}

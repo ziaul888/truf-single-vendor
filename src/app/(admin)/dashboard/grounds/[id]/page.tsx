@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSlots } from "@/hooks/useSlots";
-import { venueToday } from "@/lib/slot-format";
+import { slotEndTime, slotStartTime, venueToday } from "@/lib/slot-format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import {
 import { useGround } from "@/hooks/useGrounds";
 import { useMe } from "@/hooks/useMe";
 import { useDashboardStats } from "@/hooks/useDashboard";
-import { formatPeakRanges, hourToTime } from "@/lib/ground-format";
+import { formatPeakRanges } from "@/lib/ground-format";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
   AlertCircle,
@@ -53,8 +53,8 @@ export default function GroundDetailPage() {
     ...daySlots,
     data: daySlots.data?.data.map((s): TimeSlot => ({
       id: s.id,
-      startTime: hourToTime(s.startHour),
-      endTime: hourToTime(s.endHour),
+      startTime: slotStartTime(s),
+      endTime: slotEndTime(s),
       status: s.status === "available" ? "available" : "taken",
     })),
   };
@@ -225,7 +225,7 @@ export default function GroundDetailPage() {
                   {g.peakPricePerHour !== null ? "Off-peak" : "Hourly"}
                 </span>
                 <span className="rounded-full bg-blue-200/70 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-800/50 dark:text-blue-300">
-                  {g.slotDurationMinutes === 120 ? "2-hour slots" : "1-hour slots"}
+                  {g.slotDurationMinutes === 120 ? "2-hour slots" : g.slotDurationMinutes === 90 ? "90-minute slots" : "1-hour slots"}
                 </span>
               </div>
               <span className="text-lg font-bold text-blue-700 dark:text-blue-400">

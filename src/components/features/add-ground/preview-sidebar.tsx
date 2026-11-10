@@ -47,8 +47,10 @@ export function PreviewSidebar({
   const peakRanges = filledPeakRanges(
     v.peakRanges as { from: string; to: string }[] | undefined
   ).length;
-  const step = v.slotDuration === "120" ? 2 : 1;
+  // Slots are 1, 1.5 or 2 hours; a 90-minute slot costs 1.5× the hourly price, shown per slot.
+  const step = Number(v.slotDuration ?? "60") / 60;
   const slotsPerDay = Math.floor(calcSlots(v.openingTime ?? "", v.closingTime ?? "") / step);
+  const perSlot = (perHour: number) => (step === 1.5 ? ` · ${formatCurrency(perHour * step)} per slot` : "");
 
   const requiredFilled = [
     !!v.name?.trim(),
@@ -123,6 +125,7 @@ export function PreviewSidebar({
                   </span>
                   <span className="font-semibold text-amber-600">
                     {formatCurrency(Number(v.peakPrice))}
+                    <span className="text-muted-foreground text-xs font-normal">{perSlot(Number(v.peakPrice))}</span>
                   </span>
                 </div>
               )}
@@ -134,6 +137,7 @@ export function PreviewSidebar({
                   </span>
                   <span className="font-semibold text-blue-600">
                     {formatCurrency(Number(v.offPeakPrice))}
+                    <span className="text-muted-foreground text-xs font-normal">{perSlot(Number(v.offPeakPrice))}</span>
                   </span>
                 </div>
               )}

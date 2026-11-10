@@ -1,8 +1,13 @@
 import Link from "next/link";
-import { slotPriceLabel } from "@/lib/slot-format";
+import { slotPriceLabel, slotStartMinute, slotStartTime } from "@/lib/slot-format";
 import type { PublicSlot } from "@/types/slot";
 
-const pad = (n: number) => String(n).padStart(2, "0");
+/** Checkout link; only half-hour starts add `minute`, so whole-hour links stay as they were. */
+function checkoutHref(groundId: string, date: string, s: PublicSlot) {
+  const params = new URLSearchParams({ groundId, date, hour: String(s.startHour) });
+  if (slotStartMinute(s)) params.set("minute", String(slotStartMinute(s)));
+  return `/checkout?${params}`;
+}
 
 /** A ground's free slots on the searched date; each one goes straight to checkout. */
 export function GroundFreeSlots({ groundId, date, slots }: { groundId: string; date: string; slots: PublicSlot[] }) {
@@ -18,13 +23,13 @@ export function GroundFreeSlots({ groundId, date, slots }: { groundId: string; d
       </p>
       <ul className="flex flex-wrap gap-2">
         {free.map((s) => (
-          <li key={s.startHour}>
+          <li key={slotStartTime(s)}>
             <Link
-              href={`/checkout?${new URLSearchParams({ groundId, date, hour: String(s.startHour) })}`}
+              href={checkoutHref(groundId, date, s)}
               className="flex flex-col items-center rounded-lg border px-3 py-1.5 text-center transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
             >
               <span className="text-sm font-semibold tabular-nums">
-                {pad(s.startHour)}:00{s.isPeak && <span className="text-accent"> ★</span>}
+                {slotStartTime(s)}{s.isPeak && <span className="text-accent"> ★</span>}
               </span>
               <span className="text-[10px] opacity-75">{slotPriceLabel(s.price)}</span>
             </Link>

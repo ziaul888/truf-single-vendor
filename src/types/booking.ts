@@ -2,6 +2,7 @@
 // Money is in the smallest currency unit (150000 = ৳1,500); dates are venue-local "YYYY-MM-DD".
 
 import type { Sport, GroundFormat } from "./ground";
+import type { SlotMinutes } from "./slot";
 
 export const BOOKING_STATUSES = ["pending", "confirmed", "cancelled", "completed", "no_show"] as const;
 export const PAYMENT_STATUSES = ["unpaid", "partial", "paid", "refunded", "failed"] as const;
@@ -46,7 +47,8 @@ export interface Booking {
   /** The customer asked to cancel while their bKash / Nagad payment was under review. */
   cancelRequestedAt: string | null;
   ground: { id: string; name: string; sport: Sport };
-  slot: { id: string; date: string; startHour: number; endHour: number };
+  /** Read the time through lib/slot-format: it can start or end on a half hour. */
+  slot: { id: string; date: string; startHour: number; endHour: number } & SlotMinutes;
   /** `email` null: the customer has no email (no customer emails are sent). */
   customer: { id: string; name: string; phone: string; email: string | null };
   contact: { name: string; email: string | null; phone: string };
@@ -165,7 +167,7 @@ export interface PublicBooking {
   /** Paid by bKash / Nagad at checkout; `status: "pending"` while the venue verifies it. */
   walletPayment: Omit<WalletPayment, "payerNumber"> | null;
   ground: { id: string; name: string; sport: Sport; format: GroundFormat | null; address: string | null; coverPhoto: string | null };
-  slot: { date: string; startHour: number; endHour: number };
+  slot: { date: string; startHour: number; endHour: number } & SlotMinutes;
   amount: number;
   serviceFee: number;
   total: number;

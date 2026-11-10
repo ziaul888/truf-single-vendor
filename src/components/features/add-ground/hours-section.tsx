@@ -103,8 +103,9 @@ export function HoursSection({ form }: { form: UseFormReturn<AddGroundFormData> 
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="60">1 hour</SelectItem>
-                    <SelectItem value="120">2 hours</SelectItem>
+                    <SelectItem value="60">1 hr</SelectItem>
+                    <SelectItem value="90">1 hr 30 min</SelectItem>
+                    <SelectItem value="120">2 hr</SelectItem>
                   </SelectContent>
                 </Select>
               )}

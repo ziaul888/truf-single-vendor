@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { Ground } from "@/types/api";
 import type { PublicClosure, PublicSlot } from "@/types/slot";
 import { formatPeakRanges, fromMinorUnits } from "@/lib/ground-format";
-import { addDays, venueToday } from "@/lib/slot-format";
+import { addDays, slotStartMinute, slotStartTime, venueToday } from "@/lib/slot-format";
 import { SkeletonBlock } from "@/components/portal/loading/skeleton-block";
 
 const SERVICE_FEE = 50;
@@ -53,14 +53,14 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
   const [activeDate, setActiveDate] = useState(
     dates.find((d) => d.iso === initialDate)?.iso ?? dates[0].iso,
   );
-  const [selectedHour, setSelectedHour] = useState<number | null>(null);
+  /** The picked slot's start, "16:30": 90-minute slots start on half hours. */
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   const { data: allSlots, isLoading, isError } = usePublicSlots(ground.id, dates[0].iso, dates[dates.length - 1].iso);
   const daySlots = (allSlots ?? []).filter((s) => s.date === activeDate);
   const { data: closures } = usePublicClosures(dates[0].iso, dates[dates.length - 1].iso);
   const closure = closureFor(closures ?? [], ground.id, activeDate);
-  const selected = daySlots.find((s) => s.startHour === selectedHour);
-  const slotHours = (ground.slotDurationMinutes ?? 60) / 60;
+  const selected = daySlots.find((s) => slotStartTime(s) === selectedTime);
   const price = selected ? fromMinorUnits(selected.price) : null;
   const total = price != null ? price + SERVICE_FEE : null;
 
@@ -69,8 +69,10 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
     const params = new URLSearchParams({
       groundId: ground.id,
       date: activeDate,
-      hour: String(selectedHour),
+      hour: String(selected.startHour),
     });
+    // Only half-hour starts add `minute`, so whole-hour links stay as they were.
+    if (slotStartMinute(selected)) params.set("minute", String(slotStartMinute(selected)));
     router.push(`/checkout?${params.toString()}`);
   }
 
@@ -89,7 +91,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Select date
       </p>
-      <DateStrip dates={dates} active={activeDate} onPick={(iso) => { setActiveDate(iso); setSelectedHour(null); }} />
+      <DateStrip dates={dates} active={activeDate} onPick={(iso) => { setActiveDate(iso); setSelectedTime(null); }} />
 
       <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Available hours
@@ -105,12 +107,12 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
           {closure ? closure.label : "Closed on this day."}
         </p>
       ) : (
-        <HourGrid slots={daySlots} selected={selectedHour} onPick={setSelectedHour} />
+        <HourGrid slots={daySlots} selected={selectedTime} onPick={setSelectedTime} />
       )}
 
       {total != null && (
         <div className="mt-5 space-y-1.5 border-t pt-4 text-sm">
-          <Row label={slotHours === 1 ? "1 hr slot" : `${slotHours} hr slot`} value={`৳${price!.toLocaleString()}`} />
+          <Row label={slotLabel(ground.slotDurationMinutes ?? 60)} value={`৳${price!.toLocaleString()}`} />
           <Row label="Service fee" value={`৳${SERVICE_FEE}`} />
           <Row label="Total" value={`৳${total.toLocaleString()}`} bold />
         </div>
@@ -130,7 +132,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
         Continue to payment <ArrowRight className="h-4 w-4" />
       </button>
       {selected && total != null && (
-        <MobileContinueBar time={`${pad(selected.startHour)}:00`} total={total} onContinue={handleContinue} />
+        <MobileContinueBar time={slotStartTime(selected)} total={total} onContinue={handleContinue} />
       )}
     </div>
   );
@@ -169,17 +171,19 @@ function DateStrip({
 function HourGrid({
   slots, selected, onPick,
 }: {
-  slots: PublicSlot[]; selected: number | null; onPick: (hour: number) => void;
+  slots: PublicSlot[]; selected: string | null; onPick: (time: string) => void;
 }) {
   return (
     <div className="grid grid-cols-3 gap-2">
-      {slots.map(({ startHour, available, isPeak }) => {
-        const isSelected = selected === startHour;
+      {slots.map((slot) => {
+        const { available, isPeak } = slot;
+        const time = slotStartTime(slot);
+        const isSelected = selected === time;
         return (
           <button
-            key={startHour}
+            key={time}
             disabled={!available}
-            onClick={() => onPick(startHour)}
+            onClick={() => onPick(time)}
             className={cn(
               "min-h-11 rounded-lg border px-2 py-2.5 text-sm transition",
               !available && "cursor-not-allowed bg-muted/50 text-muted-foreground line-through",
@@ -187,7 +191,7 @@ function HourGrid({
               isSelected && "bg-primary text-primary-foreground border-primary"
             )}
           >
-            {pad(startHour)}:00 {isPeak && <span className="text-accent">★</span>}
+            {time} {isPeak && <span className="text-accent">★</span>}
           </button>
         );
       })}
@@ -244,3 +248,6 @@ function buildDates(count: number) {
 }
 
 const pad = (n: number) => n.toString().padStart(2, "0");
+
+/** "1 hr slot", "2 hr slot", "1 hr 30 min slot". */
+const slotLabel = (minutes: number) => (minutes === 90 ? "1 hr 30 min slot" : `${minutes / 60} hr slot`);

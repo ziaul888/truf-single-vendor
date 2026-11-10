@@ -31,7 +31,7 @@ const AddBookingFields = z.object({
   repeatMode: z.enum(["fixed", "ongoing"]).optional(),
   weekdays: z.array(z.enum(WEEKDAYS)).optional(),
   untilDate: z.string().optional(),
-  /** The slot's start hour as a string ("21"), the way the select holds it; "" for none. */
+  /** The slot's start time ("21:00", or "16:30" for 90-minute slots), the way the select holds it; "" for none. */
   startHour: z.string().optional(),
 });
 

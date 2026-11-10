@@ -38,8 +38,9 @@ export function WeekGrid({ slots, selectedDate, currentWeekDate, onSelectDate }:
   const weekDays = getWeekDays(currentWeekDate);
   const todayStr = venueToday();
 
+  // A slot sits in the row of the hour it starts in (16:30 → the 16:00 row).
   const slotMap = new Map<string, CalendarSlot>();
-  for (const s of slots) slotMap.set(`${s.date}|${s.startTime}`, s);
+  for (const s of slots) slotMap.set(`${s.date}|${s.startTime.slice(0, 2)}:00`, s);
 
   const COLS = `60px repeat(7, 1fr)`;
 
@@ -109,7 +110,9 @@ export function WeekGrid({ slots, selectedDate, currentWeekDate, onSelectDate }:
                       <div className="font-semibold truncate">
                         {slot.status === "blocked" ? (slot.note ?? "Blocked") : slot.status === "held" ? "Paying…" : slot.customerName}
                       </div>
-                      <div className="opacity-70 text-[10px]">{slot.groundName}</div>
+                      <div className="opacity-70 text-[10px]">
+                        {!slot.startTime.endsWith(":00") && <>{slot.startTime} · </>}{slot.groundName}
+                      </div>
                     </div>
                   )}
                 </div>

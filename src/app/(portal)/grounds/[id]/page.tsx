@@ -12,6 +12,7 @@ import { getPublicVenue } from "@/services/website-settings";
 import { GroundLocation } from "@/components/portal/ground-location";
 import { GroundRules } from "@/components/portal/ground-rules";
 import { directionsUrl } from "@/lib/maps";
+import { durationLabel } from "@/lib/slot-format";
 import type { Ground } from "@/types/api";
 
 export async function generateMetadata({
@@ -151,7 +152,7 @@ function Specs({ ground }: { ground: Ground }) {
     { label: "Capacity", value: ground.capacity != null ? `${ground.capacity} players` : undefined },
     { label: "Lighting", value: ground.amenities?.find((a) => /light/i.test(a)) },
     { label: "Open hours", value: `${pad(ground.openHour)}:00–${pad(ground.closeHour)}:00` },
-    { label: "Slot length", value: ground.slotDurationMinutes === 120 ? "2 hours" : "1 hour" },
+    { label: "Slot length", value: durationLabel(ground.slotDurationMinutes ?? 60) },
     { label: "Sport", value: ground.sport },
   ].filter((it): it is { label: string; value: string } => !!it.value);
   return (

@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toApiFailure } from "@/lib/api-error";
-import { BLOCK_REASON_LABEL, addDays, formatSlotDate, slotTimeLabel, venueToday } from "@/lib/slot-format";
+import { BLOCK_REASON_LABEL, addDays, formatSlotDate, slotStartMinute, slotStartTime, slotTimeLabel, venueToday } from "@/lib/slot-format";
 import { BLOCK_REASONS, type BlockReason, type BulkBlockInput } from "@/types/slot";
 import type { Weekday } from "@/types/ground";
 import { toast } from "sonner";
@@ -61,7 +61,8 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
     { enabled: Boolean(ground && date) },
   );
   const slots = daySlots?.data ?? [];
-  const selectedSlot = slots.find((s) => String(s.startHour) === slotHour);
+  // The select holds the slot's start time ("16:30"), since 90-minute slots start on half hours.
+  const selectedSlot = slots.find((s) => slotStartTime(s) === slotHour);
   const single = blockType === "single";
   // A booked slot can be blocked only by cancelling (and refunding) its booking.
   const needsCancel = single && selectedSlot?.status === "booked";
@@ -77,7 +78,7 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
     if (!ground) return null;
     const base = { groundId: ground.id, date, reason, note: note.trim() || undefined };
     if (blockType === "single") {
-      return selectedSlot ? { ...base, type: "single", startHour: selectedSlot.startHour } : null;
+      return selectedSlot ? { ...base, type: "single", startHour: selectedSlot.startHour, startMinute: slotStartMinute(selectedSlot) } : null;
     }
     if (blockType === "fullDay") return { ...base, type: "fullDay" };
     if (weekdays.length === 0) return null;
@@ -86,7 +87,8 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
       type: "recurringWeekly",
       weekdays,
       untilDate,
-      startHour: slotHour && slotHour !== WHOLE_DAY ? Number(slotHour) : undefined,
+      // "16:30" → 16 and 30; none: the whole day.
+      ...(slotHour && slotHour !== WHOLE_DAY ? { startHour: Number(slotHour.slice(0, 2)), startMinute: Number(slotHour.slice(3, 5)) } : {}),
     };
   }
   const body = buildBody();
@@ -185,7 +187,7 @@ export function BlockSlotForm({ onSuccess, compact }: Props) {
                   <SelectContent>
                     {blockType === "recurringWeekly" && <SelectItem value={WHOLE_DAY}>Whole day</SelectItem>}
                     {slots.map((s) => (
-                      <SelectItem key={s.id} value={String(s.startHour)} disabled={single && !canPickSingle(s)}>
+                      <SelectItem key={s.id} value={slotStartTime(s)} disabled={single && !canPickSingle(s)}>
                         {slotTimeLabel(s)}{slotOptionLabel(s)}
                       </SelectItem>
                     ))}
