@@ -13,6 +13,7 @@ import {
 import { BookingPaidDue } from "./booking-paid-due";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
+import { RepeatBadge } from "./repeat-badge";
 import { WalletBadge } from "./wallet-payment-info";
 
 export function getBookingColumns(
@@ -23,9 +24,12 @@ export function getBookingColumns(
       id: "bookingNumber",
       header: "Booking #",
       cell: ({ row }) => (
-        <Link href={`/dashboard/bookings/${row.original.id}`} className="font-mono text-xs hover:underline">
-          {row.original.bookingNumber}
-        </Link>
+        <div className="flex flex-col items-start gap-1">
+          <Link href={`/dashboard/bookings/${row.original.id}`} className="font-mono text-xs hover:underline">
+            {row.original.bookingNumber}
+          </Link>
+          {row.original.seriesId && <RepeatBadge />}
+        </div>
       ),
     },
     {

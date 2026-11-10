@@ -48,9 +48,11 @@ interface PaymentSectionProps {
   form: UseFormReturn<AddBookingFormData>;
   /** Slot price in whole currency units. */
   totalAmount: number;
+  /** Repeat bookings take no due date or payment note. */
+  hideDueFields?: boolean;
 }
 
-export function PaymentSection({ form, totalAmount }: PaymentSectionProps) {
+export function PaymentSection({ form, totalAmount, hideDueFields }: PaymentSectionProps) {
   const { watch, setValue, clearErrors, register, formState: { errors } } = form;
   const paymentMethod = watch("paymentMethod");
   const paymentType = watch("paymentType");
@@ -66,17 +68,20 @@ export function PaymentSection({ form, totalAmount }: PaymentSectionProps) {
           <div className="grid gap-3 sm:grid-cols-3">
             {PAYMENT_TYPES.map(({ value, label, desc, icon: Icon, note }) => {
               const isActive = paymentType === value;
+              // Repeat bookings start confirmed whatever is paid; the due is collected per month.
+              const later = hideDueFields && value === "none";
+              const shown = later ? "Confirmed · Unpaid" : note;
               return (
                 <button key={value} type="button" className={optionClass(isActive)}
                   onClick={() => { setValue("paymentType", value); clearErrors(["advanceAmount", "dueDate"]); }}>
                   <div className={iconClass(isActive)}><Icon className="h-4 w-4" /></div>
                   <div className="min-w-0">
                     <p className={cn("text-sm font-semibold", isActive && "text-primary")}>{label}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{later ? "Nothing collected yet; collect per month" : desc}</p>
                     <span className={cn(
                       "mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium",
                       isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
-                    )}>{note}</span>
+                    )}>{shown}</span>
                   </div>
                   {isActive && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-primary" />}
                 </button>
@@ -138,21 +143,25 @@ export function PaymentSection({ form, totalAmount }: PaymentSectionProps) {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium" htmlFor="dueDate">Due Date <span className="font-normal text-muted-foreground">(optional)</span></Label>
-                <Input id="dueDate" type="date" min={venueToday()} className="h-10" {...register("dueDate")} />
-                {errors.dueDate && <p className="text-xs text-destructive">{errors.dueDate.message}</p>}
-              </div>
-            </div>
+            {!hideDueFields && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium" htmlFor="dueDate">Due Date <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                    <Input id="dueDate" type="date" min={venueToday()} className="h-10" {...register("dueDate")} />
+                    {errors.dueDate && <p className="text-xs text-destructive">{errors.dueDate.message}</p>}
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium" htmlFor="partialNote">Payment Note <span className="font-normal text-muted-foreground">(optional)</span></Label>
-              <textarea id="partialNote" rows={2} placeholder="e.g. Rest at the counter before the game"
-                className="w-full resize-none rounded-lg border bg-background px-3 py-2.5 text-base md:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
-                {...register("partialNote")} />
-              {errors.partialNote && <p className="text-xs text-destructive">{errors.partialNote.message}</p>}
-            </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium" htmlFor="partialNote">Payment Note <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                  <textarea id="partialNote" rows={2} placeholder="e.g. Rest at the counter before the game"
+                    className="w-full resize-none rounded-lg border bg-background px-3 py-2.5 text-base md:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+                    {...register("partialNote")} />
+                  {errors.partialNote && <p className="text-xs text-destructive">{errors.partialNote.message}</p>}
+                </div>
+              </>
+            )}
           </div>
         )}
 

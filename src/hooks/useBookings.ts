@@ -58,13 +58,16 @@ export function useUpcomingBookings(limit = 5) {
   });
 }
 
-/** Booking changes also move slots, calendar, customer and dashboard numbers, so refresh them all. */
-function useBookingMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) {
+/**
+ * Booking changes also move slots, calendar, customer, dashboard and repeat-booking numbers,
+ * so refresh them all.
+ */
+export function useBookingMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: fn,
     onSuccess: () => {
-      for (const key of [BOOKINGS_KEY, ["slots"], ["calendar"], ["customers"], ["dashboard"]]) {
+      for (const key of [BOOKINGS_KEY, ["slots"], ["calendar"], ["customers"], ["dashboard"], ["booking-series"]]) {
         qc.invalidateQueries({ queryKey: key });
       }
     },

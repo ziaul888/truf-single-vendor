@@ -13,17 +13,18 @@ import { SectionCard } from "@/components/features/add-booking/section-card";
 import { GroundSlotSection } from "@/components/features/add-booking/ground-slot-section";
 import { PaymentSection } from "@/components/features/add-booking/payment-section";
 import { BookingSummarySidebar } from "@/components/features/add-booking/booking-summary-sidebar";
-import {
-  CustomerSection, samePhone, toApiPhone, type KnownCustomer,
-} from "@/components/features/add-booking/customer-section";
+import { CustomerSection, type KnownCustomer } from "@/components/features/add-booking/customer-section";
+import { SeriesPreviewCard } from "@/components/features/add-booking/series-preview-card";
+import { toCustomerInput, toPatternInput, toSeriesInput } from "@/components/features/add-booking/series-input";
 import { takaLabel } from "@/components/features/bookings/booking-status-helpers";
 import { useGrounds } from "@/hooks/useGrounds";
 import { useAvailableSlots } from "@/hooks/useAddBooking";
 import { useCreateBooking } from "@/hooks/useBookings";
+import { useCreateSeries, useSeriesPreview } from "@/hooks/useBookingSeries";
 import { applyApiErrors, toApiFailure, type ApiFailure } from "@/lib/api-error";
-import { toMinorUnits } from "@/lib/ground-format";
+import { fromMinorUnits, toMinorUnits } from "@/lib/ground-format";
 import { venueToday } from "@/lib/slot-format";
-import { AddBookingSchema, type AddBookingFormData } from "@/schemas";
+import { AddBookingSchema, RepeatBookingSchema, type AddBookingFormData } from "@/schemas";
 import { isWalletMethod, type CreateBookingInput } from "@/types/booking";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -40,6 +41,11 @@ const API_FIELD: Record<string, keyof AddBookingFormData> = {
   "payment.dueDate": "dueDate",
   "payment.note": "partialNote",
   notes: "notes",
+  groundId: "groundId",
+  fromDate: "date",
+  untilDate: "untilDate",
+  weekdays: "weekdays",
+  startHour: "startHour",
 };
 
 const toFormFailure = (f: ApiFailure): ApiFailure => ({
@@ -47,16 +53,15 @@ const toFormFailure = (f: ApiFailure): ApiFailure => ({
   details: f.details?.map((d) => ({ ...d, field: API_FIELD[d.field] ?? d.field })),
 });
 
+// Fields use z.coerce, so the schemas' input types are looser than the form's.
+const bookingResolver = zodResolver(AddBookingSchema) as Resolver<AddBookingFormData>;
+const repeatResolver = zodResolver(RepeatBookingSchema) as Resolver<AddBookingFormData>;
+/** Repeat on: an hour and weekdays are checked instead of one slot. */
+const resolver: Resolver<AddBookingFormData> = (values, context, options) =>
+  (values.repeat ? repeatResolver : bookingResolver)(values, context, options);
+
 function toCreateInput(data: AddBookingFormData, known: KnownCustomer | null): CreateBookingInput {
-  const phone = toApiPhone(data.customerPhone);
-  const email = data.customerEmail.trim();
-  const customer = {
-    ...(known && samePhone(known.phone, phone) ? { id: known.id } : {}),
-    name: data.customerName.trim(),
-    phone,
-    // Blank: the API uses the customer's stored email, else none.
-    ...(email ? { email } : {}),
-  };
+  const customer = toCustomerInput(data, known);
   const note = data.partialNote?.trim() || undefined;
   const reference = isWalletMethod(data.paymentMethod) && data.paymentReference ? data.paymentReference : undefined;
   const payment: CreateBookingInput["payment"] =
@@ -73,14 +78,14 @@ export default function AddBookingPage() {
   const [knownCustomer, setKnownCustomer] = useState<KnownCustomer | null>(null);
 
   const form = useForm<AddBookingFormData>({
-    // Fields use z.coerce, so the schema's input type is looser than the form's.
-    resolver: zodResolver(AddBookingSchema) as Resolver<AddBookingFormData>,
+    resolver,
     defaultValues: {
       // Most walk-in and phone bookings are for today.
       groundId: "", date: venueToday(), slotId: "",
       customerName: "", customerPhone: "", customerEmail: "",
       paymentType: "full", paymentMethod: "cash", paymentReference: "",
       advanceAmount: 0, dueDate: "", partialNote: "", notes: "",
+      repeat: false, repeatMode: "fixed", weekdays: [], untilDate: "", startHour: "",
     },
   });
 
@@ -88,6 +93,9 @@ export default function AddBookingPage() {
   const [groundId, date, slotId, paymentType, paymentMethod, advanceAmount] = [
     watch("groundId"), watch("date"), watch("slotId"),
     watch("paymentType"), watch("paymentMethod"), Number(watch("advanceAmount") ?? 0),
+  ];
+  const [repeat, repeatMode, weekdays, untilDate, startHour] = [
+    watch("repeat") ?? false, watch("repeatMode"), watch("weekdays"), watch("untilDate"), watch("startHour"),
   ];
 
   // With one active ground there is nothing to choose, so it is picked already.
@@ -100,8 +108,17 @@ export default function AddBookingPage() {
   const { data: slots, isLoading: slotsLoading, refetch: refetchSlots } = useAvailableSlots(groundId, date);
   const selectedGround = grounds?.find((g) => g.id === groundId);
   const selectedSlot   = slots?.find((s) => s.id === slotId);
+
+  const patternInput = repeat ? toPatternInput({ groundId, date, repeatMode, weekdays, untilDate, startHour }) : null;
+  const preview = useSeriesPreview(patternInput);
+  const seriesPreview = patternInput ? preview.data : undefined;
+  // Book only from a preview of the current pattern, not the previous one still on screen.
+  const previewSettled = !!seriesPreview && !preview.isFetching && !preview.isPlaceholderData;
+  const createSeries = useCreateSeries();
+
   // The slot's own price covers slot length and peak hours; fall back to the hourly price.
-  const totalAmount    = selectedSlot?.price ?? selectedGround?.pricePerHour ?? 0;
+  // Repeat: the total of every free date.
+  const totalAmount    = repeat ? fromMinorUnits(seriesPreview?.total ?? 0) : selectedSlot?.price ?? selectedGround?.pricePerHour ?? 0;
   const slotHours      = (selectedGround?.slotDurationMinutes ?? 60) / 60;
 
   function handleApiError(err: unknown) {
@@ -117,18 +134,40 @@ export default function AddBookingPage() {
       toast.error(slotGone[failure.code]);
       return;
     }
+    if (failure.code === "NOTHING_TO_BOOK") {
+      preview.refetch();
+      toast.error("None of these dates are free any more. Change the days, time or dates.");
+      return;
+    }
     if (failure.code === "CUSTOMER_NOT_FOUND") setKnownCustomer(null);
     const landed = applyApiErrors(form, toFormFailure(failure), {
-      PAYMENT_EXCEEDS_DUE: "advanceAmount", REFERENCE_ALREADY_USED: "paymentReference",
+      PAYMENT_EXCEEDS_DUE: "advanceAmount", AMOUNT_EXCEEDS_DUE: "advanceAmount", REFERENCE_ALREADY_USED: "paymentReference",
     });
     if (!landed) toast.error(failure.error);
   }
 
+  async function submitSeries(data: AddBookingFormData) {
+    const input = toSeriesInput(data, knownCustomer);
+    if (!input) return;
+    try {
+      const series = await createSeries.mutateAsync(input);
+      const first = [...series.bookings].sort((a, b) => a.date.localeCompare(b.date))[0];
+      toast.success(`Repeat booking created: ${series.bookings.length} ${series.bookings.length === 1 ? "date" : "dates"} booked`);
+      router.push(first ? `/dashboard/bookings/${first.id}` : "/dashboard/bookings");
+    } catch (err) {
+      handleApiError(err);
+    }
+  }
+
   async function onSubmit(data: AddBookingFormData) {
-    if (!selectedSlot) return setError("slotId", { message: "Select a time slot" });
+    if (data.repeat && !seriesPreview?.bookableCount) {
+      return toast.error("None of these dates are free. Change the days, time or dates.");
+    }
+    if (!data.repeat && !selectedSlot) return setError("slotId", { message: "Select a time slot" });
     if (data.paymentType === "partial" && (data.advanceAmount ?? 0) >= totalAmount) {
       return setError("advanceAmount", { message: `Advance must be less than ${takaLabel(totalAmount)}` });
     }
+    if (data.repeat) return submitSeries(data);
     try {
       const booking = await createBooking.mutateAsync(toCreateInput(data, knownCustomer));
       toast.success(`Booking ${booking.bookingNumber} created`);
@@ -138,7 +177,16 @@ export default function AddBookingPage() {
     }
   }
 
-  const submitting = isSubmitting || createBooking.isPending;
+  const submitting = isSubmitting || createBooking.isPending || createSeries.isPending;
+  const bookable = previewSettled ? seriesPreview.bookableCount : 0;
+  const submitLabel = submitting ? (repeat ? "Booking…" : "Creating…")
+    : !repeat ? "Create Booking" : bookable > 0 ? `Book ${bookable} ${bookable === 1 ? "date" : "dates"}` : "Book dates";
+  const submitDisabled = submitting || (repeat && !!patternInput && !previewSettled);
+  const previewProps = {
+    preview: seriesPreview, ready: !!patternInput, loading: preview.isFetching,
+    error: preview.isError ? toApiFailure(preview.error).error : null,
+    onRetry: () => { preview.refetch(); }, ongoing: repeatMode === "ongoing",
+  };
 
   return (
     // Room below lg for the pinned submit bar.
@@ -157,9 +205,10 @@ export default function AddBookingPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
             <GroundSlotSection form={form} grounds={grounds} groundsLoading={groundsLoading} slots={slots} slotsLoading={slotsLoading} />
+            {repeat && <SeriesPreviewCard {...previewProps} className="lg:hidden" />}
             <CustomerSection form={form} onCustomerFound={setKnownCustomer} />
 
-            {selectedGround && (
+            {selectedGround && !repeat && (
               <div className="rounded-xl border border-primary/20 bg-primary/5 px-6 py-4">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-primary/70">Booking Summary</p>
                 <div className="flex flex-wrap items-center justify-between gap-4">
@@ -182,7 +231,7 @@ export default function AddBookingPage() {
               </div>
             )}
 
-            <PaymentSection form={form} totalAmount={totalAmount} />
+            <PaymentSection form={form} totalAmount={totalAmount} hideDueFields={repeat} />
 
             <SectionCard n="4" title="Notes" desc="Optional note for staff; the customer doesn't see it">
               <div className="space-y-2">
@@ -196,8 +245,8 @@ export default function AddBookingPage() {
               <Button variant="outline" className="h-10 px-6" asChild>
                 <Link href="/dashboard/bookings">Cancel</Link>
               </Button>
-              <Button type="submit" className="h-10 px-8" disabled={submitting}>
-                {submitting ? "Creating…" : "Create Booking"}
+              <Button type="submit" className="h-10 px-8" disabled={submitDisabled}>
+                {submitLabel}
               </Button>
             </div>
             {/* Inside the form, so it still submits it */}
@@ -205,16 +254,18 @@ export default function AddBookingPage() {
               <Button variant="outline" className="h-11 px-5" asChild>
                 <Link href="/dashboard/bookings">Cancel</Link>
               </Button>
-              <Button type="submit" className="h-11 flex-1" disabled={submitting}>
-                {submitting ? "Creating…" : "Create Booking"}
+              <Button type="submit" className="h-11 flex-1" disabled={submitDisabled}>
+                {submitLabel}
               </Button>
             </MobileActionBar>
           </div>
 
           <div className="hidden lg:col-span-1 lg:block">
-            <div className="sticky top-6">
-              <BookingSummarySidebar ground={selectedGround} slot={selectedSlot} date={date}
-                paymentType={paymentType} paymentMethod={paymentMethod} advanceAmount={advanceAmount} />
+            <div className={repeat ? "sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto" : "sticky top-6"}>
+              {repeat ? <SeriesPreviewCard {...previewProps} /> : (
+                <BookingSummarySidebar ground={selectedGround} slot={selectedSlot} date={date}
+                  paymentType={paymentType} paymentMethod={paymentMethod} advanceAmount={advanceAmount} />
+              )}
             </div>
           </div>
         </div>
