@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { navForRole } from "./sidebar-nav-data";
 import { useMe } from "@/hooks/useMe";
+import { SidebarBrand } from "./sidebar-brand";
 import { SidebarUserMenu } from "./sidebar-user-menu";
 import { RailNavItem } from "./rail-nav-item";
 
@@ -54,9 +55,7 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
         <div className="relative flex w-18 shrink-0 flex-col items-center border-r border-sidebar-border/70 bg-sidebar-accent/20 py-3 backdrop-blur-sm">
           {/* Brand */}
           <div className="relative">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-primary via-primary to-primary/60 shadow-lg ring-1 ring-primary/40">
-              <span className="text-base font-black tracking-tight text-primary-foreground">T</span>
-            </div>
+            <SidebarBrand />
             <span aria-hidden className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success shadow-[0_0_8px_var(--color-success)] ring-2 ring-sidebar" />

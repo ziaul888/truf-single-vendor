@@ -8,6 +8,7 @@ import {
   RoleCapabilities,
 } from "@/components/features/login/login-branding";
 import { LOGIN_COLORS as C } from "@/components/features/login/login-theme";
+import { usePublicVenue } from "@/hooks/useSettings";
 
 const GLOBAL_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -96,6 +97,7 @@ function FormHeader({ isMobile }: { isMobile: boolean }) {
 
 export default function LoginPage() {
   const windowWidth = useWindowWidth();
+  const { data: venue } = usePublicVenue();
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
 
@@ -110,7 +112,7 @@ export default function LoginPage() {
       <style>{GLOBAL_STYLES}</style>
       <Backdrop isMobile={isMobile} />
 
-      {isMobile ? <LoginMobileHeader /> : <LoginBrandPanel compact={isTablet} />}
+      {isMobile ? <LoginMobileHeader venue={venue} /> : <LoginBrandPanel compact={isTablet} venue={venue} />}
 
       <div
         style={{

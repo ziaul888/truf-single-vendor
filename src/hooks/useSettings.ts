@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import api from "@/lib/api";
 import type { WebsiteSettings, WebsiteImageSlot } from "@/validations/website-settings";
 import type {
-  Audited, EmailLogPage, NotificationSettings, NotificationsInput, PaymentStatus, Permissions,
+  Audited, EmailLogPage, NotificationSettings, NotificationsInput, PaymentStatus, Permissions, PublicVenue,
   ResettableSection, SystemStatus, VenueInput, VenueProfile,
 } from "@/types/settings";
 
@@ -27,6 +27,9 @@ function useSectionMutation<TVars, TResult>(key: readonly string[], fn: (vars: T
 // ── General: venue profile ──
 
 export const useVenue = () => useQuery<VenueProfile>({ queryKey: KEY.venue, queryFn: () => get("/admin/settings/venue") });
+
+/** The public venue profile (name and logo), for pages nobody is signed in to, like the login page. */
+export const usePublicVenue = () => useQuery<PublicVenue>({ queryKey: ["venue", "public"], queryFn: () => get("/venue") });
 
 export const useUpdateVenue = () =>
   useSectionMutation(KEY.venue, async (body: VenueInput) => (await api.put("/admin/settings/venue", body)).data.data as VenueProfile);
