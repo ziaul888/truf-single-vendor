@@ -23,18 +23,18 @@ const PAGE_SIZE = 20;
 /** The stat cards read up to this many pending bookings (the API's page maximum). */
 const STATS_LIMIT = 100;
 
-function StatCard({ icon: Icon, tone, value, label }: {
-  icon: typeof AlertCircle; tone: string; value: string; label: string;
+function StatCard({ icon: Icon, tone, value, label, className }: {
+  icon: typeof AlertCircle; tone: string; value: string; label: string; className?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4 pt-6">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-full ${tone}`}>
-          <Icon className="h-5 w-5" />
+    <Card className={className}>
+      <CardContent className="flex items-center gap-3 p-3 sm:gap-4 sm:p-6">
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10 ${tone}`}>
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
-        <div>
-          <div className="text-2xl font-bold">{value}</div>
-          <div className="text-sm text-muted-foreground">{label}</div>
+        <div className="min-w-0">
+          <div className="text-xl font-bold sm:text-2xl">{value}</div>
+          <div className="text-xs text-muted-foreground sm:text-sm">{label}</div>
         </div>
       </CardContent>
     </Card>
@@ -81,13 +81,13 @@ export default function ConfirmedPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatCard icon={AlertCircle} tone="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
           value={statsLoading ? "—" : String(awaiting)} label={toVerify > 0 ? `Awaiting Review · ${toVerify} to verify` : "Awaiting Review"} />
         <StatCard icon={TrendingUp} tone="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
           value={statsLoading ? "—" : slotPriceLabel(dueAtStake)}
           label={awaiting > STATS_LIMIT ? `Amount Due (first ${STATS_LIMIT} requests)` : "Amount Due Across Requests"} />
-        <StatCard icon={CalendarCheck} tone="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+        <StatCard icon={CalendarCheck} tone="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" className="col-span-2 sm:col-span-1"
           value={statsLoading || !oldest ? "—" : timeAgo(oldest.createdAt)} label="Oldest Request" />
       </div>
 

@@ -81,7 +81,7 @@ export default function ExportPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="min-w-0 lg:col-span-2">
           <CardHeader>
             <CardTitle>Export Settings</CardTitle>
             <CardDescription>Choose what to export, the dates, and the file format.</CardDescription>
@@ -104,10 +104,10 @@ export default function ExportPage() {
               <Label htmlFor="export-from">
                 Date range {rangeOptional && <span className="font-normal text-muted-foreground">(optional)</span>}
               </Label>
-              <div className="flex items-center gap-2">
-                <Input id="export-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-9" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Input id="export-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-9 min-w-0 flex-[1_1_7rem]" />
                 <span className="shrink-0 text-sm text-muted-foreground">to</span>
-                <Input id="export-to" aria-label="End date" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-9" />
+                <Input id="export-to" aria-label="End date" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-9 min-w-0 flex-[1_1_7rem]" />
                 {rangeOptional && (from || to) && (
                   <Button variant="ghost" size="sm" onClick={() => { setFrom(""); setTo(""); }}>Clear</Button>
                 )}
@@ -150,7 +150,7 @@ export default function ExportPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle className="text-base">What&apos;s included?</CardTitle>
           </CardHeader>

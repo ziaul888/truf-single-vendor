@@ -8,7 +8,7 @@ import { useMe } from "@/hooks/useMe";
 import { SettingsPageHeader } from "@/components/features/settings/settings-page-header";
 import { ReadOnlyNotice } from "@/components/features/settings/read-only-notice";
 import { SettingsLoadError, SettingsLoading } from "@/components/features/settings/settings-load-state";
-import { SettingsSaveActions } from "@/components/features/settings/settings-save-actions";
+import { SettingsSaveActions, SettingsSaveBar } from "@/components/features/settings/settings-save-actions";
 import { BookingBehaviourCard, GenerationSettingsCard } from "@/components/features/slots/booking-rule-cards";
 import { PortalCheckoutSettings } from "@/components/features/slots/portal-checkout-settings";
 import type { SlotSettingsInput } from "@/validations/slot-settings";
@@ -30,7 +30,7 @@ export default function BookingSettingsPage() {
   return (
     <form onSubmit={submit} className="space-y-5">
       <SettingsPageHeader title="Booking" description="Booking window, cancellations and portal checkout" audit={settings}>
-        {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} />}
+        {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} className="hidden md:inline-flex" />}
       </SettingsPageHeader>
       {!canEdit && <ReadOnlyNotice />}
 
@@ -47,6 +47,11 @@ export default function BookingSettingsPage() {
         <BookingBehaviourCard form={form} />
         <PortalCheckoutSettings form={form} />
       </fieldset>
+      {canEdit && (
+        <SettingsSaveBar>
+          <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} />
+        </SettingsSaveBar>
+      )}
     </form>
   );
 }

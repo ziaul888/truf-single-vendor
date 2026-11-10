@@ -3,7 +3,7 @@ import {
   BadgeCheck, Calendar, CircleDot, Grid3x3, Search, ShieldCheck, Zap,
 } from "lucide-react";
 import { listPublicGrounds } from "@/services/portal-grounds";
-import { venueToday } from "@/lib/slot-format";
+import { addDays, venueToday } from "@/lib/slot-format";
 import { SPORT_META, SPORTS } from "@/components/portal/sports";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import { isUploadedImage } from "./is-uploaded-image";
@@ -32,7 +32,7 @@ export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["
       {/* Pitch-themed gradient overlay so text stays legible */}
       <div className="absolute inset-0 bg-gradient-to-b from-sidebar/60 to-sidebar/90" />
 
-      <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+      <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-28 lg:px-8">
         <div className="max-w-2xl text-sidebar-foreground">
           {hero.badge && (
             <span className="inline-block rounded-full bg-accent px-3 py-1 text-xs font-bold tracking-wider text-accent-foreground">
@@ -65,7 +65,7 @@ export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["
         </div>
 
         {/* Search box (one ground: straight to its slots on the chosen date) */}
-        <SearchBox action={grounds.length === 1 ? `/grounds/${grounds[0].id}` : "/grounds"} />
+        <SearchBox single={grounds.length === 1} action={grounds.length === 1 ? `/grounds/${grounds[0].id}` : "/grounds"} />
 
         <TrustBadges />
       </div>
@@ -77,7 +77,8 @@ function TrustBadges() {
   return (
     <div className="relative mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-sidebar-foreground/80">
       <span className="flex items-center gap-2">
-        <ShieldCheck className="h-4 w-4 text-accent" /> Secure Stripe payments
+        {/* Card payments can be switched off in Settings, so no "Stripe" claim here. */}
+        <ShieldCheck className="h-4 w-4 text-accent" /> Secure booking
       </span>
       <span className="flex items-center gap-2">
         <BadgeCheck className="h-4 w-4 text-accent" /> Money-back on cancellation
@@ -98,47 +99,35 @@ function Stat({ n, label }: { n: string; label: string }) {
   );
 }
 
-/** Opens /grounds with every matching ground's free slots for that day. */
-function SearchBox({ action }: { action: string }) {
+/**
+ * Opens /grounds with every matching ground's free slots for that day. With one ground, sport and
+ * size would filter nothing, so it asks only for the date. Dates stop at the 7 days the slot picker shows.
+ */
+function SearchBox({ action, single }: { action: string; single: boolean }) {
+  const today = venueToday();
   return (
     <form
       action={action}
       className="relative mt-10 max-w-3xl rounded-2xl bg-card/95 p-3 shadow-2xl backdrop-blur sm:p-4"
     >
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:gap-3">
-        <Field colSpan={4} icon={Calendar} label="Date">
+      <div className={`grid grid-cols-1 gap-2 sm:gap-3 ${single ? "sm:grid-cols-[1fr_auto]" : "sm:grid-cols-12"}`}>
+        <Field colSpan={single ? undefined : 4} icon={Calendar} label="Date">
           <input
             type="date"
             name="date"
-            className="w-full bg-transparent text-sm font-medium outline-none"
+            className="w-full bg-transparent text-base font-medium outline-none sm:text-sm"
             required
-            min={venueToday()}
-            defaultValue={venueToday()}
+            min={today}
+            max={addDays(today, 6)}
+            defaultValue={today}
           />
         </Field>
-        <Field colSpan={3} icon={CircleDot} label="Sport">
-          <select name="sport" className="w-full bg-transparent text-sm font-medium outline-none">
-            <option value="">Any sport</option>
-            {SPORTS.map((s) => (
-              <option key={s} value={s}>{SPORT_META[s].label}</option>
-            ))}
-          </select>
-        </Field>
-        <Field colSpan={3} icon={Grid3x3} label="Format">
-          <select name="format" className="w-full bg-transparent text-sm font-medium outline-none">
-            <option value="">Any size</option>
-            <option value="4x4">4×4</option>
-            <option value="5x5">5×5</option>
-            <option value="6x6">6×6</option>
-            <option value="7x7">7×7</option>
-            <option value="8x8">8×8</option>
-            <option value="9x9">9×9</option>
-            <option value="11x11">11×11</option>
-          </select>
-        </Field>
+        {!single && <SportAndFormat />}
         <button
           type="submit"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 sm:col-span-2"
+          className={`inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 ${
+            single ? "sm:px-6" : "sm:col-span-2"
+          }`}
         >
           <Search className="h-4 w-4" /> Find slots
         </button>
@@ -147,14 +136,41 @@ function SearchBox({ action }: { action: string }) {
   );
 }
 
+function SportAndFormat() {
+  return (
+    <>
+      <Field colSpan={3} icon={CircleDot} label="Sport">
+        <select name="sport" className="w-full bg-transparent text-base font-medium outline-none sm:text-sm">
+          <option value="">Any sport</option>
+          {SPORTS.map((s) => (
+            <option key={s} value={s}>{SPORT_META[s].label}</option>
+          ))}
+        </select>
+      </Field>
+      <Field colSpan={3} icon={Grid3x3} label="Format">
+        <select name="format" className="w-full bg-transparent text-base font-medium outline-none sm:text-sm">
+          <option value="">Any size</option>
+          <option value="4x4">4×4</option>
+          <option value="5x5">5×5</option>
+          <option value="6x6">6×6</option>
+          <option value="7x7">7×7</option>
+          <option value="8x8">8×8</option>
+          <option value="9x9">9×9</option>
+          <option value="11x11">11×11</option>
+        </select>
+      </Field>
+    </>
+  );
+}
+
 function Field({
   colSpan, icon: Icon, label, children,
 }: {
-  colSpan: number; icon: typeof Calendar; label: string; children: React.ReactNode;
+  colSpan?: number; icon: typeof Calendar; label: string; children: React.ReactNode;
 }) {
   const span: Record<number, string> = { 2: "sm:col-span-2", 3: "sm:col-span-3", 4: "sm:col-span-4" };
   return (
-    <div className={`rounded-xl border bg-card px-3 py-2 ${span[colSpan]}`}>
+    <div className={`rounded-xl border bg-card px-3 py-2 ${colSpan ? span[colSpan] : ""}`}>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
       <div className="mt-0.5 flex items-center gap-2">
         <Icon className="h-4 w-4 text-primary" />

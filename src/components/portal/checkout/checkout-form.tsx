@@ -122,7 +122,7 @@ export function CheckoutForm({
   const total = options.data ? takaLabel(slotPrice + options.data.serviceFee) : null;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8 space-y-6 rounded-2xl border bg-card p-6">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8 space-y-6 rounded-2xl border bg-card p-4 sm:p-6">
       <div>
         <h2 className="mb-4 font-bold">Your details</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -166,18 +166,21 @@ export function CheckoutForm({
             holdMinutes={options.data.holdMinutes}
           />
         )}
-        {wallet && <WalletFields method={wallet.method} number={wallet.number} total={total} register={register} errors={errors} />}
-        {errors.paymentMethod && <p className="mt-1 text-[11px] text-destructive">{errors.paymentMethod.message}</p>}
+        {/* Signed out, cash and wallets ask to sign in first, before any TrxID is typed (it would be lost on the way). */}
+        {needsSignIn
+          ? !sessionPending && <SignInNotice href={signInHref} />
+          : wallet && <WalletFields method={wallet.method} number={wallet.number} total={total} register={register} errors={errors} />}
+        {errors.paymentMethod && <p className="mt-1 text-xs text-destructive">{errors.paymentMethod.message}</p>}
       </div>
 
       <div>
         <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" className="mt-0.5 accent-primary" {...register("acceptTerms")} />
+          <input type="checkbox" className="h-5 w-5 shrink-0 accent-primary" {...register("acceptTerms")} />
           <span>
             I agree to the venue&apos;s booking and cancellation rules.
           </span>
         </label>
-        {errors.acceptTerms && <p className="mt-1 text-[11px] text-destructive">{errors.acceptTerms.message}</p>}
+        {errors.acceptTerms && <p className="mt-1 text-xs text-destructive">{errors.acceptTerms.message}</p>}
       </div>
 
       {formError && (
@@ -192,18 +195,16 @@ export function CheckoutForm({
         </div>
       )}
 
-      {needsSignIn && !sessionPending ? (
-        <SignInNotice href={signInHref} />
-      ) : (
-        <button
-          type="submit"
-          disabled={disabled || busy || !canPay || needsSignIn}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-          {options.data && !canPay ? "Online booking unavailable" : submitLabel(method, total, busy)}
-        </button>
-      )}
+      <button
+        type="submit"
+        disabled={disabled || busy || !canPay || needsSignIn}
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+        {options.data && !canPay
+          ? "Online booking unavailable"
+          : needsSignIn && !sessionPending ? "Sign in above to continue" : submitLabel(method, total, busy)}
+      </button>
     </form>
   );
 }

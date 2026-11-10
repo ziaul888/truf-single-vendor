@@ -35,7 +35,7 @@ export function BookingDetailsCard({
 }) {
   const pill = STATUS_PILL[state];
   return (
-    <div className="mt-10 rounded-2xl bg-card p-6 text-left text-card-foreground">
+    <div className="mt-10 rounded-2xl bg-card p-4 text-left sm:p-6 text-card-foreground">
       <div className="flex items-center gap-3 border-b pb-4">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
           {b.ground.coverPhoto ? (
@@ -79,7 +79,7 @@ export function BookingDetailsCard({
           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.ground.address)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold hover:bg-muted"
+          className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold hover:bg-muted"
         >
           <Map className="h-4 w-4" /> Get directions
         </a>

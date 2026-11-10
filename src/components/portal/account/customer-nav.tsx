@@ -16,7 +16,7 @@ export function CustomerNav() {
   if (!session) {
     return (
       <Link href={`/sign-in?from=${encodeURIComponent(pathname)}`}
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold hover:text-accent">
+        className="inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold hover:text-accent">
         <UserRound className="h-4 w-4" />
         <span className="hidden sm:inline">Sign in</span>
       </Link>
@@ -27,13 +27,14 @@ export function CustomerNav() {
   return (
     <div className="flex items-center">
       <Link href="/account" title="My profile"
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold hover:text-accent">
+        className="inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold hover:text-accent">
         <UserRound className="h-4 w-4" />
         <span className="hidden max-w-28 truncate sm:inline">{label}</span>
       </Link>
+      {/* Phones sign out from the menu, leaving the venue name room in the header */}
       <button type="button" aria-label="Sign out" title="Sign out" disabled={signOut.isPending}
         onClick={() => signOut.mutate(undefined, { onSuccess: () => router.refresh() })}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg opacity-70 hover:text-accent hover:opacity-100">
+        className="hidden h-10 w-10 items-center justify-center rounded-lg opacity-70 hover:text-accent hover:opacity-100 sm:inline-flex">
         <LogOut className="h-4 w-4" />
       </button>
     </div>

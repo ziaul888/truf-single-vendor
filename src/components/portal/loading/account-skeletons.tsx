@@ -17,8 +17,8 @@ export function MyBookingsSkeleton({ className }: { className?: string }) {
         </div>
       </div>
       <div className="mt-6 inline-flex gap-1 rounded-lg border p-1">
-        <SkeletonBlock className="h-8 w-24 rounded-md" />
-        <SkeletonBlock className="h-8 w-16 rounded-md" />
+        <SkeletonBlock className="h-8 w-24 rounded-md pointer-coarse:h-11" />
+        <SkeletonBlock className="h-8 w-16 rounded-md pointer-coarse:h-11" />
       </div>
       <BookingRowsSkeleton />
     </div>
@@ -30,8 +30,8 @@ export function BookingRowsSkeleton() {
   return (
     <div className="mt-6 space-y-3" aria-hidden>
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 rounded-2xl border bg-card p-4">
-          <SkeletonBlock className="h-12 w-12 shrink-0" />
+        <div key={i} className="flex items-center gap-3 rounded-2xl border bg-card p-4 sm:gap-4">
+          <SkeletonBlock className="hidden h-12 w-12 shrink-0 sm:block" />
           <div className="min-w-0 flex-1">
             <SkeletonLine className="h-6 w-40 max-w-full" />
             <SkeletonLine className="mt-0.5 w-56 max-w-full" />
@@ -88,8 +88,8 @@ function PersonalDetailsSkeleton() {
             <SkeletonBlock className="mt-1 h-11.5 rounded-lg" />
             {hint && (
               <div className="mt-1">
-                <SkeletonLine className="h-[16.5px] w-full" />
-                <SkeletonLine className="h-[16.5px] w-2/3" />
+                <SkeletonLine className="h-4 w-full" />
+                <SkeletonLine className="h-4 w-2/3" />
               </div>
             )}
           </div>

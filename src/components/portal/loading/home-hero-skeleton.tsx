@@ -5,7 +5,7 @@ import { SkeletonLine } from "./skeleton-line";
 export function HomeHeroSkeleton() {
   return (
     <section className="bg-sidebar">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-28 lg:px-8">
         <div className="max-w-2xl">
           <SkeletonBlock className="h-6 w-40 rounded-full" />
           <div className="mt-4">
@@ -22,7 +22,7 @@ export function HomeHeroSkeleton() {
         </div>
         <SearchBoxSkeleton />
         <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3">
-          {["w-48", "w-56", "w-52"].map((w) => <SkeletonLine key={w} className={w} />)}
+          {["w-36", "w-56", "w-52"].map((w) => <SkeletonLine key={w} className={w} />)}
         </div>
       </div>
     </section>
@@ -37,7 +37,8 @@ function SearchBoxSkeleton() {
         {["sm:col-span-4", "sm:col-span-3", "sm:col-span-3"].map((span, i) => (
           <div key={i} className={`rounded-xl border bg-card px-3 py-2 ${span}`}>
             <SkeletonLine className="h-[16.5px] w-12" />
-            <SkeletonLine className="mt-0.5 w-full" />
+            {/* The inputs are text-base on phones, text-sm from sm */}
+            <SkeletonLine className="mt-0.5 h-6 w-full sm:h-5" />
           </div>
         ))}
         <SkeletonBlock className="h-11 sm:col-span-2 sm:h-auto" />

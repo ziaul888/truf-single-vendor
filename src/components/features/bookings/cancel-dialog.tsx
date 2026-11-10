@@ -18,6 +18,7 @@ import type { Booking } from "@/types/booking";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { isAwaitingWalletVerification } from "./booking-status-helpers";
+import { keepKeyboardClosed } from "./keep-keyboard-closed";
 
 const CancelSchema = z.object({
   reason: z.string().trim().max(500, "Keep the reason under 500 characters"),
@@ -38,7 +39,7 @@ interface CancelDialogProps {
 export function CancelDialog({ booking, open, onOpenChange, mode = "cancel" }: CancelDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={keepKeyboardClosed}>
         {booking && <CancelForm key={booking.id} booking={booking} mode={mode} onClose={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
@@ -103,7 +104,7 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
           <Label htmlFor="cancel-reason" className="text-sm font-medium">
             Reason <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
-          <Textarea id="cancel-reason" rows={3} className="resize-none text-sm"
+          <Textarea id="cancel-reason" rows={3} className="resize-none"
             placeholder="e.g. Ground maintenance scheduled, customer asked to cancel…" {...register("reason")} />
           {errors.reason && <p className="text-xs text-destructive">{errors.reason.message}</p>}
         </div>

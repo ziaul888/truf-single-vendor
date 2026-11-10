@@ -14,7 +14,12 @@ import {
  * Inline status: there is no generic status update, so "Confirmed" calls confirm
  * and "Cancelled" opens the cancel dialog (which asks about the refund).
  */
-export function StatusCell({ booking, onCancel }: { booking: Booking; onCancel: (b: Booking) => void }) {
+export function StatusCell({ booking, onCancel, triggerClassName = "h-7 w-32 text-xs" }: {
+  booking: Booking;
+  onCancel: (b: Booking) => void;
+  /** The phone card list passes a taller trigger. */
+  triggerClassName?: string;
+}) {
   const confirm = useConfirmBooking();
 
   if (!isCancellable(booking)) {
@@ -38,7 +43,7 @@ export function StatusCell({ booking, onCancel }: { booking: Booking; onCancel: 
 
   return (
     <Select value={booking.status} onValueChange={handleChange} disabled={confirm.isPending}>
-      <SelectTrigger className="h-7 w-32 text-xs">
+      <SelectTrigger className={triggerClassName}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

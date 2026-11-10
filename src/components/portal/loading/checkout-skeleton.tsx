@@ -1,7 +1,10 @@
 import { SkeletonBlock } from "./skeleton-block";
 import { SkeletonLine } from "./skeleton-line";
 
-/** Checkout while it loads: title, stepper and the details / payment form beside the booking summary. */
+/**
+ * Checkout while it loads: title, stepper and the details / payment form beside the booking summary
+ * (on phones a compact summary above the form instead).
+ */
 export function CheckoutSkeleton() {
   return (
     <div
@@ -23,9 +26,10 @@ export function CheckoutSkeleton() {
             </div>
           ))}
         </div>
+        <CompactSummarySkeleton />
         <FormSkeleton />
       </section>
-      <aside className="lg:sticky lg:top-20 lg:self-start">
+      <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">
         <SummarySkeleton />
       </aside>
     </div>
@@ -37,8 +41,9 @@ function FieldSkeleton({ className, hint }: { className?: string; hint?: boolean
   return (
     <div className={className}>
       <SkeletonLine className="h-4 w-20" />
-      <SkeletonBlock className="mt-1 h-9.5 rounded-lg" />
-      {hint && <SkeletonLine className="mt-1 h-[16.5px] w-56 max-w-full" />}
+      {/* Inputs are text-base on phones (no iOS zoom), text-sm from sm */}
+      <SkeletonBlock className="mt-1 h-10.5 rounded-lg sm:h-9.5" />
+      {hint && <SkeletonLine className="mt-1 h-4 w-56 max-w-full" />}
     </div>
   );
 }
@@ -46,7 +51,7 @@ function FieldSkeleton({ className, hint }: { className?: string; hint?: boolean
 /** The form card: details, payment (its "Loading payment options…" line), terms and submit. */
 function FormSkeleton() {
   return (
-    <div className="mt-8 space-y-6 rounded-2xl border bg-card p-6">
+    <div className="mt-8 space-y-6 rounded-2xl border bg-card p-4 sm:p-6">
       <div>
         <SkeletonLine className="mb-4 h-6 w-28" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -65,6 +70,27 @@ function FormSkeleton() {
         <SkeletonLine className="w-32 sm:hidden" />
       </div>
       <SkeletonBlock className="h-12 rounded-lg" />
+    </div>
+  );
+}
+
+/** Below lg: badge and ground name, the date · time line, then the price lines. */
+function CompactSummarySkeleton() {
+  return (
+    <div className="mt-6 rounded-2xl border bg-card p-4 lg:hidden">
+      <div className="flex items-center gap-2">
+        <SkeletonBlock className="h-5 w-14 rounded-md" />
+        <SkeletonLine className="h-6 w-32" />
+      </div>
+      <SkeletonLine className="mt-1 w-48 max-w-full" />
+      <div className="mt-4 space-y-1.5 border-t pt-4">
+        <SummaryRowSkeleton />
+        <SummaryRowSkeleton />
+        <div className="flex justify-between border-t pt-2">
+          <SkeletonLine className="h-6 w-12" />
+          <SkeletonLine className="h-6 w-16" />
+        </div>
+      </div>
     </div>
   );
 }

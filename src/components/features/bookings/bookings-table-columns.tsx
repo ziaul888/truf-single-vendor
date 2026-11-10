@@ -8,8 +8,9 @@ import type { Booking } from "@/types/booking";
 import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
 import { Phone, UserX, XCircle } from "lucide-react";
 import {
-  PAYMENT_STATUS_LABEL, canMarkNoShow, isAwaitingWalletVerification, isCancellable, paymentStatusVariant,
+  PAYMENT_STATUS_LABEL, canMarkNoShow, isCancellable, paymentStatusVariant,
 } from "./booking-status-helpers";
+import { BookingPaidDue } from "./booking-paid-due";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
 import { WalletBadge } from "./wallet-payment-info";
@@ -46,14 +47,7 @@ export function getBookingColumns(
     {
       id: "paidDue",
       header: "Paid / Due",
-      cell: ({ row }) => (
-        <div className="text-xs">
-          <div className="text-green-600 dark:text-green-400">{slotPriceLabel(row.original.paid)}</div>
-          {row.original.due > 0 && (isAwaitingWalletVerification(row.original)
-            ? <div className="text-muted-foreground">Verifying</div>
-            : <div className="text-amber-600 dark:text-amber-400">{slotPriceLabel(row.original.due)} due</div>)}
-        </div>
-      ),
+      cell: ({ row }) => <BookingPaidDue booking={row.original} />,
     },
     {
       id: "status",

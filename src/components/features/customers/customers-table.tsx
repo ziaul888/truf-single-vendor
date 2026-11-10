@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import type { Customer, CustomerSort } from "@/types/booking";
 import { avatarBg, initials, formatSince, formatDate, formatTaka, TAG_CLS, TAG_LABEL } from "./customer-display";
+import { CustomersList } from "./customers-list";
 
 /** Sortable columns in table order; the API always sorts high → low. */
 export const SORT_COLUMNS: { field: CustomerSort; label: string }[] = [
@@ -46,54 +47,59 @@ export function CustomersTable({
   onSort: (field: CustomerSort) => void;
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow className="bg-muted/30">
-          <TableHead className="w-[220px]">Customer</TableHead>
-          {SORT_COLUMNS.map(({ field, label }) => (
-            <TableHead key={field}>
-              <button type="button" className="flex items-center gap-1 font-medium" onClick={() => onSort(field)}>
-                {label}
-                {field === sort ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 opacity-40" />}
-              </button>
-            </TableHead>
-          ))}
-          <TableHead>Tag</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {customers.length === 0 ? (
-          <TableRow><TableCell colSpan={8} className="py-12 text-center text-muted-foreground">No customers found.</TableCell></TableRow>
-        ) : (
-          customers.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: avatarBg(c.name) }}>
-                    {initials(c.name)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium leading-tight truncate">{c.name}</p>
-                    <p className="text-xs text-muted-foreground">{c.phone}</p>
-                  </div>
-                </div>
-              </TableCell>
-              <CustomerCells c={c} />
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
-                    <Link href={`/dashboard/customers/${c.id}`}>Profile</Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
-                    <Link href={`/dashboard/bookings?customer=${c.id}`}>Bookings</Link>
-                  </Button>
-                </div>
-              </TableCell>
+    <>
+      <div className="md:hidden"><CustomersList customers={customers} /></div>
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30">
+              <TableHead className="w-[220px]">Customer</TableHead>
+              {SORT_COLUMNS.map(({ field, label }) => (
+                <TableHead key={field}>
+                  <button type="button" className="flex items-center gap-1 font-medium" onClick={() => onSort(field)}>
+                    {label}
+                    {field === sort ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+                  </button>
+                </TableHead>
+              ))}
+              <TableHead>Tag</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          </TableHeader>
+          <TableBody>
+            {customers.length === 0 ? (
+              <TableRow><TableCell colSpan={8} className="py-12 text-center text-muted-foreground">No customers found.</TableCell></TableRow>
+            ) : (
+              customers.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: avatarBg(c.name) }}>
+                        {initials(c.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium leading-tight truncate">{c.name}</p>
+                        <p className="text-xs text-muted-foreground">{c.phone}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <CustomerCells c={c} />
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                        <Link href={`/dashboard/customers/${c.id}`}>Profile</Link>
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                        <Link href={`/dashboard/bookings?customer=${c.id}`}>Bookings</Link>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }

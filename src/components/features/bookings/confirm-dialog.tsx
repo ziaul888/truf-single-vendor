@@ -25,6 +25,7 @@ import {
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
 import { TrxIdField } from "./trx-id-field";
 import { WalletPaymentRows } from "./wallet-payment-info";
+import { keepKeyboardClosed } from "./keep-keyboard-closed";
 
 const ConfirmSchema = z.object({
   markPaid: z.boolean(),
@@ -47,7 +48,7 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({ booking, open, onOpenChange }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={keepKeyboardClosed}>
         {booking && <ConfirmForm key={booking.id} booking={booking} onClose={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>

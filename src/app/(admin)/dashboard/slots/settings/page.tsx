@@ -8,6 +8,7 @@ import { ChevronLeft, Save, Bell, Loader2 } from "lucide-react";
 import { useSlotSettings } from "@/hooks/useSlots";
 import { useSlotSettingsForm } from "@/hooks/useSlotSettingsForm";
 import { useMe } from "@/hooks/useMe";
+import { SettingsSaveBar } from "@/components/features/settings/settings-save-actions";
 import { SettingToggle } from "@/components/features/slots/setting-fields";
 import { PortalCheckoutSettings } from "@/components/features/slots/portal-checkout-settings";
 import {
@@ -42,7 +43,7 @@ export default function SlotSettingsPage() {
           <p className="text-sm text-muted-foreground">Booking window, slot generation, checkout and notifications for every ground</p>
         </div>
         {canEdit && (
-          <Button type="submit" disabled={saving || !isDirty}>
+          <Button type="submit" className="hidden md:inline-flex" disabled={saving || !isDirty}>
             <Save className="mr-1.5 h-4 w-4" />
             {saving ? "Saving…" : "Save settings"}
           </Button>
@@ -94,6 +95,14 @@ export default function SlotSettingsPage() {
         </Card>
       </fieldset>
       {!canEdit && <p className="text-xs text-muted-foreground">Only admins can change slot settings.</p>}
+      {canEdit && (
+        <SettingsSaveBar>
+          <Button type="submit" disabled={saving || !isDirty}>
+            <Save className="mr-1.5 h-4 w-4" />
+            {saving ? "Saving…" : "Save settings"}
+          </Button>
+        </SettingsSaveBar>
+      )}
     </form>
   );
 }

@@ -23,7 +23,7 @@ export function SectionCard({
 
   return (
     <Card>
-      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 pb-4">
+      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 p-4 pb-4 sm:p-6 sm:pb-4">
         <div className="space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-base">
             <Icon className="h-4 w-4 text-muted-foreground" /> {title}
@@ -41,7 +41,7 @@ export function SectionCard({
           />
         </div>
       </CardHeader>
-      <CardContent className={cn("space-y-4 transition-opacity", !enabled && "opacity-60")}>{children}</CardContent>
+      <CardContent className={cn("space-y-4 p-4 pt-0 transition-opacity sm:p-6 sm:pt-0", !enabled && "opacity-60")}>{children}</CardContent>
     </Card>
   );
 }

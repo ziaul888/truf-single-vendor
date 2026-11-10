@@ -51,7 +51,7 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <ReportHeader title="Reports" subtitle="How the business is doing" range={range} period={period} onRange={setRange} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard title="Sales" value={s ? slotPriceLabel(s.revenue) : "—"} icon={Banknote}
           trend={s?.revenueTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
         <StatCard title="Bookings" value={s ? String(s.bookings) : "—"} icon={CalendarDays}

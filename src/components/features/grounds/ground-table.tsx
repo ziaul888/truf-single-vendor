@@ -16,6 +16,7 @@ import { CheckCircle2, XCircle, Pencil, LayoutList, TrendingUp, TrendingDown } f
 import { formatPeakRanges } from "@/lib/ground-format";
 import type { Ground } from "@/hooks/useGrounds";
 import { SPORT_EMOJI, SPORT_GRADIENT } from "./ground-card";
+import { GroundList } from "./ground-list";
 
 interface GroundTableProps {
   grounds: Ground[];
@@ -26,9 +27,18 @@ interface GroundTableProps {
 }
 
 // Today's bookings per ground are on the ground detail page (and summed on the list's stat card).
-export function GroundTable({ grounds, onToggleStatus, isPending, canEdit }: GroundTableProps) {
+export function GroundTable(props: GroundTableProps) {
   return (
-    <div className="overflow-hidden rounded-xl border">
+    <>
+      <div className="md:hidden"><GroundList {...props} /></div>
+      <GroundDataTable {...props} />
+    </>
+  );
+}
+
+function GroundDataTable({ grounds, onToggleStatus, isPending, canEdit }: GroundTableProps) {
+  return (
+    <div className="hidden overflow-hidden rounded-xl border md:block">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">

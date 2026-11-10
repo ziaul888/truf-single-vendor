@@ -70,7 +70,7 @@ export function BookingsByStatusChart() {
         <p className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">No bookings in the last 7 days.</p>
       ) : (
         <ResponsiveContainer width="100%" height={240}>
-          <RadialBarChart cx="50%" cy="50%" innerRadius={30} outerRadius={110} data={rows} startAngle={90} endAngle={-270}>
+          <RadialBarChart cx="50%" cy="50%" innerRadius={30} outerRadius="80%" data={rows} startAngle={90} endAngle={-270}>
             <RadialBar dataKey="value" cornerRadius={6} label={{ position: "insideStart", fill: "#fff", fontSize: 11 }} />
             <Legend iconSize={10} />
             <Tooltip />

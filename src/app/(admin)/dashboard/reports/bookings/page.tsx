@@ -27,7 +27,7 @@ export default function BookingsReportPage() {
     <div className="space-y-6">
       <ReportHeader title="Bookings Report" subtitle="Counted by the day each slot is played" range={range} period={period} onRange={setRange} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard title="Bookings" value={s ? String(s.bookings) : "—"} icon={CalendarDays}
           trend={s?.bookingsTrend} trendLabel={TREND_LABEL} loading={summary.isLoading} />
         <StatCard title="Completion Rate" value={s?.completionRate != null ? `${s.completionRate.toFixed(1)}%` : "—"} icon={CheckCircle}
@@ -38,7 +38,7 @@ export default function BookingsReportPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
+        <Card className="min-w-0 lg:col-span-3">
           <CardHeader>
             <CardTitle className="text-base font-medium">Booking Trends Over Time</CardTitle>
           </CardHeader>
@@ -46,7 +46,7 @@ export default function BookingsReportPage() {
             <BookingTrendsChart data={series.data?.points} loading={series.isLoading} />
           </CardContent>
         </Card>
-        <Card className="lg:col-span-2">
+        <Card className="min-w-0 lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base font-medium">Status Breakdown</CardTitle>
           </CardHeader>

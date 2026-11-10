@@ -4,6 +4,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Ban, Eye, History, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -13,23 +14,29 @@ import { BLOCK_REASON_LABEL, slotTimeLabel } from "@/lib/slot-format";
 import { BLOCK_REASONS, type BlockReason } from "@/types/slot";
 import { blockedToast } from "./block-booked-slot-dialog";
 
-const BLOCK_BTN = "h-7 px-2 text-xs gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20";
+const BLOCK_BTN = "text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20";
+const UNBLOCK_BTN = "text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20";
+const ROW_SIZE = "h-7 px-2 text-xs gap-1";
+// The phone card list: 40px buttons, starting at the card's left edge.
+const LARGE_SIZE = "h-10 px-3 gap-1.5";
 
 interface Props {
   slot: Slot;
   onHistory: (slot: Slot) => void;
   /** Booked slots ask first: blocking cancels and refunds the booking. */
   onBlockBooked: (slot: Slot) => void;
+  large?: boolean;
 }
 
 /**
  * History, View booking, Block and Unblock for one slot row.
  * Free slots block straight away; booked ones go through a confirm; held ones (customer paying) can't be blocked.
  */
-export function SlotRowActions({ slot, onHistory, onBlockBooked }: Props) {
+export function SlotRowActions({ slot, onHistory, onBlockBooked, large }: Props) {
   const block = useBlockSlot();
   const unblock = useUnblockSlot();
   const busy = block.isPending || unblock.isPending;
+  const size = large ? LARGE_SIZE : ROW_SIZE;
 
   function handleBlock(reason: BlockReason) {
     block.mutate(
@@ -49,23 +56,23 @@ export function SlotRowActions({ slot, onHistory, onBlockBooked }: Props) {
   }
 
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className={cn("flex items-center gap-1", large ? "flex-wrap" : "justify-end")}>
       <Button
-        variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1"
+        variant="ghost" size="sm" className={size}
         onClick={() => onHistory(slot)}
         aria-label={`History of ${slotTimeLabel(slot)}`}
       >
         <History className="h-3 w-3" /> History
       </Button>
       {slot.booking && (
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" asChild>
+        <Button variant="ghost" size="sm" className={size} asChild>
           <Link href={`/dashboard/bookings/${slot.booking.id}`}><Eye className="h-3 w-3" /> View</Link>
         </Button>
       )}
       {slot.status === "available" && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className={BLOCK_BTN} disabled={busy}>
+            <Button variant="ghost" size="sm" className={cn(size, BLOCK_BTN)} disabled={busy}>
               <Ban className="h-3 w-3" /> Block
             </Button>
           </DropdownMenuTrigger>
@@ -78,13 +85,13 @@ export function SlotRowActions({ slot, onHistory, onBlockBooked }: Props) {
         </DropdownMenu>
       )}
       {slot.status === "booked" && (
-        <Button variant="ghost" size="sm" className={BLOCK_BTN} onClick={() => onBlockBooked(slot)}>
+        <Button variant="ghost" size="sm" className={cn(size, BLOCK_BTN)} onClick={() => onBlockBooked(slot)}>
           <Ban className="h-3 w-3" /> Block
         </Button>
       )}
       {slot.status === "blocked" && (
         <Button
-          variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+          variant="ghost" size="sm" className={cn(size, UNBLOCK_BTN)}
           disabled={busy}
           onClick={handleUnblock}
         >

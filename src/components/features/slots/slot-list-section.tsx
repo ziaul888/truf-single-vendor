@@ -11,31 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import {
-  BLOCK_REASON_LABEL, durationLabel, formatSlotDate, slotPriceLabel, slotTimeLabel, venueToday,
-} from "@/lib/slot-format";
+import { durationLabel, formatSlotDate, slotPriceLabel, slotTimeLabel, venueToday } from "@/lib/slot-format";
 import { SLOT_STATUSES, type SlotStatus } from "@/types/slot";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SlotBulkBar } from "./slot-bulk-bar";
 import { SlotHistorySheet } from "./slot-history-sheet";
 import { SlotRowActions } from "./slot-row-actions";
 import { BlockBookedSlotDialog } from "./block-booked-slot-dialog";
-
-const STATUS_CLS: Record<SlotStatus, string> = {
-  available: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  held:      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  booked:    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  blocked:   "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
-};
+import { SlotCardList, SlotCustomer, SlotStatusPill, isSelectable } from "./slot-card-list";
 
 const PAGE_SIZE = 10;
-
-/** "18:05" in the venue's timezone. */
-const venueClock = (iso: string) =>
-  new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
-
-/** Held and booked slots belong to a customer, so they can't be selected for bulk actions. */
-const isSelectable = (s: Slot) => s.status === "available" || s.status === "blocked";
 
 export function SlotListSection() {
   const [groundId, setGroundId] = useState("all");
@@ -62,6 +47,7 @@ export function SlotListSection() {
   const selectedSlots = slotRows.filter((s) => selected.has(s.id));
   const allSelected = selectable.length > 0 && selectable.every((s) => selected.has(s.id));
   const clearSelection = () => setSelected(new Set());
+  const toggleAll = (on: boolean) => setSelected(on ? new Set(selectable.map((s) => s.id)) : new Set());
 
   function toggleOne(id: string, on: boolean) {
     setSelected((cur) => {
@@ -74,7 +60,7 @@ export function SlotListSection() {
   return (
     <div className="space-y-4">
       {/* Stats — for the chosen ground and date, regardless of the status filter */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-5">
         {[
           { label: "Total slots",  value: stats?.total     ?? "—", color: "text-foreground" },
           { label: "Available",    value: stats?.available ?? "—", color: "text-blue-600 dark:text-blue-400" },
@@ -83,9 +69,9 @@ export function SlotListSection() {
           { label: "Blocked",      value: stats?.blocked   ?? "—", color: "text-zinc-500" },
         ].map(({ label, value, color }) => (
           <Card key={label}>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <p className="text-xs text-muted-foreground mb-1">{label}</p>
-              <p className={cn("text-2xl font-bold", color)}>{isLoading ? "—" : value}</p>
+              <p className={cn("text-xl font-bold sm:text-2xl", color)}>{isLoading ? "—" : value}</p>
             </CardContent>
           </Card>
         ))}
@@ -131,7 +117,17 @@ export function SlotListSection() {
           <div className="space-y-px p-4">{[...Array(7)].map((_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />)}</div>
         ) : (
           <>
-            <Table>
+            <div className="md:hidden">
+              {selectable.length > 0 && (
+                <label className="flex cursor-pointer items-center gap-3 border-b bg-muted/30 px-4 py-2.5 text-sm text-muted-foreground">
+                  <Checkbox checked={allSelected} onCheckedChange={(v) => toggleAll(v === true)} />
+                  Select all on this page
+                </label>
+              )}
+              <SlotCardList slots={slotRows} selected={selected} showGround={hasGroundChoice(grounds)} onToggle={toggleOne}
+                onHistory={setHistoryOf} onBlockBooked={setBlockingBooked} />
+            </div>
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead className="w-10">
@@ -139,7 +135,7 @@ export function SlotListSection() {
                       aria-label="Select all slots on this page"
                       checked={allSelected}
                       disabled={selectable.length === 0}
-                      onCheckedChange={(v) => setSelected(v === true ? new Set(selectable.map((s) => s.id)) : new Set())}
+                      onCheckedChange={(v) => toggleAll(v === true)}
                     />
                   </TableHead>
                   <TableHead>Slot time</TableHead>
@@ -180,14 +176,7 @@ export function SlotListSection() {
                         ) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-sm font-medium whitespace-nowrap">{slotPriceLabel(slot.price)}</TableCell>
-                      <TableCell>
-                        <span
-                          className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize", STATUS_CLS[slot.status])}
-                          title={slot.block ? `${BLOCK_REASON_LABEL[slot.block.reason]}${slot.block.note ? `: ${slot.block.note}` : ""}` : undefined}
-                        >
-                          {slot.status}
-                        </span>
-                      </TableCell>
+                      <TableCell><SlotStatusPill slot={slot} /></TableCell>
                       <TableCell className="text-right">
                         <SlotRowActions slot={slot} onHistory={setHistoryOf} onBlockBooked={setBlockingBooked} />
                       </TableCell>
@@ -219,19 +208,6 @@ export function SlotListSection() {
       <BlockBookedSlotDialog slot={blockingBooked} onClose={() => setBlockingBooked(null)} />
     </div>
   );
-}
-
-/** The customer cell: who booked it, or "Customer paying…" while a slot is held in checkout. */
-function SlotCustomer({ slot }: { slot: Slot }) {
-  if (slot.status === "held") {
-    return (
-      <span className="text-amber-700 dark:text-amber-400">
-        {slot.booking?.customerName && <span className="block text-foreground">{slot.booking.customerName}</span>}
-        <span className="text-xs">Customer paying…{slot.heldUntil ? ` (until ${venueClock(slot.heldUntil)})` : ""}</span>
-      </span>
-    );
-  }
-  return slot.booking?.customerName ? <>{slot.booking.customerName}</> : <span className="text-muted-foreground">—</span>;
 }
 
 /** Up to 5 page numbers around the current page. */

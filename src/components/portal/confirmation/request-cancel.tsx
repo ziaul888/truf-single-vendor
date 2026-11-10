@@ -48,7 +48,7 @@ export function RequestCancel({
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="w-full rounded-lg border border-destructive/30 px-3 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/5"
+        className="min-h-11 w-full rounded-lg border border-destructive/30 px-3 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/5"
       >
         Request cancellation
       </button>
@@ -66,12 +66,12 @@ function AskToCancel({ pending, tellBy, error, onYes, onNo }: {
       <p className="font-semibold">Ask the venue to cancel?</p>
       <p className="mt-1 text-muted-foreground">You can only ask once. The venue checks your payment, then cancels with a refund or tells you {tellBy}.</p>
       {error && <p role="alert" className="mt-2 text-destructive">{error}</p>}
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
           onClick={onYes}
           disabled={pending}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-destructive px-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
         >
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
           Yes, ask to cancel
@@ -80,7 +80,7 @@ function AskToCancel({ pending, tellBy, error, onYes, onNo }: {
           type="button"
           onClick={onNo}
           disabled={pending}
-          className="flex-1 rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+          className="h-11 flex-1 rounded-lg border px-3 text-sm font-semibold hover:bg-muted disabled:opacity-60"
         >
           Keep booking
         </button>

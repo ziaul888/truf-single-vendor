@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CalendarDays, HelpCircle, LayoutDashboard, MapPin, Menu, Phone, Trophy } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CalendarDays, HelpCircle, LayoutDashboard, LogOut, MapPin, Menu, Phone, Trophy } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useCustomerSession, useCustomerSignOut } from "@/components/portal/account/use-customer-session";
 
 const LINKS = [
   { href: "/#how", label: "How it works", Icon: HelpCircle },
@@ -21,7 +23,7 @@ export function MobileMenu({ phone, isAdmin, bookHref }: { phone: string; isAdmi
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Open menu"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:text-accent md:hidden"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:text-accent md:hidden"
       >
         <Menu className="h-5 w-5" />
       </SheetTrigger>
@@ -41,6 +43,7 @@ export function MobileMenu({ phone, isAdmin, bookHref }: { phone: string; isAdmi
               <LayoutDashboard className="h-5 w-5 text-accent" />Dashboard
             </Link>
           )}
+          <SignOutItem onDone={close} />
         </nav>
         <div className="mt-auto space-y-3 border-t border-white/10 p-6">
           {phone && (
@@ -55,5 +58,20 @@ export function MobileMenu({ phone, isAdmin, bookHref }: { phone: string; isAdmi
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Signed in: Sign out (the header hides its sign-out icon on phones). */
+function SignOutItem({ onDone }: { onDone: () => void }) {
+  const router = useRouter();
+  const { data: session } = useCustomerSession();
+  const signOut = useCustomerSignOut();
+  if (!session) return null;
+  return (
+    <button type="button" disabled={signOut.isPending}
+      onClick={() => signOut.mutate(undefined, { onSuccess: () => { onDone(); router.refresh(); } })}
+      className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium hover:bg-white/5 hover:text-accent disabled:opacity-60">
+      <LogOut className="h-5 w-5 text-accent" />{signOut.isPending ? "Signing out…" : "Sign out"}
+    </button>
   );
 }

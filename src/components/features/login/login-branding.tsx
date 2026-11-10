@@ -32,10 +32,10 @@ function LogoMark({ size, venue }: { size: number; venue?: Brand }) {
 
 const subtitle = { color: C.muted, letterSpacing: 3, textTransform: "uppercase" as const };
 
-/** Compact logo row shown above the form on phones. */
+/** Compact logo row shown above the form on phones (hidden from `md` up). */
 export function LoginMobileHeader({ venue }: { venue?: Brand }) {
   return (
-    <div style={{ padding: "28px 24px 0", position: "relative", zIndex: 1 }}>
+    <div className="md:hidden" style={{ padding: "28px 24px 0", position: "relative", zIndex: 1 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <LogoMark size={40} venue={venue} />
         <div>
@@ -49,24 +49,20 @@ export function LoginMobileHeader({ venue }: { venue?: Brand }) {
   );
 }
 
-/** Left-hand branding panel on tablet and desktop. */
-export function LoginBrandPanel({ compact, venue }: { compact: boolean; venue?: Brand }) {
+/** Left-hand branding panel on tablet and desktop (hidden on phones); tablet sizes, roomier from `lg`. */
+export function LoginBrandPanel({ venue }: { venue?: Brand }) {
   return (
     <div
-      style={{
-        flex: 1, display: "flex", flexDirection: "column", justifyContent: "center",
-        padding: compact ? "48px 40px" : "60px 64px", position: "relative", zIndex: 1,
-      }}
+      className="hidden px-10 py-12 md:flex lg:px-16 lg:py-[60px]"
+      style={{ flex: 1, flexDirection: "column", justifyContent: "center", position: "relative", zIndex: 1 }}
     >
-      <div style={{ marginBottom: compact ? 36 : 48 }}>
+      <div className="mb-9 lg:mb-12">
         <div style={{ marginBottom: 32 }}>
           <LogoMark size={56} venue={venue} />
         </div>
         <div
-          style={{
-            fontFamily: "'Bebas Neue', sans-serif", fontSize: compact ? 44 : 56,
-            lineHeight: 1, letterSpacing: 3, color: C.text,
-          }}
+          className="text-[44px] lg:text-[56px]"
+          style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1, letterSpacing: 3, color: C.text }}
         >
           {nameOf(venue).toUpperCase()}<br />
           <span style={{ color: C.accent }}>ADMIN</span>
@@ -77,10 +73,8 @@ export function LoginBrandPanel({ compact, venue }: { compact: boolean; venue?: 
       <RoleCapabilities />
 
       <div
-        style={{
-          borderTop: "1px solid rgba(37,164,98,0.12)", marginTop: compact ? 36 : 48,
-          paddingTop: 24, fontSize: 12, color: C.faint, lineHeight: 1.8,
-        }}
+        className="mt-9 lg:mt-12"
+        style={{ borderTop: "1px solid rgba(37,164,98,0.12)", paddingTop: 24, fontSize: 12, color: C.faint, lineHeight: 1.8 }}
       >
         Secure access with JWT authentication<br />
         Your role is set by your account

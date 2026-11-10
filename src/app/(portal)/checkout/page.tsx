@@ -41,6 +41,8 @@ export default async function CheckoutPage({
           </p>
         )}
 
+        {ground && <CompactSummary ground={ground} date={date} slot={slot} />}
+
         {ground && date && hourNum != null && slot ? (
           <CheckoutForm
             groundId={ground.id}
@@ -59,7 +61,8 @@ export default async function CheckoutPage({
         )}
       </section>
 
-      <aside className="lg:sticky lg:top-20 lg:self-start">
+      {/* Phones get CompactSummary above the form instead */}
+      <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">
         <div className="rounded-2xl border bg-card p-5">
           <h3 className="mb-3 font-bold">Your booking</h3>
           {ground ? (
@@ -102,6 +105,31 @@ function BookingSummary({ ground, date, slot }: { ground: Ground; date?: string;
       {slot && <CheckoutTotals slotPrice={slot.price} isPeak={slot.isPeak} />}
       <GroundRules rules={ground.rules} heading="h3" className="mt-4 border-t pt-4" />
     </>
+  );
+}
+
+/**
+ * Below lg: what is being booked and its total, above the form, with the ground rules the form
+ * asks to agree to (folded away so the form isn't pushed down).
+ */
+function CompactSummary({ ground, date, slot }: { ground: Ground; date?: string; slot?: PublicSlot }) {
+  return (
+    <div className="mt-6 rounded-2xl border bg-card p-4 lg:hidden">
+      <div className="flex items-center gap-2">
+        {ground.format && <FormatBadge format={ground.format} />}
+        <p className="min-w-0 truncate font-semibold">{ground.name}</p>
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {date ? formatSlotDate(date) : "—"} · {slot ? slotTimeLabel(slot) : "—"}
+      </p>
+      {slot && <CheckoutTotals slotPrice={slot.price} isPeak={slot.isPeak} />}
+      {ground.rules?.trim() && (
+        <details className="mt-4 border-t pt-4 text-sm">
+          <summary className="cursor-pointer font-bold">Ground rules</summary>
+          <p className="mt-2 whitespace-pre-line leading-relaxed text-muted-foreground">{ground.rules}</p>
+        </details>
+      )}
+    </div>
   );
 }
 

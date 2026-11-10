@@ -63,7 +63,7 @@ export function GlobalSearch() {
         onClick={() => setOpen(true)}
         aria-label="Open search"
         className={cn(
-          "border-input bg-background text-muted-foreground inline-flex h-9 w-full max-w-md items-center gap-2 rounded-lg border px-3 text-sm shadow-sm transition-colors",
+          "border-input bg-background text-muted-foreground inline-flex h-9 pointer-coarse:h-10 w-full max-w-md items-center gap-2 rounded-lg border px-3 text-sm shadow-sm transition-colors",
           "hover:border-ring/60 hover:text-foreground focus-visible:ring-ring/30 focus:outline-none focus-visible:ring-2"
         )}
       >
@@ -78,7 +78,8 @@ export function GlobalSearch() {
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="overflow-hidden p-0 sm:max-w-xl">
+        {/* Phones: pinned near the top so the on-screen keyboard doesn't cover the results. */}
+        <DialogContent className="overflow-hidden p-0 max-sm:top-4 max-sm:translate-y-0 sm:max-w-xl">
           <DialogTitle className="sr-only">Search</DialogTitle>
           {open && <SearchPalette onSelect={() => setOpen(false)} />}
         </DialogContent>
@@ -133,7 +134,7 @@ function SearchPalette({ onSelect }: { onSelect: () => void }) {
           value={query}
           onValueChange={setQuery}
           placeholder="Search pages, customers, bookings, grounds…"
-          className="placeholder:text-muted-foreground/70 flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="placeholder:text-muted-foreground/70 flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none md:text-sm disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 
@@ -205,7 +206,7 @@ function SearchPalette({ onSelect }: { onSelect: () => void }) {
         )}
       </Command.List>
 
-      <div className="text-muted-foreground flex items-center justify-between border-t px-3 py-2 text-xs">
+      <div className="text-muted-foreground flex items-center justify-between border-t px-3 py-2 text-xs pointer-coarse:hidden">
         <span>
           <kbd className="bg-muted mr-1 rounded border px-1 font-mono">↑↓</kbd>
           navigate

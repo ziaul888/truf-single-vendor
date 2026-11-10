@@ -15,6 +15,7 @@ import { toApiFailure } from "@/lib/api-error";
 import { slotPriceLabel } from "@/lib/slot-format";
 import { UserX } from "lucide-react";
 import { toast } from "sonner";
+import { keepKeyboardClosed } from "./keep-keyboard-closed";
 
 const NoShowSchema = z.object({
   reason: z.string().trim().max(500, "Keep the reason under 500 characters"),
@@ -40,7 +41,7 @@ interface NoShowDialogProps {
 export function NoShowDialog({ booking, open, onOpenChange }: NoShowDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={keepKeyboardClosed}>
         {booking && <NoShowFormBody key={booking.id} booking={booking} onClose={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
@@ -87,7 +88,7 @@ function NoShowFormBody({ booking, onClose }: { booking: NoShowTarget; onClose: 
           <Label htmlFor="no-show-reason" className="text-sm font-medium">
             Reason <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
-          <Textarea id="no-show-reason" rows={3} className="resize-none text-sm"
+          <Textarea id="no-show-reason" rows={3} className="resize-none"
             placeholder="e.g. Team didn't turn up, phone switched off…" {...register("reason")} />
           {errors.reason && <p className="text-xs text-destructive">{errors.reason.message}</p>}
         </div>

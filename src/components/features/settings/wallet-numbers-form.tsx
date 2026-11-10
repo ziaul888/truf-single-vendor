@@ -63,7 +63,7 @@ export function WalletNumbersForm({ settings, canEdit, onSaved }: { settings: Sl
           Customers send the total to this number and enter the TrxID. Each booking waits on Confirm Bookings until you find the payment in your app and verify it.
         </p>
         {canEdit && (
-          <div className="flex justify-end gap-2">
+          <div className="flex gap-2 sm:justify-end [&>button]:flex-1 sm:[&>button]:flex-none">
             <SettingsSaveActions dirty={isDirty} saving={save.isPending} onDiscard={() => reset(values)} />
           </div>
         )}

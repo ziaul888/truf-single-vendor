@@ -8,7 +8,7 @@ import { SettingsPageHeader } from "@/components/features/settings/settings-page
 import { SettingsSection } from "@/components/features/settings/settings-section";
 import { ReadOnlyNotice } from "@/components/features/settings/read-only-notice";
 import { SettingsLoadError, SettingsLoading } from "@/components/features/settings/settings-load-state";
-import { SettingsSaveActions } from "@/components/features/settings/settings-save-actions";
+import { SettingsSaveActions, SettingsSaveBar } from "@/components/features/settings/settings-save-actions";
 import { VenueFields } from "@/components/features/settings/venue-fields";
 import { VenueLogoField } from "@/components/features/settings/venue-logo-field";
 import { VenueLocale } from "@/components/features/settings/venue-locale";
@@ -26,7 +26,7 @@ export default function GeneralSettingsPage() {
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       <SettingsPageHeader title="General" description="Venue details, logo and locale" audit={venue}>
-        {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} />}
+        {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} className="hidden md:inline-flex" />}
       </SettingsPageHeader>
       {!canEdit && <ReadOnlyNotice />}
 
@@ -49,6 +49,11 @@ export default function GeneralSettingsPage() {
       <SettingsSection title="Locale" icon={Globe} description="Fixed for v1. Prices and times everywhere use these.">
         <VenueLocale locale={venue.locale} />
       </SettingsSection>
+      {canEdit && (
+        <SettingsSaveBar>
+          <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} />
+        </SettingsSaveBar>
+      )}
     </form>
   );
 }

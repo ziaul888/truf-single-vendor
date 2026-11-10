@@ -55,7 +55,7 @@ export function MyBookingsView() {
       <div role="tablist" className="mt-6 inline-flex rounded-lg border p-1">
         {(["upcoming", "past"] as const).map((s) => (
           <button key={s} role="tab" type="button" aria-selected={scope === s} onClick={() => setScope(s)}
-            className={cn("rounded-md px-4 py-1.5 text-sm font-semibold capitalize", scope === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+            className={cn("rounded-md px-4 py-1.5 text-sm font-semibold capitalize pointer-coarse:min-h-11", scope === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
             {s}
           </button>
         ))}
@@ -103,8 +103,9 @@ function BookingRow({ booking: b }: { booking: CustomerBooking }) {
   const status = STATUS[b.status];
   return (
     <Link href={toAppPath(b.confirmationUrl)}
-      className="flex items-center gap-4 rounded-2xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+      className="flex items-center gap-3 rounded-2xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm sm:gap-4">
+      {/* Phones leave the icon out so the name and date get the room */}
+      <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted sm:flex">
         <CalendarDays className="h-5 w-5 opacity-70" />
       </div>
       <div className="min-w-0 flex-1">
