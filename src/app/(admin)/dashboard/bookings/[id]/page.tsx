@@ -24,6 +24,7 @@ import { EditBookingDialog } from "@/components/features/bookings/edit-booking-d
 import { NoShowDialog, UndoNoShowDialog, noShowTargetOf } from "@/components/features/bookings/no-show-dialog";
 import { PayAtVenueBadge } from "@/components/features/bookings/pay-at-venue-badge";
 import { CancelRequestedBadge } from "@/components/features/bookings/wallet-payment-info";
+import { SeriesCard } from "@/components/features/booking-series/series-card";
 
 type DialogName = "cancel" | "confirm" | "collect" | "edit" | "noShow" | "undoNoShow" | null;
 
@@ -111,6 +112,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           <BookingInfoCard booking={booking} onEdit={booking.status === "cancelled" ? undefined : () => setDialog("edit")} />
+          {booking.seriesId && <SeriesCard seriesId={booking.seriesId} currentBookingId={booking.id} />}
           <BookingCustomerCard booking={booking} />
           <BookingPaymentCard booking={booking} />
         </div>

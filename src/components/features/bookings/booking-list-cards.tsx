@@ -11,6 +11,7 @@ import { PAYMENT_STATUS_LABEL, canMarkNoShow, isCancellable, paymentStatusVarian
 import { BookingPaidDue } from "./booking-paid-due";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
+import { RepeatBadge } from "./repeat-badge";
 import { WalletBadge } from "./wallet-payment-info";
 
 const DANGER_BTN = "h-10 text-destructive hover:bg-destructive/10 hover:text-destructive";
@@ -61,6 +62,7 @@ function BookingListCard({ booking: b, showGround, onCancel, onNoShow }: Omit<Bo
       <div className="flex flex-wrap items-center gap-1.5">
         <Link href={`/dashboard/bookings/${b.id}`} className="font-mono text-xs text-primary hover:underline">{b.bookingNumber}</Link>
         <Badge variant={paymentStatusVariant(b.paymentStatus)}>{PAYMENT_STATUS_LABEL[b.paymentStatus]}</Badge>
+        {b.seriesId && <RepeatBadge />}
         {b.payAtVenue && <PayAtVenueBadge />}
         {b.walletPayment && <WalletBadge payment={b.walletPayment} />}
       </div>

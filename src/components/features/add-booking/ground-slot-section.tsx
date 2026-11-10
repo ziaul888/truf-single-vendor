@@ -12,6 +12,7 @@ import { CalendarClock } from "lucide-react";
 import { takaLabel } from "@/components/features/bookings/booking-status-helpers";
 import { SectionCard } from "./section-card";
 import { SlotPicker } from "./slot-picker";
+import { RepeatFields, RepeatToggle } from "./repeat-fields";
 
 interface GroundSlotSectionProps {
   form: UseFormReturn<AddBookingFormData>;
@@ -23,17 +24,18 @@ interface GroundSlotSectionProps {
 
 export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsLoading }: GroundSlotSectionProps) {
   const { control, register, watch, setValue, clearErrors, formState: { errors } } = form;
-  const [groundId, date, slotId] = [watch("groundId"), watch("date"), watch("slotId")];
+  const [groundId, date, slotId, repeat] = [watch("groundId"), watch("date"), watch("slotId"), watch("repeat") ?? false];
   const selectedGround = grounds?.find((g) => g.id === groundId);
 
   return (
     <SectionCard n="1" title="Ground & Slot Selection" desc="Choose the ground, date and available time slot">
       <div className="space-y-5">
+        <RepeatToggle form={form} slotStartTime={slots?.find((s) => s.id === slotId)?.startTime} />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label className="text-sm font-medium">Ground <span className="text-destructive">*</span></Label>
             <Controller control={control} name="groundId" render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue("slotId", ""); }}>
+              <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue("slotId", ""); setValue("startHour", ""); }}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder={groundsLoading ? "Loading…" : "Select a ground"} />
                 </SelectTrigger>
@@ -49,7 +51,7 @@ export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsL
             {errors.groundId && <p className="text-xs text-destructive">{errors.groundId.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-medium" htmlFor="date">Date <span className="text-destructive">*</span></Label>
+            <Label className="text-sm font-medium" htmlFor="date">{repeat ? "Starting" : "Date"} <span className="text-destructive">*</span></Label>
             <Input id="date" type="date" min={venueToday()} className="h-10" {...register("date", { onChange: () => setValue("slotId", "") })} />
             {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
           </div>
@@ -68,26 +70,28 @@ export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsL
           </div>
         )}
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Time Slot <span className="text-destructive">*</span></Label>
-            {groundId && date && !slotsLoading && <span className="text-xs text-muted-foreground">Only open slots are shown</span>}
-          </div>
-          {!groundId || !date ? (
-            <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed py-10 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
-                <CalendarClock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Select ground & date first</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Available time slots will appear here</p>
-              </div>
+        {repeat ? <RepeatFields form={form} ground={selectedGround} /> : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Time Slot <span className="text-destructive">*</span></Label>
+              {groundId && date && !slotsLoading && <span className="text-xs text-muted-foreground">Only open slots are shown</span>}
             </div>
-          ) : (
-            <SlotPicker slots={slots ?? []} value={slotId} loading={slotsLoading} error={errors.slotId?.message}
-              onChange={(id) => { setValue("slotId", id); clearErrors("slotId"); }} />
-          )}
-        </div>
+            {!groundId || !date ? (
+              <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed py-10 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                  <CalendarClock className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Select ground & date first</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Available time slots will appear here</p>
+                </div>
+              </div>
+            ) : (
+              <SlotPicker slots={slots ?? []} value={slotId} loading={slotsLoading} error={errors.slotId?.message}
+                onChange={(id) => { setValue("slotId", id); clearErrors("slotId"); }} />
+            )}
+          </div>
+        )}
       </div>
     </SectionCard>
   );

@@ -62,6 +62,8 @@ export interface Booking {
   confirmedAt: string | null;
   cancelledAt: string | null;
   cancelReason: string | null;
+  /** Part of a repeat booking (series); null for a one-off. */
+  seriesId: string | null;
   createdAt: string;
   updatedAt: string;
 }
