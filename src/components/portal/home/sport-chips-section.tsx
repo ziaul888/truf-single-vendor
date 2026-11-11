@@ -5,6 +5,8 @@ import type { WebsiteSections } from "@/validations/website-settings";
 
 export async function SportChipsSection({ content }: { content: WebsiteSections["sportChips"] }) {
   const grounds = await listPublicGrounds();
+  // One ground means one chip: nothing to browse by sport.
+  if (grounds.length === 1) return null;
   // All 7 sports with real counts; sports the venue doesn't offer yet are hidden once any ground exists.
   const all = SPORTS.map((id) => ({ id, ...SPORT_META[id], count: grounds.filter((g) => g.sport === id).length }));
   const sports = grounds.length ? all.filter((s) => s.count > 0) : all;
