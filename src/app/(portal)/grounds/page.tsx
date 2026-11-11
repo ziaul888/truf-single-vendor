@@ -45,14 +45,14 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
     : sorted;
 
   return (
-    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[260px_1fr] lg:px-8">
+    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 sm:gap-8 sm:px-6 sm:py-8 lg:grid-cols-[260px_1fr] lg:px-8">
       <GroundsFilterSidebar query={query} />
       <div>
         <GroundsDateBar query={query} />
         <div className="mt-4">
           <ResultsHeader count={grounds.length} query={query} venueName={venue.name} />
         </div>
-        <div className={`mt-4 grid grid-cols-1 gap-5 ${slotsByGround ? "" : "md:grid-cols-2"}`}>
+        <div className={`mt-3 grid grid-cols-1 gap-3 sm:mt-4 sm:gap-5 ${slotsByGround ? "" : "md:grid-cols-2"}`}>
           {grounds.length === 0 && (
             <p className="text-muted-foreground rounded-xl border border-dashed p-10 text-center text-sm md:col-span-2">
               {filtered
@@ -66,7 +66,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
               className="group bg-card overflow-hidden rounded-xl border transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               <div className="flex">
-                <div className="relative w-32 shrink-0">
+                <div className="relative w-28 shrink-0 sm:w-32">
                   {g.images?.[0] ? (
                     <Image
                       src={g.images[0]}
@@ -82,7 +82,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
                     <FormatBadge format={g.format} className="absolute top-2 left-2 text-[10px]" />
                   )}
                 </div>
-                <div className="flex flex-1 flex-col p-4">
+                <div className="flex flex-1 flex-col p-3 sm:p-4">
                   <h3 className="font-bold">{g.name}</h3>
                   <p className="text-muted-foreground mt-0.5 text-xs capitalize">
                     {[g.sport, g.surface?.replace("-", " ")].filter(Boolean).join(" · ")}
@@ -107,7 +107,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
                 </div>
               </div>
               {slotsByGround && query.date && (
-                <div className="border-t p-4">
+                <div className="border-t p-3 sm:p-4">
                   <GroundFreeSlots
                     groundId={g.id}
                     date={query.date}

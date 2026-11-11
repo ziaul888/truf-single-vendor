@@ -12,13 +12,14 @@ export async function SportChipsSection({ content }: { content: WebsiteSections[
   const sports = grounds.length ? all.filter((s) => s.count > 0) : all;
   const top = Math.max(0, ...sports.map((s) => s.count));
   return (
-    <section className="border-b bg-card py-10">
+    <section className="border-b bg-card py-6 sm:py-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between">
-          <h2 className="text-2xl font-bold">{content.title}</h2>
+        <div className="mb-3 flex items-end justify-between sm:mb-6">
+          <h2 className="text-lg font-bold sm:text-2xl">{content.title}</h2>
           <Link href="/grounds" className="text-sm font-medium hover:text-primary">All grounds →</Link>
         </div>
-        <div className="flex flex-wrap gap-3">
+        {/* One swipeable row on phones instead of a tall wrapped block */}
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:gap-3 sm:px-0 [&::-webkit-scrollbar]:hidden">
           {sports.map(({ id, label, Icon, count }) => {
             // Highlight the sport with the most grounds.
             const active = count > 0 && count === top;
@@ -26,7 +27,7 @@ export async function SportChipsSection({ content }: { content: WebsiteSections[
             <Link
               key={id}
               href={`/grounds?sport=${id}`}
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+              className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
                 active
                   ? "border-primary bg-primary text-primary-foreground"
                   : "bg-card hover:border-primary/40"

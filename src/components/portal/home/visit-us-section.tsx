@@ -10,15 +10,15 @@ export function VisitUsSection({
   content: WebsiteSections["visitUs"]; venue: PublicVenue;
 }) {
   return (
-    <section id="visit" className="bg-card py-14">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 md:grid-cols-2 lg:px-8">
+    <section id="visit" className="bg-card py-8 sm:py-14">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-6 px-4 sm:gap-10 sm:px-6 md:grid-cols-2 lg:px-8">
         <div>
           {content.badge && (
             <span className="inline-block rounded-full bg-accent px-3 py-1 text-xs font-bold tracking-wider text-accent-foreground">
               {content.badge}
             </span>
           )}
-          <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{content.title}</h2>
+          <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:mt-4 sm:text-4xl">{content.title}</h2>
           <ContactDetails venue={venue} />
         </div>
         <VenueImage src={content.imageUrl} mapUrl={venue.mapUrl} />
@@ -31,7 +31,7 @@ function ContactDetails({ venue }: { venue: PublicVenue }) {
   // Only what the admin has entered on Settings → General.
   const reception = [venue.phone, venue.email].filter(Boolean).join(" · ");
   return (
-    <dl className="mt-6 space-y-4 text-sm">
+    <dl className="mt-4 space-y-3 text-sm sm:mt-6 sm:space-y-4">
       {(venue.address || venue.mapUrl) && (
         <Detail Icon={MapPin} label="Address">
           {venue.address}
@@ -50,7 +50,7 @@ function ContactDetails({ venue }: { venue: PublicVenue }) {
 
 function VenueImage({ src, mapUrl }: { src: string; mapUrl: string }) {
   const image = (
-    <div className="relative h-72 overflow-hidden rounded-2xl border">
+    <div className="relative h-48 overflow-hidden rounded-2xl border sm:h-72">
       <Image
         src={src}
         alt="The venue"

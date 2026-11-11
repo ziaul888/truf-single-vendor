@@ -8,7 +8,7 @@ import { SkeletonLine } from "./skeleton-line";
 export function GroundsListSkeleton() {
   return (
     <div
-      className="page-loading mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[260px_1fr] lg:px-8"
+      className="page-loading mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 sm:gap-8 sm:px-6 sm:py-8 lg:grid-cols-[260px_1fr] lg:px-8"
       aria-busy="true"
       aria-label="Loading grounds"
     >

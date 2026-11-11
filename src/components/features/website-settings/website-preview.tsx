@@ -40,7 +40,7 @@ export function WebsitePreview({
         <BrowserBar />
         <div className="pitch max-h-[70vh] overflow-y-auto bg-background text-foreground">
           <PreviewHeader venue={venue} mobile={device === "mobile"} />
-          <PreviewHero hero={values.hero} venueName={venue.name} mobile={device === "mobile"} />
+          <PreviewHero hero={values.hero} mobile={device === "mobile"} />
           <PreviewSections sections={values.sections} venue={venue} />
           <PreviewFooter venue={venue} social={values.social} />
         </div>
@@ -112,24 +112,18 @@ function PreviewHeader({ venue, mobile }: { venue: PublicVenue; mobile: boolean 
   );
 }
 
-function PreviewHero({ hero, venueName, mobile }: { hero: WebsiteSettings["hero"]; venueName: string; mobile: boolean }) {
+function PreviewHero({ hero, mobile }: { hero: WebsiteSettings["hero"]; mobile: boolean }) {
   return (
-    <div className="relative overflow-hidden">
+    <div className={cn("relative flex items-center overflow-hidden", mobile ? "min-h-40" : "min-h-52")}>
       {isWebsiteImageSrc(hero.imageUrl) ? (
         <Image src={hero.imageUrl} alt="" fill unoptimized sizes="420px" className="object-cover" />
       ) : (
         <div className="absolute inset-0 bg-sidebar" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-sidebar/60 to-sidebar/90" />
-      <div className={cn("relative px-4 text-sidebar-foreground", mobile ? "py-8" : "py-10")}>
-        {hero.badge && (
-          <span className="inline-block rounded-full bg-accent px-2 py-0.5 text-[8px] font-bold tracking-wider text-accent-foreground">{hero.badge}</span>
-        )}
-        <p className={cn("mt-2 font-extrabold leading-tight tracking-tight", mobile ? "text-lg" : "text-2xl")}>
-          {hero.headline}<br /><span className="text-accent">{venueName}</span>
-        </p>
-        {hero.description && <p className="mt-2 line-clamp-3 text-[10px] opacity-85">{hero.description}</p>}
-        <div className="mt-3 h-7 rounded-md bg-card/90" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-sidebar/40 to-sidebar/85" />
+      {/* The portal hero is the photo and the search box only */}
+      <div className="relative w-full px-4 py-6">
+        <div className="mx-auto h-14 max-w-xs rounded-md bg-card/90" aria-hidden />
       </div>
     </div>
   );
