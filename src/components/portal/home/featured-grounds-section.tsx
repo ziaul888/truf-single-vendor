@@ -20,7 +20,8 @@ export async function FeaturedGroundsSection({ content }: { content: WebsiteSect
             View as list →
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* A lone card in a 3-column grid looks lost: let it span the width on larger screens. */}
+        <div className={grounds.length === 1 ? "mx-auto max-w-md sm:max-w-2xl" : "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"}>
           {grounds.map((g) => (
             <GroundCard key={g.id} ground={g} />
           ))}
