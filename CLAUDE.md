@@ -1,230 +1,94 @@
-# CLAUDE.md — Turf Management System (Code Cohen)
 
-## Project Overview
-Turf/sports-ground booking platform — v1.0 initial release.
-Stack: Next.js 14 (App Router) · Node.js + Express · PostgreSQL · Prisma · Stripe · SendGrid
 
-## Architecture
-```
-src/
-├── app/                  # Next.js App Router pages & layouts
-│   ├── (admin)/          # Admin dashboard routes (protected)
-│   ├── (portal)/         # Customer booking portal routes
-│   └── api/              # Next.js API routes (thin controllers only)
-├── components/
-│   ├── ui/               # Generic reusable components (Button, Input, etc.)
-│   └── features/         # Feature-specific components (BookingCard, etc.)
-├── lib/
-│   ├── db.ts             # Prisma client singleton
-│   ├── stripe.ts         # Stripe client
-│   ├── sendgrid.ts       # Email client
-│   └── auth.ts           # JWT helpers
-├── services/             # Business logic (never put logic in routes/components)
-├── validations/          # Zod schemas — one file per domain
-└── types/                # Shared TypeScript interfaces
-```
+Project Scope
 
-## Code Style & Quality
-- TypeScript everywhere — no `.js` files in `src/`
-- Use `strict: false` (see tsconfig) but avoid `any` — use proper types
-- Formatter: Prettier (default config, runs on save)
-- Linter: ESLint with Next.js defaults — fix all warnings, never suppress with comments
-- Named exports only — no default exports except Next.js pages
-- File naming: `kebab-case.ts` for files, `PascalCase` for React components
-- Max file length: 300 lines — split if longer
-- Max function length: 40 lines — extract helpers if longer
-- One concern per file — no "utils.ts" dumping grounds
+## Cross-Repository Instructions
 
-## Best Development Practices
+Claude Code starts from the turf-admin repository.
 
-### 1. Service Layer Pattern
-Never write business logic in API routes or React components.
-Always create a service function in `src/services/`.
-```ts
-// WRONG — logic in route
-app.post('/bookings', async (req, res) => {
-  const slot = await db.timeSlot.findFirst(...);
-  if (slot.status !== 'available') ...
-  const booking = await db.booking.create(...);
-  await stripe.paymentIntents.create(...);
-});
+Backend repository: ../turf-api
 
-// CORRECT — thin route, fat service
-app.post('/bookings', async (req, res) => {
-  const result = await BookingService.create(req.body);
-  res.json({ success: true, data: result });
-});
-```
+### For Backend or Full-Stack Tasks
 
-### 2. Always Validate Input with Zod
-Every API endpoint must validate request body/params before touching the DB.
-```ts
-// src/validations/booking.ts
-export const CreateBookingSchema = z.object({
-  groundId: z.string().uuid(),
-  slotId: z.string().uuid(),
-  customerName: z.string().min(2).max(100),
-  customerEmail: z.string().email(),
-  customerPhone: z.string().min(10).max(15),
-});
-```
+1. Read ../turf-api/CLAUDE.md before making backend changes.
+2. Follow the backend repository's coding standards.
+3. Inspect existing backend code before implementation.
+4. Use relevant backend memory when available.
+5. Never assume backend memory is automatically loaded.
+6. Verify API contracts before changing frontend integration.
+7. Run relevant tests in each modified repository.
+8. Review Git changes separately for both repositories.
 
-### 3. Error Handling — Never Throw Naked
-Use a consistent error response shape everywhere.
-```ts
-// src/lib/api-response.ts
-export const success = (data: unknown) => ({ success: true, data });
-export const error = (message: string, code = 400) => ({ success: false, error: message });
+### Memory Rules
 
-// In routes — always try/catch
-try {
-  const data = await BookingService.create(body);
-  return res.status(201).json(success(data));
-} catch (err) {
-  if (err instanceof AppError) return res.status(err.code).json(error(err.message, err.code));
-  console.error(err);
-  return res.status(500).json(error('Internal server error'));
-}
-```
+- Frontend tasks: use frontend project memory.
+- Backend tasks: use backend-specific memory.
+- Full-stack tasks: use relevant context from both.
+- Never apply outdated memory without verifying current code.
+- Never duplicate backend business logic in the frontend.
 
-### 4. Database — Prisma Best Practices
-- Always use Prisma migrations — never edit schema without `prisma migrate dev`
-- Use `db.$transaction([...])` for operations that must be atomic (e.g. create booking + update slot)
-- Never expose Prisma models directly to the client — map to a DTO
-- Add indexes on frequently queried fields: `groundId`, `date`, `status`
-- Soft-delete pattern: add `deletedAt DateTime?` — never hard-delete bookings or payments
-```ts
-// Atomic booking creation — slot + booking in one transaction
-const [updatedSlot, newBooking] = await db.$transaction([
-  db.timeSlot.update({ where: { id: slotId }, data: { status: 'booked' } }),
-  db.booking.create({ data: { ...bookingData } }),
-]);
-```
-
-### 5. Stripe — Secure Payment Flow
-- NEVER handle raw card data — always use Stripe Checkout Sessions
-- Verify webhook signatures on every incoming Stripe event
-- Store `stripePaymentIntentId` on every payment record
-- Refunds via Stripe API only — mark record as `refunded`, never delete
-```ts
-// Always verify webhook
-const event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-```
-
-### 6. Environment Variables
-- Never hardcode secrets or API keys
-- Never commit `.env` or `.env.local` — only commit `.env.example`
-- Validate all env vars at startup using Zod
-```ts
-// src/lib/env.ts — validate on boot
-const EnvSchema = z.object({
-  DATABASE_URL: z.string().url(),
-  STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
-  STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
-  SENDGRID_API_KEY: z.string(),
-  JWT_SECRET: z.string().min(32),
-  NEXT_PUBLIC_APP_URL: z.string().url(),
-});
-export const env = EnvSchema.parse(process.env);
-```
-
-### 7. Authentication & Authorization
-- JWT stored in httpOnly cookie — never localStorage
-- Middleware validates token on every admin route
-- Two roles only: `admin`, `manager` — check role before sensitive actions
-- Always hash passwords with bcrypt (saltRounds: 12)
-- Rate-limit login endpoint (max 5 attempts per 15 min)
-
-### 8. React & Frontend
-- Use React Server Components by default — only add `'use client'` when needed
-- Data fetching in Server Components — never fetch in `useEffect` for initial data
-- Use `next/image` for all images — never bare `` tags
-- Loading states: every async action needs a loading indicator
-- Error boundaries: wrap feature sections with ``
-- Forms: use `react-hook-form` + Zod resolver — no manual `useState` for forms
-- Never store sensitive data in component state or localStorage
-
-### 9. API Conventions
-- All endpoints under `/api/v1/`
-- Response shape: `{ success: boolean, data?, error? }`
-- HTTP status codes: 200 OK · 201 Created · 400 Bad Request · 401 Unauthorized · 404 Not Found · 409 Conflict · 500 Server Error
-- Pagination: `{ data, total, page, limit }` for list endpoints
-- Never return passwords, JWT secrets, or internal IDs in responses
-
-### 10. Git & Commits
-- Branch naming: `feat/`, `fix/`, `chore/`, `refactor/`
-- Commit format: `feat(booking): add slot availability check`
-- Never commit directly to `main` — use PRs
-- One feature per branch — keep PRs small and focused
-- Write meaningful commit messages — no "fix bug" or "update"
-
-### 11. Testing
-- Unit test all service functions in `src/services/`
-- Integration test all API endpoints with Supertest
-- Use a separate test database — never run tests against production DB
-- Mock Stripe and SendGrid in tests — never make real API calls
-- Minimum coverage target: 70% on services
-```bash
-npm test                  # Run all tests
-npm run test:coverage     # Coverage report
-```
-
-### 12. Performance
-- Use `React.memo` only when profiling shows a real problem — not by default
-- Debounce search/filter inputs (300ms)
-- Paginate all list endpoints — never return unbounded arrays
-- Cache ground listings with `next/cache` revalidation (60s)
-- Use database indexes — run `EXPLAIN ANALYZE` on slow queries
-
-### 13. Security Checklist
-- All user input sanitized before DB write
-- SQL injection: impossible with Prisma parameterized queries — do not use raw SQL
-- XSS: Next.js escapes by default — never use `dangerouslySetInnerHTML`
-- CORS: whitelist only your own domain
-- Helmet.js on Express for security headers
-- No sensitive data in URLs or query params
-- Logs must never contain passwords, card numbers, or tokens
-
-## Key Business Rules
-- Slots auto-generated hourly from ground opening/closing time
-- Slot cannot be double-booked — check `status === 'available'` inside a DB transaction
-- Admin-blocked slots are permanently unavailable to customers
-- Cancellation = full refund to original payment method only (card via Stripe; cash, bank transfer, bKash and Nagad marked refunded and paid back by hand; an unverified bKash / Nagad payment is marked failed)
-- Portal payment: card (Stripe Checkout), cash at the venue, or manual bKash / Nagad. The admin switches each on or off in Settings → Payments: card also needs the Stripe keys, and bKash / Nagad show only when the admin has set that number too (switching one off keeps the number); the customer sends the total (service fee included) and enters the TrxID and sender number; the booking stays pending until staff Verify (confirm) or Reject (cancel with `rejectWalletPayment`) it on Confirm Bookings. While under review it isn't money owed (no dues, no Collect payment) and the customer can't cancel directly: before the cutoff they send a cancel request, and staff verify and cancel with a refund, or reject. A verified payment counts as revenue on the day it is verified. No bKash / Nagad API integration
-- Portal cash and bKash / Nagad need the customer signed in with their phone (card stays open to guests); at most 3 open unpaid portal bookings per phone; checkout is rate limited (5 per 10 minutes per phone)
-- Staff can record cash, bank transfer, bKash or Nagad (optional TrxID); a TrxID can't be used twice for the same method while its payment is pending or verified (a rejected one can be reused)
-- Pricing is per-ground, per-hour — fixed, no dynamic pricing in v1
-- Soft-delete only — never hard-delete bookings, payments, or customers
-
-## What Is NOT in v1 — Do Not Implement
-- Mobile app or any native features
-- Coupon or discount codes
-- SMS notifications (email only)
-- Loyalty or points system
-- UPI, or any wallet or payment method beyond card, cash, bank transfer and manual bKash / Nagad (no bKash / Nagad API, no paying a due by wallet through the booking link)
-- Multi-vendor / multi-branch support
-- Advanced analytics beyond daily/weekly revenue CSV
-
-## Environment Variables
-```
-DATABASE_URL=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-SENDGRID_API_KEY=
-JWT_SECRET=
-NEXT_PUBLIC_APP_URL=
-NODE_ENV=
-```
-
-## Commands
-```bash
-npm run dev                  # Start dev server (port 3000)
-npm run build                # Production build
-npm run lint                 # ESLint check
-npm run test                 # Run test suite
-npx prisma migrate dev       # Apply DB migrations
-npx prisma generate          # Regenerate Prisma client
-npx prisma studio            # Open DB GUI
-```
-
-## When in doubt — ask before implementing. Keep it simple. Ship v1 first.
+- This repository is the Next.js 14 App Router frontend for the Turf Management System v1.
+- It contains the admin dashboard and customer booking portal.
+- The separate sibling repository ../turf-api is the NestJS 12 backend and owns API endpoints, database, authentication enforcement, booking/payment business logic, and integrations.
+- This file contains frontend development rules only. Do not implement Prisma, Stripe webhooks, SendGrid delivery, NestJS controllers, or database migrations here.
+- Verify current source and package.json before assuming any dependency, script, or folder exists.
+Frontend Architecture
+- Follow existing Next.js App Router conventions under src/app/, including the existing admin and portal route groups where present.
+- Reuse shared components from src/components/ui/ and feature components from src/components/features/ where present.
+- Keep UI presentation, reusable hooks, API clients, form validation, and types appropriately separated based on the actual project structure.
+- Prefer Server Components where suitable; use Client Components for interactivity, browser APIs, and client state.
+- Respect existing authentication/session and data-fetching patterns; do not invent a parallel architecture.
+Senior-Level Code Quality
+- Write readable, maintainable, production-ready TypeScript. Avoid any and unsafe type assertions; follow the current tsconfig without changing strictness unrequested.
+- Follow DRY, KISS, separation of concerns, and existing conventions. Do not over-engineer.
+- Prefer named exports except where Next.js requires default exports.
+- Use descriptive names, focused components/functions, and feature-specific helpers rather than catch-all utility files.
+- Reuse existing UI components, hooks, themes, schemas, and API clients before creating new ones.
+- Avoid unrelated refactors, unapproved dependencies, and premature memoization.
+- Use Prettier and the project's configured lint rules; do not suppress warnings without a justified reason.
+Mobile-First UX (Critical)
+- Customers and staff primarily use phones. Design every UI change mobile-first.
+- Verify widths of 320, 375, 390, and 430 px, then tablet and desktop layouts.
+- Use responsive layouts, touch-friendly controls, readable text, accessible labels, and usable mobile forms.
+- Avoid horizontal overflow, clipped dialogs, inaccessible navigation, and fixed widths that break on small screens.
+- Respect the existing design system, theme tokens, spacing, and colors; do not introduce arbitrary hardcoded colors.
+- Provide loading, empty, error, success, and disabled states where relevant.
+- Preserve keyboard accessibility and sensible focus behavior.
+API Integration (Cross-Repo Boundary)
+- Frontend consumes the backend through /api/v1; the frontend may proxy requests to the API server.
+- Before adding or changing API calls, inspect existing frontend API clients and the actual backend contract.
+- Account for backend response envelopes ({ success: true, data } or { success: false, error }) and nested pagination data as implemented.
+- Treat server-side authorization, payment verification, slot availability, pricing, and cancellation rules as backend-owned.
+- Frontend may validate inputs for UX but must not be the sole enforcer of business rules.
+- Do not expose secrets, store sensitive tokens in localStorage, or log private customer/payment data.
+- Do not modify ../turf-api unless the task requires it.
+Multi-Repository Claude Workflow
+- Claude Code usually starts from this turf-admin repository.
+- Backend path: ../turf-api (only if present and accessible).
+- For backend or full-stack tasks, explicitly read ../turf-api/CLAUDE.md before backend edits.
+- Determine whether a request affects frontend, backend, or both. Never assume both must change.
+- Check Git branch and working tree separately in every affected repository.
+- Coordinate request/response contracts and verify integration after cross-repo changes.
+- If backend access is unavailable, explain the limitation instead of guessing or fabricating an API.
+- Example startup from this repository: claude --add-dir ../turf-api (subject to Claude Code permissions).
+Agentic Development Workflow
+1. Analyze: Read relevant files, existing patterns, active branch, and working-tree changes.
+2. Plan: For nontrivial tasks, outline the smallest safe implementation and key edge cases.
+3. Implement: Make focused, reusable changes within the appropriate repository.
+4. Verify: Run available frontend type-check/lint/tests/build; use Playwright for critical UI flows when configured, especially mobile.
+5. Review: Inspect Git diff; report changed files, behavior, verification results, and any untested items.
+Never claim tests passed unless they were run. Never commit, push, discard user changes, or run destructive commands without explicit approval.
+RAG Learning Notes
+- When the user is actively learning RAG in this project, maintain docs/rag-learning.md in Bangla with English technical terms.
+- Add verified concepts and practical examples learned during the task; avoid duplicate or speculative notes.
+- Do not implement RAG features unless specifically requested.
+Frontend Product Constraints
+- Preserve current customer/admin booking, authentication, payment-option, and cancellation UX as defined by the backend contract.
+- The frontend may display card (Stripe Checkout), cash at venue, and manual bKash/Nagad options when enabled by backend settings; never pretend manual wallet payments are automatically verified.
+- Keep v1 scope focused: do not introduce native mobile apps, coupons, loyalty, multi-branch support, or unsupported payment methods without approval.
+- Responsive mobile web UI is required; this does not imply building a native mobile app.
+Commands
+- Inspect package.json and the lockfile to determine the actual package manager and scripts.
+- Use existing project commands for development, linting, type checking, testing, and builds; do not assume missing scripts exist.
+Final Rule
+When in doubt, inspect the code and ask before making architectural or destructive changes. Keep changes focused and ship v1 safely.
