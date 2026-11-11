@@ -260,6 +260,24 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  /*
+   * Feel like an app on phones: no grey flash on tap, no double-tap zoom delay, and no rubber-band
+   * bounce showing the page edge (scroll areas inside still scroll).
+   */
+  html {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  summary,
+  [role="button"] {
+    touch-action: manipulation;
+  }
   /* Tailwind v4 leaves buttons on the default cursor. */
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
