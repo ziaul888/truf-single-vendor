@@ -1,3 +1,4 @@
+import type { Viewport } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { Facebook, Instagram, LayoutDashboard, MessageCircle, Phone } from "lucide-react";
@@ -8,6 +9,10 @@ import type { PublicVenue } from "@/types/settings";
 import { VenueMark } from "@/components/portal/venue-mark";
 import { MobileMenu } from "@/components/portal/mobile-menu";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
+import { PortalTabBar } from "@/components/portal/portal-tab-bar";
+
+/** The browser / status bar takes the pitch background. */
+export const viewport: Viewport = { themeColor: "#0b2612" };
 
 /**
  * The portal locks to the `pitch` theme regardless of the admin theme toggle —
@@ -15,23 +20,26 @@ import { CustomerNav } from "@/components/portal/account/customer-nav";
  * globals.css under `.pitch`.
  */
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { venue, social } = await getPublicWebsite();
+  const [{ venue, social }, bookHref] = await Promise.all([getPublicWebsite(), bookingHref()]);
   return (
-    // Below lg, room at the bottom for a page's fixed action bar (`data-mobile-cta`) so it doesn't cover the footer.
-    <div className="pitch flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))]">
-      <PortalHeader venue={venue} />
+    // Below lg, room at the bottom for a page's fixed action bar (`data-mobile-cta`) so it doesn't cover the footer;
+    // while that bar is up, the phone tab bar (`data-portal-tabs`) steps aside for it.
+    <div className="pitch flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))] has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden">
+      <PortalHeader venue={venue} bookHref={bookHref} />
       <main className="flex-1">{children}</main>
       <PortalFooter venue={venue} social={social} />
+      <PortalTabBar bookHref={bookHref} />
     </div>
   );
 }
 
-async function PortalHeader({ venue }: { venue: PublicVenue }) {
-  const [cookieStore, bookHref] = await Promise.all([cookies(), bookingHref()]);
+async function PortalHeader({ venue, bookHref }: { venue: PublicVenue; bookHref: string }) {
+  const cookieStore = await cookies();
   const isAdmin = Boolean(cookieStore.get("admin_token")?.value);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-sidebar text-sidebar-foreground">
+    // The top padding clears the status bar when the app runs full-screen.
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-sidebar pt-[env(safe-area-inset-top)] text-sidebar-foreground">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex min-w-0 items-center gap-2">
           <VenueMark logoUrl={venue.logoUrl} name={venue.name} />
@@ -66,10 +74,11 @@ async function PortalHeader({ venue }: { venue: PublicVenue }) {
               <span className="hidden sm:inline">Dashboard</span>
             </Link>
           )}
-          <CustomerNav />
+          {/* Phones reach the account and booking from the tab bar, leaving the venue name room */}
+          <span className="hidden md:contents"><CustomerNav /></span>
           <Link
             href={bookHref}
-            className="inline-flex h-10 items-center whitespace-nowrap rounded-lg bg-accent px-3 text-sm font-semibold text-accent-foreground hover:opacity-90 sm:px-4"
+            className="hidden h-10 items-center whitespace-nowrap rounded-lg bg-accent px-3 text-sm font-semibold text-accent-foreground hover:opacity-90 sm:px-4 md:inline-flex"
           >
             Book now
           </Link>

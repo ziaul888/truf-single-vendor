@@ -43,7 +43,7 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
       <aside
         onMouseLeave={() => { if (!drawer) showSection(null); }}
         className={cn(
-          "relative flex h-dvh overflow-hidden bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out border-r border-sidebar-border",
+          "relative flex h-dvh overflow-hidden pt-[env(safe-area-inset-top)] bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out border-r border-sidebar-border",
           collapsed ? "w-18" : drawer ? "w-[min(20rem,88vw)]" : "w-72",
         )}
       >

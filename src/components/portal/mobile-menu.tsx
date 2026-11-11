@@ -3,21 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, HelpCircle, LayoutDashboard, LogOut, MapPin, Menu, Phone, Trophy } from "lucide-react";
+import { HelpCircle, LayoutDashboard, LogOut, MapPin, Menu, Phone } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCustomerSession, useCustomerSignOut } from "@/components/portal/account/use-customer-session";
 
 const LINKS = [
   { href: "/#how", label: "How it works", Icon: HelpCircle },
-  { href: "/my-bookings", label: "My bookings", Icon: CalendarDays },
   { href: "/#visit", label: "Visit us", Icon: MapPin },
 ];
 
-/** The header's links for phones and small tablets, where the inline nav is hidden. */
+/** The header's links for phones and small tablets, where the inline nav is hidden (the tab bar has Book and My bookings). */
 export function MobileMenu({ phone, isAdmin, bookHref }: { phone: string; isAdmin: boolean; bookHref: string }) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
-  const links = [{ href: bookHref, label: "Our grounds", Icon: Trophy }, ...LINKS];
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -31,7 +29,7 @@ export function MobileMenu({ phone, isAdmin, bookHref }: { phone: string; isAdmi
       <SheetContent className="pitch max-w-xs border-l border-white/10 bg-sidebar text-sidebar-foreground">
         <SheetTitle className="px-6 pb-2 pt-5 text-base">Menu</SheetTitle>
         <nav className="flex flex-col px-3">
-          {links.map(({ href, label, Icon }) => (
+          {LINKS.map(({ href, label, Icon }) => (
             <Link key={href} href={href} onClick={close}
               className="flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium hover:bg-white/5 hover:text-accent">
               <Icon className="h-5 w-5 text-accent" />{label}

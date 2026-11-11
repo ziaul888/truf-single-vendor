@@ -16,7 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: venue.name, template: `%s · ${venue.name}` },
     description: "Check live slot availability and book your turf online.",
-    ...(venue.logoUrl && { icons: { icon: venue.logoUrl } }),
+    icons: { ...(venue.logoUrl && { icon: venue.logoUrl }), apple: "/app-icon?size=180" },
+    // Opened from the home screen it runs full screen, like an app; headers pad for the status bar.
+    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: venue.name },
   };
 }
 
@@ -30,7 +32,8 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           {children}
-          <Toaster richColors position="top-right" />
+          {/* Full screen on a phone, toasts clear the status bar. */}
+          <Toaster richColors position="top-right" mobileOffset={{ top: "calc(env(safe-area-inset-top) + 12px)" }} />
         </Providers>
       </body>
     </html>

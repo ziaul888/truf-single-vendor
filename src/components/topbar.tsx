@@ -1,38 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
 import { GlobalSearch } from "@/components/global-search";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { sectionTitle } from "@/components/section-title";
 import { useMe } from "@/hooks/useMe";
 
-export function Topbar({
-  title,
-  onMenuClick,
-}: {
-  title?: string;
-  onMenuClick?: () => void;
-}) {
+export function Topbar({ title }: { title?: string }) {
   const { data: me } = useMe();
+  const pathname = usePathname();
 
+  // Below lg the header clears the iOS status bar (full-screen app) and names the current section;
+  // the Menu tab in the bottom bar opens the drawer.
   return (
-    <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
-      <div className="flex shrink-0 items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          onClick={onMenuClick}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-        <h2 className="hidden text-base font-semibold text-foreground sm:block">
+    <header className="flex h-[calc(3.5rem_+_env(safe-area-inset-top))] shrink-0 items-center gap-4 border-b bg-card px-4 pt-[env(safe-area-inset-top)] md:px-6 lg:h-[calc(4rem_+_env(safe-area-inset-top))]">
+      <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none sm:shrink-0">
+        <h2 className="truncate text-base font-semibold text-foreground lg:hidden">
+          {sectionTitle(pathname)}
+        </h2>
+        <h2 className="hidden text-base font-semibold text-foreground lg:block">
           {title ?? "Dashboard"}
         </h2>
       </div>
 
-      <div className="flex flex-1 justify-center">
+      {/* Phones: the search trigger shrinks to an icon button; it opens the same palette. */}
+      <div className="flex justify-center sm:flex-1 max-sm:[&>button]:w-9 max-sm:[&>button]:justify-center max-sm:[&>button]:px-0 max-sm:pointer-coarse:[&>button]:w-10 max-sm:[&>button>span]:hidden">
         <GlobalSearch />
       </div>
 

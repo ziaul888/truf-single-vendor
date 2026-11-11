@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
+import { AdminTabBar } from "@/components/admin-tab-bar";
 
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
@@ -25,7 +26,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background">
+    // The tab bar steps aside while a page shows its own fixed MobileActionBar.
+    <div className="flex h-dvh overflow-hidden bg-background has-[[data-mobile-action-bar]]:[&_[data-tab-bar]]:hidden">
       {/* Mobile backdrop */}
       {mobileOpen && (
         <div
@@ -52,8 +54,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       {/* Main area */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <Topbar onMenuClick={() => setMobileOpen((o) => !o)} />
+        <Topbar />
         <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 md:px-10 md:py-6">{children}</main>
+        <AdminTabBar menuOpen={mobileOpen} onMenuClick={() => setMobileOpen((o) => !o)} />
       </div>
     </div>
   );
