@@ -1,7 +1,8 @@
 import Image from "next/image";
-import { Calendar, MapPin, ShieldCheck } from "lucide-react";
+import { Calendar, MapPin, Navigation, Phone, ShieldCheck } from "lucide-react";
 import type { WebsiteSections } from "@/validations/website-settings";
 import type { PublicVenue } from "@/types/settings";
+import { HomeSection } from "./home-section";
 import { isUploadedImage } from "./is-uploaded-image";
 
 export function VisitUsSection({
@@ -10,20 +11,30 @@ export function VisitUsSection({
   content: WebsiteSections["visitUs"]; venue: PublicVenue;
 }) {
   return (
-    <section id="visit" className="bg-card py-8 sm:py-14">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-6 px-4 sm:gap-10 sm:px-6 md:grid-cols-2 lg:px-8">
-        <div>
+    <HomeSection id="visit">
+      <div className="grid overflow-hidden rounded-3xl border bg-card md:grid-cols-2">
+        <div className="relative h-52 md:h-auto md:min-h-96">
+          <Image
+            src={content.imageUrl}
+            alt="The venue"
+            fill
+            unoptimized={isUploadedImage(content.imageUrl)}
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
+          />
+        </div>
+        <div className="p-5 sm:p-8">
           {content.badge && (
             <span className="inline-block rounded-full bg-accent px-3 py-1 text-xs font-bold tracking-wider text-accent-foreground">
               {content.badge}
             </span>
           )}
-          <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:mt-4 sm:text-4xl">{content.title}</h2>
+          <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-4xl">{content.title}</h2>
           <ContactDetails venue={venue} />
+          <Actions venue={venue} />
         </div>
-        <VenueImage src={content.imageUrl} mapUrl={venue.mapUrl} />
       </div>
-    </section>
+    </HomeSection>
   );
 }
 
@@ -32,43 +43,38 @@ function ContactDetails({ venue }: { venue: PublicVenue }) {
   const reception = [venue.phone, venue.email].filter(Boolean).join(" · ");
   return (
     <dl className="mt-4 space-y-3 text-sm sm:mt-6 sm:space-y-4">
-      {(venue.address || venue.mapUrl) && (
-        <Detail Icon={MapPin} label="Address">
-          {venue.address}
-          {venue.mapUrl && (
-            <a href={venue.mapUrl} target="_blank" rel="noopener noreferrer" className="ml-1 text-xs text-primary underline">
-              Get directions →
-            </a>
-          )}
-        </Detail>
-      )}
+      {venue.address && <Detail Icon={MapPin} label="Address">{venue.address}</Detail>}
       {venue.openHours && <Detail Icon={Calendar} label="Open hours">Every day · {venue.openHours}</Detail>}
       {reception && <Detail Icon={ShieldCheck} label="Reception">{reception}</Detail>}
     </dl>
   );
 }
 
-function VenueImage({ src, mapUrl }: { src: string; mapUrl: string }) {
-  const image = (
-    <div className="relative h-48 overflow-hidden rounded-2xl border sm:h-72">
-      <Image
-        src={src}
-        alt="The venue"
-        fill
-        unoptimized={isUploadedImage(src)}
-        sizes="(max-width: 768px) 100vw, 50vw"
-        className="object-cover opacity-90"
-      />
-      <div className="absolute inset-0 bg-sidebar/20" />
-      {mapUrl && (
-        <div className="absolute inset-x-4 bottom-4 flex items-center gap-3 rounded-lg bg-card p-3 text-sm">
-          <MapPin className="h-5 w-5 text-primary" />
-          <span className="font-medium">Open in Google Maps</span>
-        </div>
+/** The two things a visitor does with this section, as big tap targets. */
+function Actions({ venue }: { venue: PublicVenue }) {
+  if (!venue.mapUrl && !venue.phone) return null;
+  return (
+    <div className="mt-5 flex flex-col gap-2 sm:mt-6 sm:flex-row">
+      {venue.mapUrl && (
+        <a
+          href={venue.mapUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90"
+        >
+          <Navigation className="h-4 w-4" /> Get directions
+        </a>
+      )}
+      {venue.phone && (
+        <a
+          href={`tel:${venue.phone.replace(/[^\d+]/g, "")}`}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-6 text-sm font-semibold hover:bg-muted"
+        >
+          <Phone className="h-4 w-4" /> Call
+        </a>
       )}
     </div>
   );
-  return mapUrl ? <a href={mapUrl} target="_blank" rel="noopener noreferrer">{image}</a> : image;
 }
 
 function Detail({
@@ -78,8 +84,10 @@ function Detail({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <Icon className="mt-0.5 h-5 w-5 text-primary" />
-      <div>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
         <dt className="font-semibold">{label}</dt>
         <dd className="text-muted-foreground">{children}</dd>
       </div>
