@@ -12,7 +12,8 @@ import { useBookings } from "@/hooks/useBookings";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useGrounds } from "@/hooks/useGrounds";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { formatSlotDate, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import { cn } from "@/lib/utils";
 
 interface PageEntry {
@@ -182,7 +183,7 @@ function SearchPalette({ onSelect }: { onSelect: () => void }) {
                 onSelect={() => go(`/dashboard/bookings/${b.id}`)}
                 icon={<CalendarDays className="h-4 w-4 text-blue-500" />}
                 label={`${b.bookingNumber} · ${b.contact.name || b.customer.name} · ${b.ground.name}`}
-                hint={`${formatSlotDate(b.slot.date)} · ${slotTimeLabel(b.slot)}`}
+                hint={`${formatSlotDate(b.slot.date)} · ${formatBookingSlots(b)}`}
               />
             ))}
           </Command.Group>

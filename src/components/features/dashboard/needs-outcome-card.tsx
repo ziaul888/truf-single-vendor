@@ -6,7 +6,8 @@ import { ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardAttention } from "@/hooks/useDashboard";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import type { NeedsOutcomeBooking } from "@/types/dashboard";
 import { NoShowDialog, type NoShowTarget } from "@/components/features/bookings/no-show-dialog";
 import { CollectByIdDialog } from "./collect-by-id-dialog";
@@ -66,7 +67,7 @@ function OutcomeRow({ booking: b, onCollect, onNoShow }: { booking: NeedsOutcome
         <Link href={`/dashboard/bookings/${b.id}`} className="font-mono text-xs hover:underline">{b.bookingNumber}</Link>
         <span className="ml-2 font-medium">{b.customerName}</span>
         <p className="text-xs text-muted-foreground">
-          {b.groundName} · {formatSlotDate(b.slot.date)} {slotTimeLabel(b.slot)}
+          {b.groundName} · {formatSlotDate(b.slot.date)} {formatBookingSlots(b)}
           {!underReview(b) && b.due > 0 && <> · <span className="text-amber-600 dark:text-amber-400">{slotPriceLabel(b.due)} due</span></>}
           {b.payAtVenue && " · Pay at venue"}
         </p>

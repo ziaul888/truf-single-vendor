@@ -2,7 +2,8 @@ import Image from "next/image";
 import { Map } from "lucide-react";
 import type { PublicBooking } from "@/types/booking";
 import { fromMinorUnits } from "@/lib/ground-format";
-import { formatSlotDate, slotTimeLabel } from "@/lib/slot-format";
+import { bookingSlotCount, formatBookingSlots } from "@/lib/booking-slots";
+import { formatSlotDate, slotCountLabel, slotStartTime, slotTimeLabel } from "@/lib/slot-format";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { PAYMENT_STATUS_LABEL, WALLET_NAME, isUnderReview, type ConfirmationState } from "./confirmation-state";
 
@@ -34,6 +35,7 @@ export function BookingDetailsCard({
   booking: PublicBooking; state: ConfirmationState; venueName: string; children?: React.ReactNode;
 }) {
   const pill = STATUS_PILL[state];
+  const slotCount = bookingSlotCount(b);
   return (
     <div className="mt-10 rounded-2xl bg-card p-4 text-left sm:p-6 text-card-foreground">
       <div className="flex items-center gap-3 border-b pb-4">
@@ -57,11 +59,17 @@ export function BookingDetailsCard({
       <dl className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
         <Stat label="Booking" value={b.bookingNumber} />
         <Stat label="Date" value={formatSlotDate(b.slot.date)} />
-        <Stat label="Time" value={slotTimeLabel(b.slot)} />
+        <Stat label={slotCount > 1 ? `Time · ${slotCountLabel(slotCount)}` : "Time"} value={formatBookingSlots(b)} />
       </dl>
 
       <div className="mt-4 space-y-1.5 border-t pt-4 text-sm">
-        <Line label="Slot" value={taka(b.amount)} />
+        {b.slots && b.slots.length > 1 ? (
+          b.slots.map((s) => (
+            <Line key={slotStartTime(s)} label={slotTimeLabel(s)} value={taka(s.price)} />
+          ))
+        ) : (
+          <Line label="Slot" value={taka(b.amount)} />
+        )}
         <Line label="Service fee" value={taka(b.serviceFee)} />
         <Line label="Total" value={taka(b.total)} bold />
         {b.paid > 0 && b.due > 0 && !isUnderReview(b) && (

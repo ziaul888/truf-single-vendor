@@ -12,17 +12,19 @@ import type { CheckoutMethod } from "@/types/booking";
 import { CUSTOMER_SESSION_KEY, useCustomerSession } from "@/components/portal/account/use-customer-session";
 import { checkoutFormSchema, CHECKOUT_FIELDS, EMAIL_REQUIRED_MESSAGE, type CheckoutFormValues } from "./checkout-schema";
 import { Field, PaymentChoice, SignInNotice } from "./checkout-fields";
-import { takaLabel } from "./checkout-totals";
+import { formatSlotsParam, MAX_SLOTS_PER_BOOKING, slotStartMinute, slotStartTime } from "@/lib/slot-format";
+import type { PublicSlot } from "@/types/slot";
+import { slotsSubtotal, takaLabel } from "./checkout-totals";
 import { useCheckoutOptions } from "./use-checkout-options";
 import { WalletFields } from "./wallet-fields";
 
 interface FormError { message: string; slotTaken: boolean; myBookings?: boolean }
 
 export function CheckoutForm({
-  groundId, date, hour, startMinute, slotPrice, disabled, initialMethod = "card",
+  groundId, date, slots, disabled, initialMethod = "card",
 }: {
-  /** startMinute: 30 when a 90-minute slot starts on the half hour. */
-  groundId: string; date: string; hour: number; startMinute: number; slotPrice: number; disabled: boolean;
+  /** One ground and date; 1 to 4 slots, earliest first (prices in the smallest unit). */
+  groundId: string; date: string; slots: PublicSlot[]; disabled: boolean;
   /** The method chosen before signing in (`?method=` on the way back). */
   initialMethod?: CheckoutMethod;
 }) {
@@ -65,8 +67,8 @@ export function CheckoutForm({
   const busy = isSubmitting || leaving;
   // Cash, bKash and Nagad need a signed-in customer (turf-api: 401 SIGN_IN_REQUIRED); card stays open to guests.
   const needsSignIn = method !== "card" && !session;
-  const minuteParam = startMinute ? `&minute=${startMinute}` : "";
-  const signInHref = `/sign-in?from=${encodeURIComponent(`/checkout?groundId=${groundId}&date=${date}&hour=${hour}${minuteParam}&method=${method}`)}`;
+  const slotsParam = formatSlotsParam(slots.map(slotStartTime));
+  const signInHref = `/sign-in?from=${encodeURIComponent(`/checkout?groundId=${groundId}&date=${date}&slots=${slotsParam}&method=${method}`)}`;
 
   // Keep the form's value on the method shown, so the wallet fields are validated when they apply.
   useEffect(() => {
@@ -78,7 +80,8 @@ export function CheckoutForm({
     try {
       const { customerName, customerEmail, customerPhone, reference, payerNumber } = values;
       const result = await startCheckout({
-        groundId, date, hour, startMinute, customerName, customerEmail, customerPhone, paymentMethod: method,
+        groundId, date, slots: slots.map((s) => ({ startHour: s.startHour, startMinute: slotStartMinute(s) })),
+        customerName, customerEmail, customerPhone, paymentMethod: method,
         ...(wallet && { reference: reference.trim().toUpperCase(), payerNumber: payerNumber.trim() }),
       });
       setLeaving(true);
@@ -114,14 +117,18 @@ export function CheckoutForm({
         message: "You already have 3 unpaid bookings waiting. Pay or cancel one of them first, or pay by card.",
         slotTaken: false, myBookings: true,
       });
+    } else if (err.code === "TOO_MANY_SLOTS") {
+      setFormError({ message: `You can book up to ${options.data?.maxSlotsPerBooking ?? MAX_SLOTS_PER_BOOKING} slots at a time. Pick fewer slots and try again.`, slotTaken: true });
+    } else if (err.code === "SLOTS_MUST_SHARE_GROUND_DATE") {
+      setFormError({ message: "All slots in one booking must be on the same ground and day.", slotTaken: true });
     } else if (err.code === "TOO_MANY_ATTEMPTS") {
       setFormError({ message: "Too many booking attempts. Please wait a few minutes and try again.", slotTaken: false });
-    } else if (err.code === "SLOT_NOT_AVAILABLE") setFormError({ message: "Sorry, someone just booked this slot.", slotTaken: true });
+    } else if (err.code === "SLOT_NOT_AVAILABLE") setFormError({ message: "Sorry, someone just booked one of these slots.", slotTaken: true });
     else if (err.code === "GROUND_CLOSED") setFormError({ message: "Sorry, the ground is closed on that day.", slotTaken: true });
     else setFormError({ message: err.message, slotTaken: false });
   };
 
-  const total = options.data ? takaLabel(slotPrice + options.data.serviceFee) : null;
+  const total = options.data ? takaLabel(slotsSubtotal(slots) + options.data.serviceFee) : null;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8 space-y-6 rounded-2xl border bg-card p-4 sm:p-6">

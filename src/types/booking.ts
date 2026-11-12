@@ -33,6 +33,19 @@ export type BookingSource = "portal" | "staff";
 
 export interface StaffRef { id: string; name: string }
 
+/** One slot of a booking (a booking holds 1 to 4 on one ground and date). `price` is in the smallest unit. */
+export interface BookingSlot extends SlotMinutes {
+  /** Missing on a customer's (public) booking. */
+  id?: string;
+  date: string;
+  startHour: number;
+  endHour: number;
+  price: number;
+  /** `cancelled` once the booking is cancelled (cancelling releases every slot). */
+  status: "active" | "cancelled";
+  cancelledAt: string | null;
+}
+
 /** Admin booking. `contact` is what was given for this booking; `customer` is the customer record. */
 export interface Booking {
   id: string;
@@ -49,6 +62,9 @@ export interface Booking {
   ground: { id: string; name: string; sport: Sport };
   /** Read the time through lib/slot-format: it can start or end on a half hour. */
   slot: { id: string; date: string; startHour: number; endHour: number } & SlotMinutes;
+  /** Every slot, earliest first. Missing from older APIs: use `slot` (see lib/booking-slots). */
+  slots?: BookingSlot[];
+  slotCount?: number;
   /** `email` null: the customer has no email (no customer emails are sent). */
   customer: { id: string; name: string; phone: string; email: string | null };
   contact: { name: string; email: string | null; phone: string };
@@ -125,7 +141,8 @@ export interface BookingPage {
 }
 
 export interface CreateBookingInput {
-  slotId: string;
+  /** 1 to 4 slots of one ground and date. */
+  slotIds: string[];
   /** `email` optional: left out, the customer's stored one is used, else none. */
   customer: { id?: string; name: string; phone: string; email?: string };
   payment:
@@ -145,6 +162,8 @@ export interface CheckoutOptions {
   serviceFee: number;
   currency: string;
   holdMinutes: number;
+  /** Most slots one booking can hold. Missing from older APIs: assume 4. */
+  maxSlotsPerBooking?: number;
 }
 
 export const CHECKOUT_METHODS = ["card", "cash", ...WALLET_METHODS] as const;
@@ -168,6 +187,9 @@ export interface PublicBooking {
   walletPayment: Omit<WalletPayment, "payerNumber"> | null;
   ground: { id: string; name: string; sport: Sport; format: GroundFormat | null; address: string | null; coverPhoto: string | null };
   slot: { date: string; startHour: number; endHour: number } & SlotMinutes;
+  /** Every slot, earliest first. Missing from older APIs: use `slot` (see lib/booking-slots). */
+  slots?: BookingSlot[];
+  slotCount?: number;
   amount: number;
   serviceFee: number;
   total: number;

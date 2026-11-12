@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { OFFLINE_METHODS } from "@/types/booking";
 import { WEEKDAYS } from "@/types/ground";
-import { addDays, venueToday } from "@/lib/slot-format";
+import { addDays, MAX_SLOTS_PER_BOOKING, venueToday } from "@/lib/slot-format";
 import { OptionalEmailSchema } from "@/validations/customer";
 import { OptionalTrxIdSchema } from "@/validations/wallet";
 
@@ -11,7 +11,8 @@ export const SERIES_MAX_DAYS = 30;
 const AddBookingFields = z.object({
   groundId: z.string().min(1, "Select a ground"),
   date: z.string().min(1, "Select a date").refine((d) => d >= venueToday(), "Date can't be in the past"),
-  slotId: z.string().min(1, "Select a time slot"),
+  /** 1 to MAX_SLOTS_PER_BOOKING slots of the chosen ground and date. */
+  slotIds: z.array(z.string().min(1)).min(1, "Select a time slot").max(MAX_SLOTS_PER_BOOKING, `Up to ${MAX_SLOTS_PER_BOOKING} slots per booking`),
   customerName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
   customerPhone: z.string().trim().refine((p) => p.replace(/\D/g, "").length >= 10, "Enter a valid phone number"),
   /** Optional; "" for none. */
@@ -50,14 +51,14 @@ function checkAdvance(data: PaymentFields, ctx: z.RefinementCtx, withDueDate = t
 
 /**
  * Staff (walk-in / phone) booking. Amounts are whole currency units here; the page converts
- * them to the smallest unit. "Advance must be below the slot price" is checked on submit,
- * because the price comes from the chosen slot.
+ * them to the smallest unit. "Advance must be below the total" is checked on submit,
+ * because the price comes from the chosen slots.
  */
 export const AddBookingSchema = AddBookingFields.superRefine((data, ctx) => checkAdvance(data, ctx));
 
 /** The same form with Repeat on: an hour and weekdays instead of one slot. */
 export const RepeatBookingSchema = AddBookingFields.extend({
-  slotId: z.string(),
+  slotIds: z.array(z.string()),
   repeat: z.literal(true),
   repeatMode: z.enum(["fixed", "ongoing"]),
   weekdays: z.array(z.enum(WEEKDAYS)).min(1, "Pick at least one day"),

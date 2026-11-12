@@ -23,7 +23,7 @@ import { useCreateBooking } from "@/hooks/useBookings";
 import { useCreateSeries, useSeriesPreview } from "@/hooks/useBookingSeries";
 import { applyApiErrors, toApiFailure, type ApiFailure } from "@/lib/api-error";
 import { fromMinorUnits, toMinorUnits } from "@/lib/ground-format";
-import { durationLabel, venueToday } from "@/lib/slot-format";
+import { durationLabel, MAX_SLOTS_PER_BOOKING, slotCountLabel, venueToday } from "@/lib/slot-format";
 import { AddBookingSchema, RepeatBookingSchema, type AddBookingFormData } from "@/schemas";
 import { isWalletMethod, type CreateBookingInput } from "@/types/booking";
 import { ChevronLeft } from "lucide-react";
@@ -31,7 +31,7 @@ import { toast } from "sonner";
 
 /** The API reports nested fields ("customer.name"); these are the form fields they belong to. */
 const API_FIELD: Record<string, keyof AddBookingFormData> = {
-  slotId: "slotId",
+  slotIds: "slotIds",
   "customer.name": "customerName",
   "customer.phone": "customerPhone",
   "customer.email": "customerEmail",
@@ -61,7 +61,7 @@ const repeatResolver = zodResolver(RepeatBookingSchema) as Resolver<AddBookingFo
 const resolver: Resolver<AddBookingFormData> = (values, context, options) =>
   (values.repeat ? repeatResolver : bookingResolver)(values, context, options);
 
-function toCreateInput(data: AddBookingFormData, known: KnownCustomer | null): CreateBookingInput {
+function toCreateInput(data: AddBookingFormData, slotIds: string[], known: KnownCustomer | null): CreateBookingInput {
   const customer = toCustomerInput(data, known);
   const note = data.partialNote?.trim() || undefined;
   const reference = isWalletMethod(data.paymentMethod) && data.paymentReference ? data.paymentReference : undefined;
@@ -69,7 +69,7 @@ function toCreateInput(data: AddBookingFormData, known: KnownCustomer | null): C
     data.paymentType === "none" ? { type: "none" }
     : data.paymentType === "full" ? { type: "full", method: data.paymentMethod, reference }
     : { type: "partial", method: data.paymentMethod, amount: toMinorUnits(data.advanceAmount ?? 0), dueDate: data.dueDate || undefined, reference, note };
-  return { slotId: data.slotId, customer, payment, notes: data.notes?.trim() || undefined };
+  return { slotIds, customer, payment, notes: data.notes?.trim() || undefined };
 }
 
 export default function AddBookingPage() {
@@ -82,7 +82,7 @@ export default function AddBookingPage() {
     resolver,
     defaultValues: {
       // Most walk-in and phone bookings are for today.
-      groundId: "", date: venueToday(), slotId: "",
+      groundId: "", date: venueToday(), slotIds: [],
       customerName: "", customerPhone: "", customerEmail: "",
       paymentType: "full", paymentMethod: "cash", paymentReference: "",
       advanceAmount: 0, dueDate: "", partialNote: "", notes: "",
@@ -91,8 +91,8 @@ export default function AddBookingPage() {
   });
 
   const { register, watch, setValue, setError, handleSubmit, formState: { errors, isSubmitting } } = form;
-  const [groundId, date, slotId, paymentType, paymentMethod, advanceAmount] = [
-    watch("groundId"), watch("date"), watch("slotId"),
+  const [groundId, date, slotIds, paymentType, paymentMethod, advanceAmount] = [
+    watch("groundId"), watch("date"), watch("slotIds") ?? [],
     watch("paymentType"), watch("paymentMethod"), Number(watch("advanceAmount") ?? 0),
   ];
   const [repeat, repeatMode, weekdays, untilDate, startHour] = [
@@ -108,7 +108,8 @@ export default function AddBookingPage() {
 
   const { data: slots, isLoading: slotsLoading, refetch: refetchSlots } = useAvailableSlots(groundId, date);
   const selectedGround = grounds?.find((g) => g.id === groundId);
-  const selectedSlot   = slots?.find((s) => s.id === slotId);
+  // Only slots still on offer count (a refresh can take one away), earliest first.
+  const selectedSlots  = (slots ?? []).filter((s) => slotIds.includes(s.id)).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const patternInput = repeat ? toPatternInput({ groundId, date, repeatMode, weekdays, untilDate, startHour }) : null;
   const preview = useSeriesPreview(patternInput);
@@ -117,22 +118,35 @@ export default function AddBookingPage() {
   const previewSettled = !!seriesPreview && !preview.isFetching && !preview.isPlaceholderData;
   const createSeries = useCreateSeries();
 
-  // The slot's own price covers slot length and peak hours; fall back to the hourly price.
-  // Repeat: the total of every free date.
-  const totalAmount    = repeat ? fromMinorUnits(seriesPreview?.total ?? 0) : selectedSlot?.price ?? selectedGround?.pricePerHour ?? 0;
+  // Each slot's own price covers slot length and peak hours; fall back to the hourly price.
+  // Several slots: their sum. Repeat: the total of every free date.
+  const totalAmount    = repeat ? fromMinorUnits(seriesPreview?.total ?? 0)
+    : selectedSlots.length > 0 ? selectedSlots.reduce((sum, s) => sum + (s.price ?? selectedGround?.pricePerHour ?? 0), 0)
+    : selectedGround?.pricePerHour ?? 0;
   const slotLength     = durationLabel(selectedGround?.slotDurationMinutes ?? 60);
 
-  function handleApiError(err: unknown) {
+  /** Reload the free slots and keep only the picked ones that are still free (the API doesn't say which was taken). */
+  async function pruneSelection() {
+    const fresh = (await refetchSlots()).data;
+    setValue("slotIds", fresh ? slotIds.filter((id) => fresh.some((s) => s.id === id)) : []);
+  }
+
+  async function handleApiError(err: unknown) {
     const failure = toApiFailure(err);
     const slotGone: Record<string, string> = {
-      SLOT_NOT_AVAILABLE: "That slot was just taken. Pick another one.",
+      SLOT_NOT_AVAILABLE: "A slot was just taken. Check your selection and pick again.",
       GROUND_CLOSED: "The ground is closed on that day. Pick another date.",
-      SLOT_IN_PAST: "That slot has ended. Pick another one.",
+      SLOT_IN_PAST: "A slot has ended. Pick another one.",
+      SLOTS_MUST_SHARE_GROUND_DATE: "All slots in one booking must be on the same ground and date.",
     };
+    if (failure.code === "TOO_MANY_SLOTS") {
+      toast.error(`A booking holds up to ${MAX_SLOTS_PER_BOOKING} slots. Remove a slot and try again.`);
+      return;
+    }
     if (failure.code && slotGone[failure.code]) {
-      setValue("slotId", "");
-      refetchSlots();
       toast.error(slotGone[failure.code]);
+      if (failure.code === "SLOT_NOT_AVAILABLE") await pruneSelection();
+      else { setValue("slotIds", []); refetchSlots(); }
       return;
     }
     if (failure.code === "NOTHING_TO_BOOK") {
@@ -164,13 +178,13 @@ export default function AddBookingPage() {
     if (data.repeat && !seriesPreview?.bookableCount) {
       return toast.error("None of these dates are free. Change the days, time or dates.");
     }
-    if (!data.repeat && !selectedSlot) return setError("slotId", { message: "Select a time slot" });
+    if (!data.repeat && selectedSlots.length === 0) return setError("slotIds", { message: "Select a time slot" });
     if (data.paymentType === "partial" && (data.advanceAmount ?? 0) >= totalAmount) {
       return setError("advanceAmount", { message: `Advance must be less than ${takaLabel(totalAmount)}` });
     }
     if (data.repeat) return submitSeries(data);
     try {
-      const booking = await createBooking.mutateAsync(toCreateInput(data, knownCustomer));
+      const booking = await createBooking.mutateAsync(toCreateInput(data, selectedSlots.map((s) => s.id), knownCustomer));
       toast.success(`Booking ${booking.bookingNumber} created`);
       router.push(`/dashboard/bookings/${booking.id}`);
     } catch (err) {
@@ -221,7 +235,9 @@ export default function AddBookingPage() {
                     <div className="h-8 w-px bg-border" />
                     <div>
                       <p className="text-xs text-muted-foreground">Duration</p>
-                      <p className="mt-0.5 text-lg font-semibold">{selectedSlot ? slotLength : "—"}</p>
+                      <p className="mt-0.5 text-lg font-semibold">
+                        {selectedSlots.length === 0 ? "—" : selectedSlots.length > 1 ? `${slotCountLabel(selectedSlots.length)} · ${slotLength} each` : slotLength}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -264,7 +280,7 @@ export default function AddBookingPage() {
           <div className="hidden lg:col-span-1 lg:block">
             <div className={repeat ? "sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto" : "sticky top-6"}>
               {repeat ? <SeriesPreviewCard {...previewProps} /> : (
-                <BookingSummarySidebar ground={selectedGround} slot={selectedSlot} date={date}
+                <BookingSummarySidebar ground={selectedGround} slots={selectedSlots} date={date}
                   paymentType={paymentType} paymentMethod={paymentMethod} advanceAmount={advanceAmount} />
               )}
             </div>

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import type { Booking } from "@/types/booking";
 import { Phone, UserX, XCircle } from "lucide-react";
 import { PAYMENT_STATUS_LABEL, canMarkNoShow, isCancellable, paymentStatusVariant } from "./booking-status-helpers";
@@ -48,7 +49,7 @@ function BookingListCard({ booking: b, showGround, onCancel, onNoShow }: Omit<Bo
         <div className="min-w-0">
           <Link href={`/dashboard/bookings/${b.id}`} className="block truncate font-medium hover:underline">{b.contact.name}</Link>
           <p className="truncate text-xs text-muted-foreground">
-            {showGround && <>{b.ground.name} · </>}{formatSlotDate(b.slot.date)} · {slotTimeLabel(b.slot)}
+            {showGround && <>{b.ground.name} · </>}{formatSlotDate(b.slot.date)} · {formatBookingSlots(b)}
           </p>
           <a href={`tel:${b.contact.phone}`} className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
             <Phone className="h-3 w-3" />{b.contact.phone}

@@ -7,11 +7,14 @@ import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Ground } from "@/types/api";
 import type { PublicClosure, PublicSlot } from "@/types/slot";
-import { formatPeakRanges, fromMinorUnits } from "@/lib/ground-format";
-import { addDays, slotStartMinute, slotStartTime, venueToday } from "@/lib/slot-format";
+import { formatPeakRanges } from "@/lib/ground-format";
+import {
+  addDays, formatSlotsParam, MAX_SLOTS_PER_BOOKING, slotCountLabel, slotStartTime, slotTimeLabel, venueToday,
+} from "@/lib/slot-format";
 import { SkeletonBlock } from "@/components/portal/loading/skeleton-block";
+import { takaLabel } from "@/components/portal/checkout/checkout-totals";
+import { useCheckoutOptions } from "@/components/portal/checkout/use-checkout-options";
 
-const SERVICE_FEE = 50;
 /** Days offered in the picker; turf-api returns at most 14 per request. */
 const DAYS_SHOWN = 7;
 
@@ -53,26 +56,39 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
   const [activeDate, setActiveDate] = useState(
     dates.find((d) => d.iso === initialDate)?.iso ?? dates[0].iso,
   );
-  /** The picked slot's start, "16:30": 90-minute slots start on half hours. */
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  /** The picked slots' starts, "16:30" (90-minute slots start on half hours): one date, up to the limit. */
+  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
   const { data: allSlots, isLoading, isError } = usePublicSlots(ground.id, dates[0].iso, dates[dates.length - 1].iso);
   const daySlots = (allSlots ?? []).filter((s) => s.date === activeDate);
   const { data: closures } = usePublicClosures(dates[0].iso, dates[dates.length - 1].iso);
   const closure = closureFor(closures ?? [], ground.id, activeDate);
-  const selected = daySlots.find((s) => slotStartTime(s) === selectedTime);
-  const price = selected ? fromMinorUnits(selected.price) : null;
-  const total = price != null ? price + SERVICE_FEE : null;
+  const { data: options } = useCheckoutOptions();
+  const maxSlots = options?.maxSlotsPerBooking ?? MAX_SLOTS_PER_BOOKING;
+  // Only slots that are still free count (a refresh can take one away), earliest first.
+  const selected = daySlots
+    .filter((s) => s.available && selectedTimes.includes(slotStartTime(s)))
+    .sort((a, b) => slotStartTime(a).localeCompare(slotStartTime(b)));
+  const subtotal = selected.reduce((sum, s) => sum + s.price, 0);
+  // The fee comes from turf-api; until it is loaded the total is only a subtotal.
+  const serviceFee = options?.serviceFee ?? null;
+  const atLimit = selected.length >= maxSlots;
+
+  function toggleTime(time: string) {
+    // Built from `selected` (still-free slots), so a slot a refresh took away can't use up the limit.
+    const current = selected.map(slotStartTime);
+    setSelectedTimes(
+      current.includes(time) ? current.filter((t) => t !== time) : current.length < maxSlots ? [...current, time] : current,
+    );
+  }
 
   function handleContinue() {
-    if (!selected) return;
+    if (selected.length === 0) return;
     const params = new URLSearchParams({
       groundId: ground.id,
       date: activeDate,
-      hour: String(selected.startHour),
+      slots: formatSlotsParam(selected.map(slotStartTime), maxSlots),
     });
-    // Only half-hour starts add `minute`, so whole-hour links stay as they were.
-    if (slotStartMinute(selected)) params.set("minute", String(slotStartMinute(selected)));
     router.push(`/checkout?${params.toString()}`);
   }
 
@@ -91,10 +107,10 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Select date
       </p>
-      <DateStrip dates={dates} active={activeDate} onPick={(iso) => { setActiveDate(iso); setSelectedTime(null); }} />
+      <DateStrip dates={dates} active={activeDate} onPick={(iso) => { setActiveDate(iso); setSelectedTimes([]); }} />
 
       <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Available hours
+        Available hours <span className="font-normal normal-case">· pick up to {maxSlots}</span>
       </p>
       {isLoading ? (
         <div className="grid grid-cols-3 gap-2">
@@ -107,32 +123,49 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
           {closure ? closure.label : "Closed on this day."}
         </p>
       ) : (
-        <HourGrid slots={daySlots} selected={selectedTime} onPick={setSelectedTime} />
+        <HourGrid slots={daySlots} selected={selectedTimes} atLimit={atLimit} onPick={toggleTime} />
+      )}
+      {atLimit && (
+        <p role="status" className="mt-2 text-xs text-muted-foreground">Up to {maxSlots} slots per booking</p>
       )}
 
-      {total != null && (
+      {selected.length > 0 && (
         <div className="mt-5 space-y-1.5 border-t pt-4 text-sm">
-          <Row label={slotLabel(ground.slotDurationMinutes ?? 60)} value={`৳${price!.toLocaleString()}`} />
-          <Row label="Service fee" value={`৳${SERVICE_FEE}`} />
-          <Row label="Total" value={`৳${total.toLocaleString()}`} bold />
+          {selected.map((s) => (
+            <Row key={slotStartTime(s)} label={slotTimeLabel(s)} value={takaLabel(s.price)} />
+          ))}
+          <Row label={selected.length > 1 ? `Subtotal · ${slotCountLabel(selected.length)}` : "Subtotal"} value={takaLabel(subtotal)} />
+          {serviceFee != null ? (
+            <>
+              <Row label="Service fee" value={takaLabel(serviceFee)} />
+              <Row label="Total" value={takaLabel(subtotal + serviceFee)} bold />
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">Service fee added at checkout.</p>
+          )}
         </div>
       )}
 
       {/* Once an hour is picked, phones continue from the sticky bar instead */}
       <button
-        disabled={!selected}
+        disabled={selected.length === 0}
         onClick={handleContinue}
         className={cn(
           "mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold",
-          !selected
+          selected.length === 0
             ? "cursor-not-allowed bg-muted text-muted-foreground"
             : "max-lg:hidden bg-accent text-accent-foreground hover:opacity-90"
         )}
       >
         Continue to payment <ArrowRight className="h-4 w-4" />
       </button>
-      {selected && total != null && (
-        <MobileContinueBar time={slotStartTime(selected)} total={total} onContinue={handleContinue} />
+      {selected.length > 0 && (
+        <MobileContinueBar
+          count={selected.length}
+          amount={serviceFee != null ? subtotal + serviceFee : subtotal}
+          isTotal={serviceFee != null}
+          onContinue={handleContinue}
+        />
       )}
     </div>
   );
@@ -169,25 +202,30 @@ function DateStrip({
 }
 
 function HourGrid({
-  slots, selected, onPick,
+  slots, selected, atLimit, onPick,
 }: {
-  slots: PublicSlot[]; selected: string | null; onPick: (time: string) => void;
+  slots: PublicSlot[]; selected: string[]; atLimit: boolean; onPick: (time: string) => void;
 }) {
   return (
     <div className="grid grid-cols-3 gap-2">
       {slots.map((slot) => {
         const { available, isPeak } = slot;
         const time = slotStartTime(slot);
-        const isSelected = selected === time;
+        const isSelected = selected.includes(time);
+        // At the limit only the picked slots stay tappable (to take one off).
+        const limited = available && atLimit && !isSelected;
         return (
           <button
             key={time}
-            disabled={!available}
+            type="button"
+            aria-pressed={isSelected}
+            disabled={!available || limited}
             onClick={() => onPick(time)}
             className={cn(
               "min-h-11 rounded-lg border px-2 py-2.5 text-sm transition",
               !available && "cursor-not-allowed bg-muted/50 text-muted-foreground line-through",
-              available && !isSelected && "hover:border-primary",
+              limited && "cursor-not-allowed opacity-50",
+              available && !isSelected && !limited && "hover:border-primary",
               isSelected && "bg-primary text-primary-foreground border-primary"
             )}
           >
@@ -200,10 +238,14 @@ function HourGrid({
 }
 
 /**
- * Phones only: the picked hour, the total and Continue, pinned to the bottom of the screen.
+ * Phones only: how many slots, the amount and Continue, pinned to the bottom of the screen.
  * `data-mobile-cta` lets the portal layout pad its bottom so the bar never covers the footer.
  */
-function MobileContinueBar({ time, total, onContinue }: { time: string; total: number; onContinue: () => void }) {
+function MobileContinueBar({
+  count, amount, isTotal, onContinue,
+}: {
+  count: number; amount: number; isTotal: boolean; onContinue: () => void;
+}) {
   return (
     <div
       data-mobile-cta
@@ -211,8 +253,8 @@ function MobileContinueBar({ time, total, onContinue }: { time: string; total: n
     >
       <div className="mx-auto flex max-w-xl items-center gap-3">
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-xs text-muted-foreground">{time} · total</p>
-          <p className="text-lg font-bold">৳{total.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">{slotCountLabel(count)} · {isTotal ? "total" : "subtotal"}</p>
+          <p className="text-lg font-bold">{takaLabel(amount)}</p>
         </div>
         <button
           type="button"
@@ -248,6 +290,3 @@ function buildDates(count: number) {
 }
 
 const pad = (n: number) => n.toString().padStart(2, "0");
-
-/** "1 hr slot", "2 hr slot", "1 hr 30 min slot". */
-const slotLabel = (minutes: number) => (minutes === 90 ? "1 hr 30 min slot" : `${minutes / 60} hr slot`);

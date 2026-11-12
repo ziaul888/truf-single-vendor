@@ -101,3 +101,60 @@ export const formatEventTime = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", {
     timeZone: VENUE_TIME_ZONE, day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true,
   });
+
+// ── Several slots in one booking (one ground and date, at most MAX_SLOTS_PER_BOOKING) ──
+
+/** The most slots one booking can hold; turf-api sends the real limit as `maxSlotsPerBooking`. */
+export const MAX_SLOTS_PER_BOOKING = 4;
+
+const START_TIME = /^(\d{1,2}):(00|30)$/;
+
+/** "18:00,19:30" (the `slots` URL param) → valid start times "HH:MM", de-duplicated, earliest first, capped. */
+export function parseSlotsParam(value: string | undefined, max = MAX_SLOTS_PER_BOOKING): string[] {
+  const times = (value ?? "").split(",").flatMap((part) => {
+    const match = START_TIME.exec(part.trim());
+    return match && Number(match[1]) <= 23 ? [clockTime(Number(match[1]), Number(match[2]))] : [];
+  });
+  return [...new Set(times)].sort().slice(0, max);
+}
+
+/** Start times "HH:MM" → the `slots` URL param. */
+export function formatSlotsParam(times: string[], max = MAX_SLOTS_PER_BOOKING): string {
+  return [...new Set(times)].sort().slice(0, max).join(",");
+}
+
+/** "16:30" → { startHour: 16, startMinute: 30 }, the shape turf-api takes for a checkout slot. */
+export function startOfTime(time: string): { startHour: number; startMinute: number } {
+  const [hour, minute] = time.split(":").map(Number);
+  return { startHour: hour, startMinute: minute || 0 };
+}
+
+const clock12 = (hour: number, minute: number) => `${(hour % 24) % 12 || 12}:${pad2(minute)}`;
+const meridiem = (hour: number) => ((hour % 24) < 12 ? "AM" : "PM");
+
+/**
+ * Booked times as a short label. One slot reads as slotTimeLabel ("6 PM–7 PM"); back-to-back
+ * slots merge into one range ("6:00 – 8:30 PM"); a gap starts a new range ("6:00 – 7:00 PM, 8:30 – 9:30 PM").
+ */
+export function formatSlotRange(slots: SlotTimes[]): string {
+  if (slots.length === 1) return slotTimeLabel(slots[0]);
+  const sorted = [...slots].sort((a, b) => slotStartHours(a) - slotStartHours(b));
+  const runs: { start: SlotTimes; end: SlotTimes }[] = [];
+  for (const slot of sorted) {
+    const last = runs[runs.length - 1];
+    if (last && slotEndHours(last.end) === slotStartHours(slot)) last.end = slot;
+    else runs.push({ start: slot, end: slot });
+  }
+  return runs
+    .map(({ start, end }) => {
+      const from = clock12(start.startHour, slotStartMinute(start));
+      const to = clock12(end.endHour, slotEndMinute(end));
+      return meridiem(start.startHour) === meridiem(end.endHour)
+        ? `${from} – ${to} ${meridiem(end.endHour)}`
+        : `${from} ${meridiem(start.startHour)} – ${to} ${meridiem(end.endHour)}`;
+    })
+    .join(", ");
+}
+
+/** "2 slots" / "1 slot". */
+export const slotCountLabel = (count: number) => `${count} ${count === 1 ? "slot" : "slots"}`;

@@ -1,20 +1,27 @@
 "use client";
 
 import { fromMinorUnits } from "@/lib/ground-format";
+import { slotTimeLabel } from "@/lib/slot-format";
+import type { PublicSlot } from "@/types/slot";
 import { useCheckoutOptions } from "./use-checkout-options";
 
 /** "৳1,550" from an amount in the smallest unit. */
 export const takaLabel = (minor: number) => `৳${fromMinorUnits(minor).toLocaleString()}`;
 
-/** Price lines for the summary sidebar: slot price plus the service fee from turf-api. */
-export function CheckoutTotals({ slotPrice, isPeak }: { slotPrice: number; isPeak: boolean }) {
+/** Sum of the slot prices (smallest unit); the service fee is added once on top. */
+export const slotsSubtotal = (slots: Pick<PublicSlot, "price">[]) => slots.reduce((sum, s) => sum + s.price, 0);
+
+/** Price lines for the summary sidebar: one per slot, the service fee from turf-api once, and the total. */
+export function CheckoutTotals({ slots }: { slots: PublicSlot[] }) {
   const { data: options, isPending, isError } = useCheckoutOptions();
   const fee = options ? takaLabel(options.serviceFee) : isPending ? "…" : "—";
-  const total = options ? takaLabel(slotPrice + options.serviceFee) : isPending ? "…" : "—";
+  const total = options ? takaLabel(slotsSubtotal(slots) + options.serviceFee) : isPending ? "…" : "—";
 
   return (
     <div className="mt-4 space-y-1.5 border-t pt-4 text-sm">
-      <Line label={isPeak ? "Slot (peak)" : "Slot"} value={takaLabel(slotPrice)} />
+      {slots.map((s) => (
+        <Line key={`${s.startHour}:${s.startMinute ?? s.startTime}`} label={`${slotTimeLabel(s)}${s.isPeak ? " (peak)" : ""}`} value={takaLabel(s.price)} />
+      ))}
       <Line label="Service fee" value={fee} />
       <Line label="Total" value={total} bold />
       {isError && <p className="text-xs text-destructive">Couldn&apos;t load the service fee.</p>}

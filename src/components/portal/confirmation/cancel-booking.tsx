@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { cancelPublicBooking } from "@/lib/portal-bookings";
+import { bookingSlotCount } from "@/lib/booking-slots";
 import type { PublicBooking } from "@/types/booking";
 
-/** "Cancel booking" with an in-page confirmation step. Cancelling refunds in full and frees the slot. */
+/** "Cancel booking" with an in-page confirmation step. Cancelling refunds in full and frees the slot (every slot, for a booking with several). */
 export function CancelBooking({
   booking, token, onCancelled,
 }: {
@@ -37,7 +38,7 @@ export function CancelBooking({
   return (
     <div role="alertdialog" aria-label="Cancel booking" className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
       <p className="font-semibold">Cancel this booking?</p>
-      <p className="mt-1 text-muted-foreground">The slot will be released.{refundNote}</p>
+      <p className="mt-1 text-muted-foreground">{bookingSlotCount(booking) > 1 ? `All ${bookingSlotCount(booking)} slots will be released.` : "The slot will be released."}{refundNote}</p>
       {cancel.isError && (
         <p role="alert" className="mt-2 text-destructive">{cancel.error.message}</p>
       )}

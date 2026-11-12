@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { useConfirmBooking } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import { OFFLINE_METHODS, isWalletMethod, type Booking } from "@/types/booking";
 import { OptionalTrxIdSchema } from "@/validations/wallet";
 import { CheckCircle2 } from "lucide-react";
@@ -106,7 +107,7 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
       <div className="space-y-3 py-3">
         <div className="space-y-1.5 rounded-md border bg-muted/30 p-3 text-sm">
           <Row label="Ground">{booking.ground.name}</Row>
-          <Row label="Date & Time">{formatSlotDate(booking.slot.date)} {slotTimeLabel(booking.slot)}</Row>
+          <Row label="Date & Time">{formatSlotDate(booking.slot.date)} {formatBookingSlots(booking)}</Row>
           <Row label="Total">{slotPriceLabel(booking.total)}</Row>
           <Row label="Due">{slotPriceLabel(booking.due)}</Row>
           <Row label="Payment">

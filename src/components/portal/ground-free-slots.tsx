@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { slotPriceLabel, slotStartMinute, slotStartTime } from "@/lib/slot-format";
+import { formatSlotsParam, slotPriceLabel, slotStartTime } from "@/lib/slot-format";
 import type { PublicSlot } from "@/types/slot";
 
-/** Checkout link; only half-hour starts add `minute`, so whole-hour links stay as they were. */
+/** Checkout link for one slot (`slots=18:00`); the checkout page also still reads old `hour` links. */
 function checkoutHref(groundId: string, date: string, s: PublicSlot) {
-  const params = new URLSearchParams({ groundId, date, hour: String(s.startHour) });
-  if (slotStartMinute(s)) params.set("minute", String(slotStartMinute(s)));
-  return `/checkout?${params}`;
+  return `/checkout?${new URLSearchParams({ groundId, date, slots: formatSlotsParam([slotStartTime(s)]) })}`;
 }
 
 /** A ground's free slots on the searched date; each one goes straight to checkout. */

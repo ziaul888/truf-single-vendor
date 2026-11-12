@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, ChevronRight } from "lucide-react";
 import { listMyBookings, toAppPath } from "@/lib/portal-bookings";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { bookingSlotCount, formatBookingSlots } from "@/lib/booking-slots";
+import { formatSlotDate, slotCountLabel, slotPriceLabel } from "@/lib/slot-format";
 import { SkeletonBlock } from "@/components/portal/loading/skeleton-block";
 import { isUnderReview } from "@/components/portal/confirmation/confirmation-state";
 
@@ -35,7 +36,7 @@ export function AccountBookingsCard() {
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next up</p>
           <p className="mt-1 font-semibold">{next.ground.name}</p>
           <p className="text-sm text-muted-foreground">
-            {formatSlotDate(next.slot.date)} · {slotTimeLabel(next.slot)} · {next.bookingNumber}
+            {formatSlotDate(next.slot.date)} · {formatBookingSlots(next)}{bookingSlotCount(next) > 1 && ` (${slotCountLabel(bookingSlotCount(next))})`} · {next.bookingNumber}
           </p>
           {next.due > 0 && !isUnderReview(next) && <p className="mt-1 text-sm font-semibold text-accent">{slotPriceLabel(next.due)} to pay</p>}
         </Link>

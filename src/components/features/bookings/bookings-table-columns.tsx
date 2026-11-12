@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Booking } from "@/types/booking";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import { Phone, UserX, XCircle } from "lucide-react";
 import {
   PAYMENT_STATUS_LABEL, canMarkNoShow, isCancellable, paymentStatusVariant,
@@ -46,7 +47,7 @@ export function getBookingColumns(
     },
     { id: "ground", header: "Ground", cell: ({ row }) => row.original.ground.name },
     { id: "date", header: "Date", cell: ({ row }) => formatSlotDate(row.original.slot.date) },
-    { id: "time", header: "Time", cell: ({ row }) => slotTimeLabel(row.original.slot) },
+    { id: "time", header: "Time", cell: ({ row }) => formatBookingSlots(row.original) },
     { id: "total", header: "Total", cell: ({ row }) => slotPriceLabel(row.original.total) },
     {
       id: "paidDue",

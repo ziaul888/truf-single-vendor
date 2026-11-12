@@ -34,9 +34,8 @@ export const getCheckoutOptions = () => call<CheckoutOptions>("/checkout/options
 export const startCheckout = (body: {
   groundId: string;
   date: string;
-  hour: number;
-  /** 0 or 30: 90-minute slots can start on the half hour. */
-  startMinute: number;
+  /** 1 to 4 slots on this ground and date, by start time (0 or 30 minutes: 90-minute slots start on the half hour). */
+  slots: { startHour: number; startMinute?: number }[];
   customerName: string;
   /** "" for none: only when signed in (a guest gets 400 EMAIL_REQUIRED). */
   customerEmail: string;

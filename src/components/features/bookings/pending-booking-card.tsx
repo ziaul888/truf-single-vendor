@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Booking } from "@/types/booking";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import { Phone, MapPin, CalendarDays, Banknote, Clock, StickyNote, CheckCircle2, XCircle, CreditCard } from "lucide-react";
 import {
   PAYMENT_STATUS_LABEL, isAwaitingCardPayment, isAwaitingWalletVerification, paymentStatusVariant, timeAgo,
@@ -63,7 +64,7 @@ export function PendingBookingCard({
                 {booking.paid > 0 && <span className="text-xs">({slotPriceLabel(booking.due)} due)</span>}
               </div>
               <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5 shrink-0" /><span>{slotTimeLabel(booking.slot)}</span>
+                <Clock className="h-3.5 w-3.5 shrink-0" /><span>{formatBookingSlots(booking)}</span>
               </div>
             </div>
 
