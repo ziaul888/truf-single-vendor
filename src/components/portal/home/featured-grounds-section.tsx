@@ -1,32 +1,29 @@
-import Link from "next/link";
-import { GroundCard } from "@/components/portal/ground-card";
+import { GroundTile } from "@/components/portal/home/ground-tile";
 import { listPublicGrounds } from "@/services/portal-grounds";
 import type { WebsiteSections } from "@/validations/website-settings";
+import { HomeSection, SectionHeading } from "./home-section";
 
 const FEATURED_COUNT = 6;
 
 export async function FeaturedGroundsSection({ content }: { content: WebsiteSections["featuredGrounds"] }) {
   const grounds = (await listPublicGrounds()).slice(0, FEATURED_COUNT);
+  if (grounds.length === 0) return null;
 
   return (
-    <section id="grounds" className="bg-muted/30 py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">{content.title}</h2>
-            {content.subtitle && <p className="mt-1 text-sm text-muted-foreground">{content.subtitle}</p>}
-          </div>
-          <Link href="/grounds" className="hidden text-sm font-medium hover:text-primary sm:inline">
-            View as list →
-          </Link>
-        </div>
-        {/* A lone card in a 3-column grid looks lost: let it span the width on larger screens. */}
-        <div className={grounds.length === 1 ? "mx-auto max-w-md sm:max-w-2xl" : "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"}>
+    <HomeSection id="grounds">
+      <SectionHeading title={content.title} subtitle={content.subtitle} href="/grounds" linkLabel={grounds.length > 1 ? "View all" : "Slots"} />
+      {grounds.length === 1 ? (
+        <GroundTile ground={grounds[0]} wide />
+      ) : (
+        // Swipeable cards on phones, a grid from sm
+        <ul className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 lg:grid-cols-3 [&::-webkit-scrollbar]:hidden">
           {grounds.map((g) => (
-            <GroundCard key={g.id} ground={g} />
+            <li key={g.id} className="w-[78%] shrink-0 snap-start sm:w-auto">
+              <GroundTile ground={g} />
+            </li>
           ))}
-        </div>
-      </div>
-    </section>
+        </ul>
+      )}
+    </HomeSection>
   );
 }

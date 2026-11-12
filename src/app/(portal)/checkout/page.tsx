@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround, getPublicSlots } from "@/services/portal-grounds";
-import { formatSlotDate, slotStartMinute, slotTimeLabel } from "@/lib/slot-format";
+import { clockTime, formatSlotDate, formatSlotRange, parseSlotsParam, slotCountLabel, slotStartTime } from "@/lib/slot-format";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { CheckoutStepper } from "@/components/portal/checkout/checkout-stepper";
 import { CheckoutForm } from "@/components/portal/checkout/checkout-form";
@@ -15,18 +15,21 @@ import type { PublicSlot } from "@/types/slot";
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ groundId?: string; date?: string; hour?: string; minute?: string; method?: string }>;
+  searchParams: Promise<{ groundId?: string; date?: string; slots?: string; hour?: string; minute?: string; method?: string }>;
 }) {
-  const { groundId, date, hour, minute, method } = await searchParams;
+  const { groundId, date, slots: slotsParam, hour, minute, method } = await searchParams;
   const ground = groundId ? await getPublicGround(groundId) : null;
 
+  // `slots=18:00,19:30` (one ground and date). Older links carry one slot as `hour` and `minute`.
   const hourNum = hour && /^\d+$/.test(hour) ? Number(hour) : null;
   // A 90-minute slot can start on the half hour (`minute=30`); older links have no minute.
-  const minuteNum = minute === "30" ? 30 : 0;
-  // The slot's price comes from turf-api (peak hours included), so the portal doesn't calculate it.
-  const slots = ground && date ? await getPublicSlots(ground.id, date) : [];
-  const slot = slots.find((s) => s.startHour === hourNum && slotStartMinute(s) === minuteNum);
-  const unavailable = !!ground && hourNum != null && !slot?.available;
+  const legacyTime = hourNum != null && hourNum < 24 ? [clockTime(hourNum, minute === "30" ? 30 : 0)] : [];
+  const requestedTimes = slotsParam !== undefined ? parseSlotsParam(slotsParam) : legacyTime;
+  // The slot prices come from turf-api (peak hours included), so the portal doesn't calculate them.
+  const daySlots = ground && date ? await getPublicSlots(ground.id, date) : [];
+  const slots = requestedTimes.flatMap((time) => daySlots.find((s) => slotStartTime(s) === time) ?? []);
+  // Any slot missing or taken makes the whole booking unavailable.
+  const unavailable = !!ground && requestedTimes.length > 0 && (slots.length !== requestedTimes.length || slots.some((s) => !s.available));
 
   return (
     <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
@@ -43,15 +46,13 @@ export default async function CheckoutPage({
           </p>
         )}
 
-        {ground && <CompactSummary ground={ground} date={date} slot={slot} />}
+        {ground && <CompactSummary ground={ground} date={date} slots={slots} />}
 
-        {ground && date && hourNum != null && slot ? (
+        {ground && date && slots.length > 0 && slots.length === requestedTimes.length ? (
           <CheckoutForm
             groundId={ground.id}
             date={date}
-            hour={hourNum}
-            startMinute={minuteNum}
-            slotPrice={slot.price}
+            slots={slots}
             disabled={unavailable}
             initialMethod={CHECKOUT_METHODS.find((m) => m === method)}
           />
@@ -69,7 +70,7 @@ export default async function CheckoutPage({
         <div className="rounded-2xl border bg-card p-5">
           <h3 className="mb-3 font-bold">Your booking</h3>
           {ground ? (
-            <BookingSummary ground={ground} date={date} slot={slot} />
+            <BookingSummary ground={ground} date={date} slots={slots} />
           ) : (
             <p className="text-sm text-muted-foreground">
               No slot selected. <Link className="underline" href="/grounds">Pick a ground</Link> first.
@@ -81,7 +82,7 @@ export default async function CheckoutPage({
   );
 }
 
-function BookingSummary({ ground, date, slot }: { ground: Ground; date?: string; slot?: PublicSlot }) {
+function BookingSummary({ ground, date, slots }: { ground: Ground; date?: string; slots: PublicSlot[] }) {
   return (
     <>
       <div className="flex gap-3">
@@ -100,12 +101,12 @@ function BookingSummary({ ground, date, slot }: { ground: Ground; date?: string;
       </div>
       <dl className="mt-4 space-y-2 text-sm">
         <Row label="Date" value={date ? formatSlotDate(date) : "—"} />
-        <Row label="Time" value={slot ? slotTimeLabel(slot) : "—"} />
+        <Row label={slots.length > 1 ? `Time · ${slotCountLabel(slots.length)}` : "Time"} value={slots.length > 0 ? formatSlotRange(slots) : "—"} />
         {ground.sport && ground.format && (
           <Row label="Sport" value={`${cap(ground.sport)} · ${FORMAT_LABEL[ground.format]}`} />
         )}
       </dl>
-      {slot && <CheckoutTotals slotPrice={slot.price} isPeak={slot.isPeak} />}
+      {slots.length > 0 && <CheckoutTotals slots={slots} />}
       <GroundRules rules={ground.rules} heading="h3" className="mt-4 border-t pt-4" />
     </>
   );
@@ -115,7 +116,7 @@ function BookingSummary({ ground, date, slot }: { ground: Ground; date?: string;
  * Below lg: what is being booked and its total, above the form, with the ground rules the form
  * asks to agree to (folded away so the form isn't pushed down).
  */
-function CompactSummary({ ground, date, slot }: { ground: Ground; date?: string; slot?: PublicSlot }) {
+function CompactSummary({ ground, date, slots }: { ground: Ground; date?: string; slots: PublicSlot[] }) {
   return (
     <div className="mt-6 rounded-2xl border bg-card p-4 lg:hidden">
       <div className="flex items-center gap-2">
@@ -123,9 +124,9 @@ function CompactSummary({ ground, date, slot }: { ground: Ground; date?: string;
         <p className="min-w-0 truncate font-semibold">{ground.name}</p>
       </div>
       <p className="mt-1 text-sm text-muted-foreground">
-        {date ? formatSlotDate(date) : "—"} · {slot ? slotTimeLabel(slot) : "—"}
+        {date ? formatSlotDate(date) : "—"} · {slots.length > 0 ? formatSlotRange(slots) : "—"}
       </p>
-      {slot && <CheckoutTotals slotPrice={slot.price} isPeak={slot.isPeak} />}
+      {slots.length > 0 && <CheckoutTotals slots={slots} />}
       {ground.rules?.trim() && (
         <details className="mt-4 border-t pt-4 text-sm">
           <summary className="cursor-pointer font-bold">Ground rules</summary>

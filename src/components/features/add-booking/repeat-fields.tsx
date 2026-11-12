@@ -35,7 +35,7 @@ export function RepeatToggle({ form, slotStartTime }: { form: Form; slotStartTim
 
   function onToggle(on: boolean) {
     setValue("repeat", on);
-    clearErrors(["slotId", "startHour", "weekdays", "untilDate"]);
+    clearErrors(["slotIds", "startHour", "weekdays", "untilDate"]);
     if (!on) return;
     const { date, weekdays, untilDate, startHour } = getValues();
     // Start from the picked date's weekday and slot, booked for four weeks.

@@ -139,10 +139,19 @@
   --sidebar-ring:        oklch(0.65  0.24  28);
 }
 
+/* The pitch background, also painted on the document so a page load never flashes the light theme */
+:root {
+  --pitch-background: oklch(0.24 0.05 150);
+}
+html:has(.pitch),
+html:has(.pitch) body {
+  background-color: var(--pitch-background);
+}
+
 /* ─── Pitch theme — Stadium under floodlights (forest green + gold) ── */
 .pitch {
   /* Base — deep forest green, like a perfectly cut pitch at night */
-  --background:          oklch(0.24  0.05  150);
+  --background:          var(--pitch-background);
   --foreground:          oklch(0.97  0.01  150);
 
   /* Card / Popover — subtle lift above bg */
@@ -285,6 +294,45 @@
   summary {
     cursor: pointer;
   }
+  /*
+   * Press feedback for every button and button-like link. Tap highlight is off (above), so without
+   * this nothing shows a tap landed: they brighten on hover (mouse only) and sink on press.
+   * Opt out with the `no-press` class. Tailwind transition/active utilities on an element still win.
+   */
+  button:not(:disabled, .no-press),
+  [role="button"]:not([aria-disabled="true"], .no-press),
+  summary,
+  a[class*="bg-primary"]:not(.no-press),
+  a[class*="bg-accent"]:not(.no-press),
+  a[class*="hover:opacity-90"]:not(.no-press),
+  a[class*="hover:bg-"]:not(.no-press),
+  a[class*="hover:border-"]:not(.no-press) {
+    transition:
+      transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      filter 140ms ease-out,
+      background-color 140ms ease-out,
+      border-color 140ms ease-out,
+      opacity 140ms ease-out;
+  }
+  @media (hover: hover) {
+    button:not(:disabled, .no-press):hover,
+    [role="button"]:not([aria-disabled="true"], .no-press):hover,
+    a[class*="bg-primary"]:not(.no-press):hover,
+    a[class*="bg-accent"]:not(.no-press):hover {
+      filter: brightness(1.06);
+    }
+  }
+  button:not(:disabled, .no-press):active,
+  [role="button"]:not([aria-disabled="true"], .no-press):active,
+  summary:active,
+  a[class*="bg-primary"]:not(.no-press):active,
+  a[class*="bg-accent"]:not(.no-press):active,
+  a[class*="hover:opacity-90"]:not(.no-press):active,
+  a[class*="hover:bg-"]:not(.no-press):active,
+  a[class*="hover:border-"]:not(.no-press):active {
+    transform: scale(0.97);
+    filter: brightness(0.92);
+  }
 }
 
 /* ─── Themed scrollbars ──────────────────────────────────────── */
@@ -397,5 +445,13 @@ html {
   .page-loading,
   .shimmer {
     animation: none;
+  }
+  /* Keep the brightness change as feedback, drop the movement */
+  button:active,
+  [role="button"]:active,
+  summary:active,
+  a:active {
+    /* Beats the press rules above, which are more specific */
+    transform: none !important;
   }
 }

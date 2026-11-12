@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { slotPriceLabel } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import type { Booking } from "@/types/booking";
 import { formatDate, PAY_CLS, BK_CLS } from "./customer-display";
 import { BOOKING_STATUS_LABEL } from "@/components/features/bookings/booking-status-helpers";
@@ -51,7 +52,7 @@ export function CustomerBookingHistory({
                   </TableCell>
                   <TableCell className="text-xs whitespace-nowrap">{formatDate(b.slot.date)}</TableCell>
                   <TableCell className="text-xs">{b.ground.name}</TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">{slotTimeLabel(b.slot)}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{formatBookingSlots(b)}</TableCell>
                   <TableCell className="text-xs font-medium whitespace-nowrap">{slotPriceLabel(b.total)}</TableCell>
                   <TableCell>
                     <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", PAY_CLS[b.paymentStatus])}>

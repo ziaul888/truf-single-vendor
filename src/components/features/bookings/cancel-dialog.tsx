@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { useCancelBooking } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
+import { bookingSlotCount, formatBookingSlots } from "@/lib/booking-slots";
 import type { Booking } from "@/types/booking";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -87,7 +88,7 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
         </DialogTitle>
         <DialogDescription>
           {verb} booking <span className="font-mono font-medium">{booking.bookingNumber}</span> for{" "}
-          <span className="font-medium">{booking.contact.name}</span>? The slot becomes available again.
+          <span className="font-medium">{booking.contact.name}</span>? {bookingSlotCount(booking) > 1 ? `All ${bookingSlotCount(booking)} slots become` : "The slot becomes"} available again.
           {booking.walletPayment?.status === "pending" && " The customer's unverified bKash / Nagad payment is marked rejected."}
         </DialogDescription>
       </DialogHeader>
@@ -95,7 +96,7 @@ function CancelForm({ booking, mode, onClose }: { booking: Booking; mode: "cance
       <div className="space-y-3 py-3">
         <div className="space-y-1 rounded-md border p-3 text-sm">
           <SummaryRow label="Ground" value={booking.ground.name} />
-          <SummaryRow label="Date & Time" value={`${formatSlotDate(booking.slot.date)} ${slotTimeLabel(booking.slot)}`} />
+          <SummaryRow label="Date & Time" value={`${formatSlotDate(booking.slot.date)} ${formatBookingSlots(booking)}`} />
           <SummaryRow label="Total" value={slotPriceLabel(booking.total)} />
           <SummaryRow label="Paid" value={slotPriceLabel(booking.paid)} />
         </div>

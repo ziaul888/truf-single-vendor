@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Banknote } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import type { Booking } from "@/types/booking";
 import {
   BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL, bookingStatusVariant, canCollectPayment, paymentStatusVariant,
@@ -20,7 +21,7 @@ export function UpcomingList({ bookings, onCollect }: { bookings: Booking[]; onC
             <Link href={`/dashboard/bookings/${b.id}`} className="min-w-0">
               <p className="truncate font-medium">{b.contact.name || b.customer.name}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {b.ground.name} · {formatSlotDate(b.slot.date)} · {slotTimeLabel(b.slot)}
+                {b.ground.name} · {formatSlotDate(b.slot.date)} · {formatBookingSlots(b)}
               </p>
             </Link>
             <span className="shrink-0 text-sm font-semibold tabular-nums">{slotPriceLabel(b.total)}</span>

@@ -7,7 +7,8 @@ import { CalendarDays, ChevronRight, Mail } from "lucide-react";
 import { BookingRowsSkeleton, MyBookingsSkeleton } from "@/components/portal/loading/account-skeletons";
 import { cn } from "@/lib/utils";
 import { fromMinorUnits } from "@/lib/ground-format";
-import { formatSlotDate, slotTimeLabel } from "@/lib/slot-format";
+import { bookingSlotCount, formatBookingSlots } from "@/lib/booking-slots";
+import { formatSlotDate, slotCountLabel } from "@/lib/slot-format";
 import { listMyBookings, toAppPath } from "@/lib/portal-bookings";
 import type { CustomerBooking } from "@/types/booking";
 import { isUnderReview } from "@/components/portal/confirmation/confirmation-state";
@@ -118,7 +119,7 @@ function BookingRow({ booking: b }: { booking: CustomerBooking }) {
           )}
         </div>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          {formatSlotDate(b.slot.date)} · {slotTimeLabel(b.slot)} · #{b.bookingNumber}
+          {formatSlotDate(b.slot.date)} · {formatBookingSlots(b)}{bookingSlotCount(b) > 1 && ` (${slotCountLabel(bookingSlotCount(b))})`} · #{b.bookingNumber}
         </p>
       </div>
       <div className="text-right">

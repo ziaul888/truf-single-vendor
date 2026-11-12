@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import type { PublicVenue } from "@/types/settings";
 import { LOGIN_COLORS as C, ROLE_CAPABILITIES } from "./login-theme";
 
@@ -12,17 +12,33 @@ function LogoMark({ size, venue }: { size: number; venue?: Brand }) {
     return (
       <span style={{ position: "relative", display: "block", width: size, height: size, borderRadius: size / 4, overflow: "hidden", background: "#fff" }}>
         {/* Served by turf-api through the same-origin proxy; a new file name on every upload. */}
-        <Image src={venue.logoUrl} alt={`${venue.name} logo`} fill unoptimized sizes={`${size}px`} style={{ objectFit: "contain" }} />
+        <FallbackImage
+          src={venue.logoUrl}
+          alt={`${venue.name} logo`}
+          fill
+          unoptimized
+          sizes={`${size}px`}
+          style={{ objectFit: "contain" }}
+          // A lost file shows the default mark, as if no logo was set
+          fallback={<DefaultMark size={size} absolute />}
+        />
       </span>
     );
   }
+  return <DefaultMark size={size} />;
+}
+
+/** The default mark; `absolute` fills a clipped logo box instead of being a box of its own. */
+function DefaultMark({ size, absolute }: { size: number; absolute?: boolean }) {
   return (
     <div
       style={{
-        width: size, height: size, borderRadius: size / 4,
+        ...(absolute
+          ? { position: "absolute", inset: 0 }
+          : { width: size, height: size, borderRadius: size / 4, boxShadow: "0 8px 32px rgba(37,164,98,0.3)" }),
         background: `linear-gradient(135deg, ${C.accentDark}, ${C.accent})`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: size / 2, boxShadow: "0 8px 32px rgba(37,164,98,0.3)",
+        fontSize: size / 2,
       }}
     >
       ⬡

@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Banknote } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
-import { formatSlotDate, slotPriceLabel, slotTimeLabel } from "@/lib/slot-format";
+import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
+import { formatBookingSlots } from "@/lib/booking-slots";
 import type { Booking } from "@/types/booking";
 import { canCollectPayment } from "@/components/features/bookings/booking-status-helpers";
 
@@ -40,7 +41,7 @@ export const bookingColumns: ColumnDef<Booking>[] = [
   { id: "customer", header: "Customer", cell: ({ row }) => row.original.contact?.name || row.original.customer.name },
   { id: "ground", header: "Ground", cell: ({ row }) => row.original.ground.name },
   { id: "date", header: "Date", cell: ({ row }) => formatSlotDate(row.original.slot.date) },
-  { id: "time", header: "Time", cell: ({ row }) => <span className="whitespace-nowrap">{slotTimeLabel(row.original.slot)}</span> },
+  { id: "time", header: "Time", cell: ({ row }) => <span className="whitespace-nowrap">{formatBookingSlots(row.original)}</span> },
   { accessorKey: "total", header: "Total", cell: ({ getValue }) => slotPriceLabel(getValue<number>()) },
   {
     accessorKey: "status",

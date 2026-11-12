@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDate, getInitials } from "@/lib/utils";
-import { durationLabel, formatEventTime, slotMinutes, slotPriceLabel, slotTimeLabel, formatSlotDate } from "@/lib/slot-format";
+import { formatEventTime, slotPriceLabel, formatSlotDate } from "@/lib/slot-format";
+import { bookingMinutes, bookingSlotCount, formatBookingSlots } from "@/lib/booking-slots";
 import type { BookingDetail } from "@/types/booking";
 import { CalendarDays, Clock, CreditCard, Mail, Pencil, Phone, Timer, Users } from "lucide-react";
 import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, isAwaitingWalletVerification, paymentStatusVariant } from "./booking-status-helpers";
@@ -24,7 +25,8 @@ export function DetailRow({ label, children }: { label: string; children: React.
 }
 
 export function BookingInfoCard({ booking, onEdit }: { booking: BookingDetail; onEdit?: () => void }) {
-  const minutes = slotMinutes(booking.slot);
+  const minutes = bookingMinutes(booking);
+  const slotCount = bookingSlotCount(booking);
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -40,11 +42,11 @@ export function BookingInfoCard({ booking, onEdit }: { booking: BookingDetail; o
       <CardContent className="space-y-3 text-sm">
         <DetailRow label="Ground"><span className="font-medium">{booking.ground.name}</span></DetailRow>
         <DetailRow label="Date"><span>{formatDate(`${booking.slot.date}T00:00:00`, "long")}</span></DetailRow>
-        <DetailRow label="Time slot">
-          <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-muted-foreground" />{slotTimeLabel(booking.slot)}</span>
+        <DetailRow label={slotCount > 1 ? `Time slots (${slotCount})` : "Time slot"}>
+          <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-muted-foreground" />{formatBookingSlots(booking)}</span>
         </DetailRow>
         <DetailRow label="Duration">
-          <span className="flex items-center gap-1"><Timer className="h-3.5 w-3.5 text-muted-foreground" />{minutes % 60 ? durationLabel(minutes) : `${minutes / 60} ${minutes === 60 ? "hour" : "hours"}`}</span>
+          <span className="flex items-center gap-1"><Timer className="h-3.5 w-3.5 text-muted-foreground" />{minutes % 60 ? `${Math.floor(minutes / 60)} hr ${minutes % 60} min` : `${minutes / 60} ${minutes === 60 ? "hour" : "hours"}`}</span>
         </DetailRow>
         <DetailRow label="Source">
           <span>{booking.source === "portal" ? "Customer portal" : `Staff${booking.createdBy ? ` · ${booking.createdBy.name}` : ""}`}</span>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ChevronRight, MapPin } from "lucide-react";
@@ -43,12 +43,12 @@ export default async function GroundDetailPage({
   const location = ground.address?.trim() || venue.address.trim();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
       <Breadcrumb name={ground.name} single={grounds.length === 1} />
       <Gallery images={ground.images ?? []} />
 
       {/* Phones: header, then the picker, then the details. From lg the picker sits in its own column beside both. */}
-      <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-[1fr_400px] lg:grid-rows-[auto_1fr] lg:gap-y-0">
+      <div className="mt-4 grid grid-cols-1 gap-x-10 gap-y-4 sm:mt-6 sm:gap-y-6 lg:grid-cols-[1fr_400px] lg:grid-rows-[auto_1fr] lg:gap-y-0">
         <div className="lg:col-start-1 lg:row-start-1">
           <Header ground={ground} location={location} />
         </div>
@@ -59,7 +59,7 @@ export default async function GroundDetailPage({
 
         <div className="lg:col-start-1 lg:row-start-2">
           <About ground={ground} />
-          <GroundRules rules={ground.rules} className="mt-6 border-b pb-8" />
+          <GroundRules rules={ground.rules} className="mt-4 border-b pb-5 sm:mt-6 sm:pb-8" />
           <Specs ground={ground} />
           <GroundLocation groundAddress={ground.address} venueAddress={venue.address} />
         </div>
@@ -71,7 +71,7 @@ export default async function GroundDetailPage({
 /** With a single ground, "Our grounds" would only lead back here, so it is left out. */
 function Breadcrumb({ name, single }: { name: string; single: boolean }) {
   return (
-    <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
+    <nav className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
       <Link href="/" className="hover:text-foreground">Home</Link>
       <ChevronRight className="h-3 w-3" />
       {!single && (
@@ -89,13 +89,13 @@ function Gallery({ images }: { images: string[] }) {
   const [hero, ...rest] = images;
   if (!hero) return null;
   return (
-    <div className="grid h-56 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-2xl sm:h-72 md:h-[420px] md:grid-cols-4 md:grid-rows-2">
+    <div className="grid h-44 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-2xl sm:h-72 md:h-[420px] md:grid-cols-4 md:grid-rows-2">
       <div className="relative md:col-span-2 md:row-span-2">
-        <Image src={hero} alt="" fill priority sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+        <FallbackImage src={hero} alt="" fill priority sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
       </div>
       {rest.slice(0, 4).map((src, i) => (
         <div key={i} className="relative hidden md:block">
-          <Image src={src} alt="" fill sizes="25vw" className="object-cover" />
+          <FallbackImage src={src} alt="" fill sizes="25vw" className="object-cover" />
         </div>
       ))}
     </div>
@@ -112,7 +112,7 @@ function Header({ ground, location }: { ground: Ground; location: string }) {
             {[ground.sport, ground.surface?.replace("-", " ")].filter(Boolean).join(" · ")}
           </span>
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{ground.name}</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-4xl">{ground.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {ground.dimensions ? `${ground.dimensions} · ` : ""}
           {ground.amenities?.length ? ground.amenities.slice(0, 3).join(" · ") : ground.address}
@@ -136,7 +136,7 @@ function Header({ ground, location }: { ground: Ground; location: string }) {
 function About({ ground }: { ground: Ground }) {
   if (!ground.description) return null;
   return (
-    <section className="mt-8 border-b pb-8">
+    <section className="mt-5 border-b pb-5 sm:mt-8 sm:pb-8">
       <h2 className="mb-2 font-bold">About this ground</h2>
       <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{ground.description}</p>
     </section>
@@ -156,7 +156,7 @@ function Specs({ ground }: { ground: Ground }) {
     { label: "Sport", value: ground.sport },
   ].filter((it): it is { label: string; value: string } => !!it.value);
   return (
-    <section className="mt-6 border-b pb-8">
+    <section className="mt-4 border-b pb-5 sm:mt-6 sm:pb-8">
       <h2 className="mb-3 font-bold">Specifications</h2>
       <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
         {items.map((it) => (

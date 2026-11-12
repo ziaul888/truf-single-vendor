@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Ground } from "@/hooks/useGrounds";
 import type { TimeSlot } from "@/hooks/useAddBooking";
-import { venueToday } from "@/lib/slot-format";
+import { MAX_SLOTS_PER_BOOKING, venueToday } from "@/lib/slot-format";
 import type { AddBookingFormData } from "@/schemas";
 import { CalendarClock } from "lucide-react";
 import { takaLabel } from "@/components/features/bookings/booking-status-helpers";
@@ -24,18 +24,18 @@ interface GroundSlotSectionProps {
 
 export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsLoading }: GroundSlotSectionProps) {
   const { control, register, watch, setValue, clearErrors, formState: { errors } } = form;
-  const [groundId, date, slotId, repeat] = [watch("groundId"), watch("date"), watch("slotId"), watch("repeat") ?? false];
+  const [groundId, date, slotIds, repeat] = [watch("groundId"), watch("date"), watch("slotIds") ?? [], watch("repeat") ?? false];
   const selectedGround = grounds?.find((g) => g.id === groundId);
 
   return (
     <SectionCard n="1" title="Ground & Slot Selection" desc="Choose the ground, date and available time slot">
       <div className="space-y-5">
-        <RepeatToggle form={form} slotStartTime={slots?.find((s) => s.id === slotId)?.startTime} />
+        <RepeatToggle form={form} slotStartTime={slots?.filter((s) => slotIds.includes(s.id)).map((s) => s.startTime).sort()[0]} />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label className="text-sm font-medium">Ground <span className="text-destructive">*</span></Label>
             <Controller control={control} name="groundId" render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue("slotId", ""); setValue("startHour", ""); }}>
+              <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue("slotIds", []); setValue("startHour", ""); }}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder={groundsLoading ? "Loading…" : "Select a ground"} />
                 </SelectTrigger>
@@ -52,7 +52,7 @@ export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsL
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-medium" htmlFor="date">{repeat ? "Starting" : "Date"} <span className="text-destructive">*</span></Label>
-            <Input id="date" type="date" min={venueToday()} className="h-10" {...register("date", { onChange: () => setValue("slotId", "") })} />
+            <Input id="date" type="date" min={venueToday()} className="h-10" {...register("date", { onChange: () => setValue("slotIds", []) })} />
             {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
           </div>
         </div>
@@ -73,8 +73,8 @@ export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsL
         {repeat ? <RepeatFields form={form} ground={selectedGround} /> : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Time Slot <span className="text-destructive">*</span></Label>
-              {groundId && date && !slotsLoading && <span className="text-xs text-muted-foreground">Only open slots are shown</span>}
+              <Label className="text-sm font-medium">Time Slots <span className="text-destructive">*</span></Label>
+              {groundId && date && !slotsLoading && <span className="text-xs text-muted-foreground">Pick up to {MAX_SLOTS_PER_BOOKING} · only open slots are shown</span>}
             </div>
             {!groundId || !date ? (
               <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed py-10 text-center">
@@ -87,8 +87,8 @@ export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsL
                 </div>
               </div>
             ) : (
-              <SlotPicker slots={slots ?? []} value={slotId} loading={slotsLoading} error={errors.slotId?.message}
-                onChange={(id) => { setValue("slotId", id); clearErrors("slotId"); }} />
+              <SlotPicker slots={slots ?? []} value={slotIds} loading={slotsLoading} error={errors.slotIds?.message}
+                onChange={(ids) => { setValue("slotIds", ids); clearErrors("slotIds"); }} />
             )}
           </div>
         )}

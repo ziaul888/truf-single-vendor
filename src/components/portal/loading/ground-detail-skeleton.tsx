@@ -9,10 +9,10 @@ import { SlotPickerSkeleton } from "./slot-picker-skeleton";
  */
 export function GroundDetailSkeleton() {
   return (
-    <div className="page-loading mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" aria-busy="true" aria-label="Loading ground">
+    <div className="page-loading mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8" aria-busy="true" aria-label="Loading ground">
       <SkeletonLine className="mb-4 h-4 w-28" />
       <GallerySkeleton />
-      <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-[1fr_400px] lg:grid-rows-[auto_1fr] lg:gap-y-0">
+      <div className="mt-4 grid grid-cols-1 gap-x-10 gap-y-4 sm:mt-6 sm:gap-y-6 lg:grid-cols-[1fr_400px] lg:grid-rows-[auto_1fr] lg:gap-y-0">
         <div className="lg:col-start-1 lg:row-start-1">
           <HeaderSkeleton />
         </div>
@@ -35,7 +35,7 @@ export function GroundDetailSkeleton() {
 /** One large photo and two thumbnails from md (the venue ground has three photos); on phones only the large one, shorter. */
 function GallerySkeleton() {
   return (
-    <div className="grid h-56 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-2xl sm:h-72 md:h-105 md:grid-cols-4 md:grid-rows-2">
+    <div className="grid h-44 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-2xl sm:h-72 md:h-105 md:grid-cols-4 md:grid-rows-2">
       <SkeletonBlock className="rounded-none md:col-span-2 md:row-span-2" />
       {Array.from({ length: 2 }).map((_, i) => <SkeletonBlock key={i} className="hidden rounded-none md:block" />)}
     </div>
@@ -62,7 +62,7 @@ function HeaderSkeleton() {
 
 function SpecsSkeleton() {
   return (
-    <section className="mt-6 border-b pb-8">
+    <section className="mt-4 border-b pb-5 sm:mt-6 sm:pb-8">
       <SkeletonLine className="mb-3 h-6 w-32" />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
@@ -78,7 +78,7 @@ function SpecsSkeleton() {
 
 function LocationSkeleton() {
   return (
-    <section className="mt-6 border-b pb-8">
+    <section className="mt-4 border-b pb-5 sm:mt-6 sm:pb-8">
       <SkeletonLine className="mb-3 h-6 w-24" />
       <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">

@@ -116,9 +116,13 @@ export interface CalendarApiSlot extends SlotMinutes {
   bookingId?: string;
   customerName?: string;
   customerPhone?: string;
-  /** Smallest unit. */
+  /** Smallest unit. The booking's total, repeated on each of its slots. */
   amount?: number;
   advancePaid?: number;
+  /** Slots in the booking. Missing from older APIs. */
+  slotCount?: number;
+  /** This slot's own price, smallest unit. Missing from older APIs. */
+  price?: number;
 }
 
 export interface SlotCalendar {

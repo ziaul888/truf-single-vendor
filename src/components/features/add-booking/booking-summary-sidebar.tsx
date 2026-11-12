@@ -9,11 +9,12 @@ import type { AddBookingFormData } from "@/schemas";
 import { PAYMENT_METHOD_LABEL, takaLabel } from "@/components/features/bookings/booking-status-helpers";
 import { PAYMENT_TYPES } from "./payment-section";
 import { cn } from "@/lib/utils";
-import { durationLabel } from "@/lib/slot-format";
+import { durationLabel, slotCountLabel } from "@/lib/slot-format";
 
 interface BookingSummarySidebarProps {
   ground?: Ground;
-  slot?: TimeSlot;
+  /** The picked slots, earliest first. */
+  slots: TimeSlot[];
   date: string;
   paymentType: AddBookingFormData["paymentType"];
   paymentMethod: AddBookingFormData["paymentMethod"];
@@ -30,11 +31,11 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
 }
 
 export function BookingSummarySidebar({
-  ground, slot, date, paymentType, paymentMethod, advanceAmount,
+  ground, slots, date, paymentType, paymentMethod, advanceAmount,
 }: BookingSummarySidebarProps) {
   const pricePerHour = ground?.pricePerHour ?? 0;
   const slotHours = (ground?.slotDurationMinutes ?? 60) / 60;
-  const totalAmount = slot?.price ?? pricePerHour * slotHours;
+  const totalAmount = slots.length > 0 ? slots.reduce((sum, s) => sum + (s.price ?? pricePerHour * slotHours), 0) : pricePerHour * slotHours;
   const slotLength = durationLabel(ground?.slotDurationMinutes ?? 60);
   const dueAmount = Math.max(0, totalAmount - advanceAmount);
   const isPartial = paymentType === "partial";
@@ -87,10 +88,12 @@ export function BookingSummarySidebar({
         </div>
         <div className="flex items-center gap-2.5 text-sm">
           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-          {slot ? (
-            <span className="font-medium">
-              {slot.startTime} – {slot.endTime}
-              <span className="ml-2 text-xs font-normal text-muted-foreground">{slotLength}</span>
+          {slots.length > 0 ? (
+            <span className="min-w-0 font-medium">
+              {slots.map((s) => `${s.startTime} – ${s.endTime}`).join(", ")}
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {slots.length > 1 ? `${slotCountLabel(slots.length)} · ${slotLength} each` : slotLength}
+              </span>
             </span>
           ) : (
             <span className="text-muted-foreground italic">No slot selected</span>
@@ -105,7 +108,7 @@ export function BookingSummarySidebar({
           Amount Breakdown
         </div>
         <Row label="Price / hour" value={ground ? takaLabel(pricePerHour) : "—"} />
-        <Row label="Duration" value={slot ? slotLength : "—"} />
+        <Row label="Duration" value={slots.length === 0 ? "—" : slots.length > 1 ? `${slots.length} × ${slotLength}` : slotLength} />
         <Separator />
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold">Total</span>

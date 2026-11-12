@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import type { Ground } from "@/types/api";
 import { FormatBadge } from "@/components/portal/format-badge";
 
@@ -9,7 +9,7 @@ export function GroundCard({ ground, badge }: { ground: Ground; badge?: string }
       <div className="relative h-48 w-full">
         {/* turf-api v1 has no photos: show the neutral pitch-coloured cover instead */}
         {ground.images?.[0] ? (
-          <Image
+          <FallbackImage
             src={ground.images[0]}
             alt={ground.name}
             fill

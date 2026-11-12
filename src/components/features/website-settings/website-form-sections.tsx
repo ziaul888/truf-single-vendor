@@ -5,7 +5,6 @@ import type { UseFormReturn } from "react-hook-form";
 import { Image as ImageIcon, MapPin, Pencil, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_WEBSITE_SETTINGS } from "@/lib/website-defaults";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import type { PublicVenue } from "@/types/settings";
@@ -19,16 +18,8 @@ export function HeroFields({ form }: { form: Form }) {
   const e = errors.hero;
   return (
     <SettingsSection title="Hero" icon={ImageIcon} description="The first thing visitors see on the home page.">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField id="hero-badge" label="Badge" hint="Small label above the headline. Leave empty to hide it." error={e?.badge?.message}>
-          <Input id="hero-badge" {...register("hero.badge")} />
-        </FormField>
-        <FormField id="hero-headline" label="Headline" hint="Shown before the venue name, e.g. “Welcome to”." error={e?.headline?.message}>
-          <Input id="hero-headline" {...register("hero.headline")} />
-        </FormField>
-      </div>
-      <FormField id="hero-description" label="Description" error={e?.description?.message}>
-        <Textarea id="hero-description" rows={3} {...register("hero.description")} />
+      <FormField id="hero-headline" label="Page title" hint="Read by screen readers and search engines, not shown on the page. The hero shows the photo and the search box." error={e?.headline?.message}>
+        <Input id="hero-headline" {...register("hero.headline")} />
       </FormField>
       <ImageUploadField
         form={form}
