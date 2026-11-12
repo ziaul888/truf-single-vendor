@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import { useWatch, type Control } from "react-hook-form";
 import {
   Eye, Facebook, Goal, Instagram, MessageCircle, Monitor, Phone, Smartphone,
@@ -90,7 +91,19 @@ function PreviewHeader({ venue, mobile }: { venue: PublicVenue; mobile: boolean 
       <div className="flex min-w-0 items-center gap-1.5">
         {venue.logoUrl ? (
           <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded bg-white">
-            <Image src={venue.logoUrl} alt="" fill unoptimized sizes="24px" className="object-contain" />
+            <FallbackImage
+              src={venue.logoUrl}
+              alt=""
+              fill
+              unoptimized
+              sizes="24px"
+              className="object-contain"
+              fallback={
+                <span className="absolute inset-0 flex items-center justify-center bg-accent">
+                  <Goal className="h-3.5 w-3.5 text-accent-foreground" />
+                </span>
+              }
+            />
           </span>
         ) : (
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-accent">

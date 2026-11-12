@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import { Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,20 @@ export function VenueLogoField({ logoUrl, name, canEdit }: { logoUrl: string | n
       <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted">
         {logoUrl ? (
           // Same-origin /api/v1/uploads/… path, proxied to turf-api.
-          <Image src={logoUrl} alt={`${name} logo`} fill unoptimized sizes="64px" className="object-contain" />
+          <FallbackImage
+            src={logoUrl}
+            alt={`${name} logo`}
+            fill
+            unoptimized
+            sizes="64px"
+            className="object-contain"
+            // A lost file shows the initial, as if no logo was set
+            fallback={
+              <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-muted-foreground">
+                {name.charAt(0).toUpperCase() || "T"}
+              </span>
+            }
+          />
         ) : (
           <span className="text-xl font-bold text-muted-foreground">{name.charAt(0).toUpperCase() || "T"}</span>
         )}

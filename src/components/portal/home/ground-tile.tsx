@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ export function GroundTile({ ground, wide }: { ground: Ground; wide?: boolean })
       )}
     >
       {image ? (
-        <Image
+        <FallbackImage
           src={image}
           alt=""
           fill

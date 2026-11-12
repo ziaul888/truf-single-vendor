@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getPublicSlots, listPublicGrounds } from "@/services/portal-grounds";
@@ -46,9 +46,10 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
 
   return (
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 sm:gap-8 sm:px-6 sm:py-8 lg:grid-cols-[260px_1fr] lg:px-8">
-      <GroundsFilterSidebar query={query} />
+      {/* Phones get the filter icon inside the date bar; from md the panel sits in its own column. */}
+      <GroundsFilterSidebar query={query} layout="panel" />
       <div>
-        <GroundsDateBar query={query} />
+        <GroundsDateBar query={query} filters={<GroundsFilterSidebar query={query} layout="menu" />} />
         <div className="mt-4">
           <ResultsHeader count={grounds.length} query={query} venueName={venue.name} />
         </div>
@@ -68,7 +69,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
               <div className="flex">
                 <div className="relative w-28 shrink-0 sm:w-32">
                   {g.images?.[0] ? (
-                    <Image
+                    <FallbackImage
                       src={g.images[0]}
                       alt={g.name}
                       fill

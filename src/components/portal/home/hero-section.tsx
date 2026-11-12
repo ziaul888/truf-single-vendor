@@ -1,11 +1,11 @@
-import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import { Calendar, CircleDot, Grid3x3, Search } from "lucide-react";
 import { listPublicGrounds } from "@/services/portal-grounds";
 import { addDays, venueHourNow, venueToday } from "@/lib/slot-format";
 import { SPORT_META, SPORTS, SURFACE_LABEL } from "@/components/portal/sports";
+import { SearchForm } from "./search-form";
 import type { Ground } from "@/types/api";
 import type { WebsiteSettings } from "@/validations/website-settings";
-import { isUploadedImage } from "./is-uploaded-image";
 
 /**
  * A full-width photo with a booking card floating at its bottom: the venue (or the one ground) with its
@@ -19,13 +19,11 @@ export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["
   return (
     <section>
       <div className="relative flex h-96 sm:h-112 items-end overflow-hidden">
-        <Image
+        <FallbackImage
           src={cover}
           alt=""
           fill
           priority
-          // Uploaded images are served from our own API with a ?v= cache key.
-          unoptimized={isUploadedImage(cover)}
           sizes="100vw"
           className="object-cover object-center"
         />
@@ -82,7 +80,7 @@ function BookingCard({ grounds, single, venueName }: { grounds: Ground[]; single
   const today = venueToday();
   const { title, subtitle, price, from } = cardSummary(grounds, single, venueName);
   return (
-    <form
+    <SearchForm
       action={single ? `/grounds/${single.id}` : "/grounds"}
       className="mx-auto max-w-3xl rounded-3xl border border-sidebar-foreground/20 bg-card/85 p-4 shadow-2xl backdrop-blur-xl sm:p-5"
     >
@@ -122,7 +120,7 @@ function BookingCard({ grounds, single, venueName }: { grounds: Ground[]; single
           <Search className="h-4 w-4" /> Find slots
         </button>
       </div>
-    </form>
+    </SearchForm>
   );
 }
 

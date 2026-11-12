@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FORMATS } from "@/types/ground";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
@@ -9,13 +9,15 @@ import { groundsHref, type GroundsQuery } from "./grounds-query";
 
 // Every option is a link, so the URL can be shared. Keying the menu by the active filters closes
 // it when an option is picked; from md up, filtering also works without JavaScript.
-export function GroundsFilterSidebar({ query }: { query: GroundsQuery }) {
+export function GroundsFilterSidebar({ query, layout }: { query: GroundsQuery; layout?: "menu" | "panel" }) {
   const anyFilter = Boolean(query.sport || query.format || query.surface);
   const activeCount = [query.sport, query.format, query.surface].filter(Boolean).length;
   return (
     <FilterMenu
       key={`${query.sport}-${query.format}-${query.surface}`}
       activeCount={activeCount}
+      icon={<SlidersHorizontal className="h-4 w-4" />}
+      layout={layout}
       // The menu renders outside the portal layout, so it needs the portal's theme class too.
       contentClassName="pitch max-h-[70vh] w-72 overflow-y-auto p-0"
     >

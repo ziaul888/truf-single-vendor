@@ -12,7 +12,6 @@ export function GroundsListSkeleton() {
       aria-busy="true"
       aria-label="Loading grounds"
     >
-      <SkeletonBlock className="h-10 w-10 rounded-md md:hidden" />
       <FiltersSkeleton />
       <div>
         <DateBarSkeleton />
@@ -63,12 +62,18 @@ function FilterGroupSkeleton({ rows }: { rows: number }) {
 /** "See free slots for a day": icon, label, date input and button in a bordered bar. */
 function DateBarSkeleton() {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
-      <SkeletonBlock className="h-4 w-4 rounded" />
-      <SkeletonLine className="w-40" />
-      {/* Touch screens get 44px targets; the input is text-base on phones */}
-      <SkeletonBlock className="h-8.5 w-36 rounded-md pointer-coarse:h-11 sm:h-7.5" />
-      <SkeletonBlock className="h-7 w-24 rounded-md pointer-coarse:h-11" />
+    <div className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap">
+      <div className="flex items-center gap-2">
+        <SkeletonBlock className="h-4 w-4 rounded" />
+        <SkeletonLine className="w-40" />
+      </div>
+      {/* The filter icon: phones only */}
+      <SkeletonBlock className="h-10 w-10 rounded-md sm:order-last sm:ml-auto md:hidden" />
+      <div className="col-span-2 flex items-center gap-2 sm:contents">
+        {/* Touch screens get 44px targets; the input is text-base on phones */}
+        <SkeletonBlock className="h-8.5 min-w-0 flex-1 rounded-md pointer-coarse:h-11 sm:h-7.5 sm:w-36 sm:flex-none" />
+        <SkeletonBlock className="h-7 w-24 rounded-md pointer-coarse:h-11" />
+      </div>
     </div>
   );
 }

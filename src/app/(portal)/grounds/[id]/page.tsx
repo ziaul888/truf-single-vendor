@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { FallbackImage } from "@/components/fallback-image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ChevronRight, MapPin } from "lucide-react";
@@ -91,11 +91,11 @@ function Gallery({ images }: { images: string[] }) {
   return (
     <div className="grid h-44 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-2xl sm:h-72 md:h-[420px] md:grid-cols-4 md:grid-rows-2">
       <div className="relative md:col-span-2 md:row-span-2">
-        <Image src={hero} alt="" fill priority sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+        <FallbackImage src={hero} alt="" fill priority sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
       </div>
       {rest.slice(0, 4).map((src, i) => (
         <div key={i} className="relative hidden md:block">
-          <Image src={src} alt="" fill sizes="25vw" className="object-cover" />
+          <FallbackImage src={src} alt="" fill sizes="25vw" className="object-cover" />
         </div>
       ))}
     </div>
