@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCheckoutOptions } from "@/lib/portal-bookings";
 
-/** Service fee, cash availability and hold time from turf-api. Shared by the form and the summary. */
+/** Payment options and the booking slot limit, shared by portal and staff booking forms. */
 export function useCheckoutOptions() {
   return useQuery({
     queryKey: ["portal", "checkout-options"],

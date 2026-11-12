@@ -3,7 +3,7 @@
 import { fromMinorUnits } from "@/lib/ground-format";
 import { slotTimeLabel } from "@/lib/slot-format";
 import type { PublicSlot } from "@/types/slot";
-import { useCheckoutOptions } from "./use-checkout-options";
+import { useCheckoutOptions } from "@/hooks/useCheckoutOptions";
 
 /** "৳1,550" from an amount in the smallest unit. */
 export const takaLabel = (minor: number) => `৳${fromMinorUnits(minor).toLocaleString()}`;

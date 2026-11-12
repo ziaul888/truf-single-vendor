@@ -12,10 +12,11 @@ import type { CheckoutMethod } from "@/types/booking";
 import { CUSTOMER_SESSION_KEY, useCustomerSession } from "@/components/portal/account/use-customer-session";
 import { checkoutFormSchema, CHECKOUT_FIELDS, EMAIL_REQUIRED_MESSAGE, type CheckoutFormValues } from "./checkout-schema";
 import { Field, PaymentChoice, SignInNotice } from "./checkout-fields";
-import { formatSlotsParam, MAX_SLOTS_PER_BOOKING, slotStartMinute, slotStartTime } from "@/lib/slot-format";
+import { formatSlotsParam, slotStartMinute, slotStartTime } from "@/lib/slot-format";
+import { bookingSlotLimit } from "@/lib/booking-limits";
 import type { PublicSlot } from "@/types/slot";
 import { slotsSubtotal, takaLabel } from "./checkout-totals";
-import { useCheckoutOptions } from "./use-checkout-options";
+import { useCheckoutOptions } from "@/hooks/useCheckoutOptions";
 import { WalletFields } from "./wallet-fields";
 
 interface FormError { message: string; slotTaken: boolean; myBookings?: boolean }
@@ -31,6 +32,8 @@ export function CheckoutForm({
   const router = useRouter();
   const queryClient = useQueryClient();
   const options = useCheckoutOptions();
+  const maxSlots = bookingSlotLimit(options.data);
+  const exceedsSlotLimit = slots.length > maxSlots;
   // Signed-in customers book on their verified phone (read-only); name and email are prefilled.
   const { data: session, isPending: sessionPending } = useCustomerSession();
   const [formError, setFormError] = useState<FormError | null>(null);
@@ -77,6 +80,10 @@ export function CheckoutForm({
 
   const onSubmit = async (values: CheckoutFormValues) => {
     setFormError(null);
+    if (exceedsSlotLimit) {
+      setFormError({ message: `You can book up to ${maxSlots} slots at a time. Pick fewer slots and try again.`, slotTaken: true });
+      return;
+    }
     try {
       const { customerName, customerEmail, customerPhone, reference, payerNumber } = values;
       const result = await startCheckout({
@@ -118,7 +125,8 @@ export function CheckoutForm({
         slotTaken: false, myBookings: true,
       });
     } else if (err.code === "TOO_MANY_SLOTS") {
-      setFormError({ message: `You can book up to ${options.data?.maxSlotsPerBooking ?? MAX_SLOTS_PER_BOOKING} slots at a time. Pick fewer slots and try again.`, slotTaken: true });
+      options.refetch();
+      setFormError({ message: "Your selection exceeds the current booking limit. Pick fewer slots and try again.", slotTaken: true });
     } else if (err.code === "SLOTS_MUST_SHARE_GROUND_DATE") {
       setFormError({ message: "All slots in one booking must be on the same ground and day.", slotTaken: true });
     } else if (err.code === "TOO_MANY_ATTEMPTS") {
@@ -178,7 +186,7 @@ export function CheckoutForm({
         {/* Signed out, cash and wallets ask to sign in first, before any TrxID is typed (it would be lost on the way). */}
         {needsSignIn
           ? !sessionPending && <SignInNotice href={signInHref} />
-          : wallet && <WalletFields method={wallet.method} number={wallet.number} total={total} register={register} errors={errors} />}
+          : wallet && !exceedsSlotLimit && <WalletFields method={wallet.method} number={wallet.number} total={total} register={register} errors={errors} />}
         {errors.paymentMethod && <p className="mt-1 text-xs text-destructive">{errors.paymentMethod.message}</p>}
       </div>
 
@@ -191,6 +199,13 @@ export function CheckoutForm({
         </label>
         {errors.acceptTerms && <p className="mt-1 text-xs text-destructive">{errors.acceptTerms.message}</p>}
       </div>
+
+      {!options.isPending && exceedsSlotLimit && (
+        <p role="alert" className="text-sm text-destructive">
+          You can book up to {maxSlots} slots at a time.{" "}
+          <Link href={`/grounds/${groundId}`} className="font-semibold underline">Pick fewer slots</Link>
+        </p>
+      )}
 
       {formError && (
         <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -206,7 +221,7 @@ export function CheckoutForm({
 
       <button
         type="submit"
-        disabled={disabled || busy || !canPay || needsSignIn}
+        disabled={disabled || busy || !canPay || needsSignIn || exceedsSlotLimit}
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}

@@ -29,6 +29,11 @@ export function blockedToast(reason: BlockReason, cancelledBooking: boolean, boo
  */
 export function blockErrorToast(err: unknown, bookingNumber?: string) {
   const failure = toApiFailure(err);
+  if (failure.code === "BOOKING_IN_PROGRESS") {
+    return toast.error("This booking has already started", {
+      description: `Booking ${bookingNumber ? `#${bookingNumber} ` : ""}covers several slots. Blocking this slot would cancel and refund the whole booking. Open the booking to review it.`,
+    });
+  }
   if (failure.code !== "VERIFY_OR_REJECT") return toast.error(failure.error);
   toast.error("Verify or reject the payment first", {
     description: `Booking ${bookingNumber ? `#${bookingNumber} ` : ""}has a bKash / Nagad payment that isn't verified yet. `

@@ -20,10 +20,12 @@ import { takaLabel } from "@/components/features/bookings/booking-status-helpers
 import { useGrounds } from "@/hooks/useGrounds";
 import { useAvailableSlots } from "@/hooks/useAddBooking";
 import { useCreateBooking } from "@/hooks/useBookings";
+import { useCheckoutOptions } from "@/hooks/useCheckoutOptions";
+import { bookingSlotLimit } from "@/lib/booking-limits";
 import { useCreateSeries, useSeriesPreview } from "@/hooks/useBookingSeries";
 import { applyApiErrors, toApiFailure, type ApiFailure } from "@/lib/api-error";
 import { fromMinorUnits, toMinorUnits } from "@/lib/ground-format";
-import { durationLabel, MAX_SLOTS_PER_BOOKING, slotCountLabel, venueToday } from "@/lib/slot-format";
+import { durationLabel, slotCountLabel, venueToday } from "@/lib/slot-format";
 import { AddBookingSchema, RepeatBookingSchema, type AddBookingFormData } from "@/schemas";
 import { isWalletMethod, type CreateBookingInput } from "@/types/booking";
 import { ChevronLeft } from "lucide-react";
@@ -32,6 +34,7 @@ import { toast } from "sonner";
 /** The API reports nested fields ("customer.name"); these are the form fields they belong to. */
 const API_FIELD: Record<string, keyof AddBookingFormData> = {
   slotIds: "slotIds",
+  slotId: "slotIds",
   "customer.name": "customerName",
   "customer.phone": "customerPhone",
   "customer.email": "customerEmail",
@@ -76,6 +79,8 @@ export default function AddBookingPage() {
   const router = useRouter();
   const { data: grounds, isLoading: groundsLoading } = useGrounds();
   const createBooking = useCreateBooking();
+  const checkoutOptions = useCheckoutOptions();
+  const maxSlots = bookingSlotLimit(checkoutOptions.data);
   const [knownCustomer, setKnownCustomer] = useState<KnownCustomer | null>(null);
 
   const form = useForm<AddBookingFormData>({
@@ -140,7 +145,8 @@ export default function AddBookingPage() {
       SLOTS_MUST_SHARE_GROUND_DATE: "All slots in one booking must be on the same ground and date.",
     };
     if (failure.code === "TOO_MANY_SLOTS") {
-      toast.error(`A booking holds up to ${MAX_SLOTS_PER_BOOKING} slots. Remove a slot and try again.`);
+      checkoutOptions.refetch();
+      toast.error("Your selection exceeds the current booking limit. Remove slots and try again.");
       return;
     }
     if (failure.code && slotGone[failure.code]) {
@@ -179,6 +185,9 @@ export default function AddBookingPage() {
       return toast.error("None of these dates are free. Change the days, time or dates.");
     }
     if (!data.repeat && selectedSlots.length === 0) return setError("slotIds", { message: "Select a time slot" });
+    if (!data.repeat && selectedSlots.length > maxSlots) {
+      return setError("slotIds", { message: `A booking holds up to ${maxSlots} slots. Remove slots to continue.` });
+    }
     if (data.paymentType === "partial" && (data.advanceAmount ?? 0) >= totalAmount) {
       return setError("advanceAmount", { message: `Advance must be less than ${takaLabel(totalAmount)}` });
     }
@@ -196,7 +205,7 @@ export default function AddBookingPage() {
   const bookable = previewSettled ? seriesPreview.bookableCount : 0;
   const submitLabel = submitting ? (repeat ? "Booking…" : "Creating…")
     : !repeat ? "Create Booking" : bookable > 0 ? `Book ${bookable} ${bookable === 1 ? "date" : "dates"}` : "Book dates";
-  const submitDisabled = submitting || (repeat && !!patternInput && !previewSettled);
+  const submitDisabled = submitting || (!repeat && selectedSlots.length > maxSlots) || (repeat && !!patternInput && !previewSettled);
   const previewProps = {
     preview: seriesPreview, ready: !!patternInput, loading: preview.isFetching,
     error: preview.isError ? toApiFailure(preview.error).error : null,
@@ -219,7 +228,7 @@ export default function AddBookingPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
-            <GroundSlotSection form={form} grounds={grounds} groundsLoading={groundsLoading} slots={slots} slotsLoading={slotsLoading} />
+            <GroundSlotSection form={form} grounds={grounds} groundsLoading={groundsLoading} slots={slots} slotsLoading={slotsLoading} maxSlots={maxSlots} />
             {repeat && <SeriesPreviewCard {...previewProps} className="lg:hidden" />}
             <CustomerSection form={form} onCustomerFound={setKnownCustomer} />
 

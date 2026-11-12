@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { staffSlotRequest } from "@/lib/booking-requests";
 import type {
   Booking, BookingDetail, BookingPage, BookingStatus, CreateBookingInput, OfflineMethod, PaymentStatus,
 } from "@/types/booking";
@@ -76,8 +77,8 @@ export function useBookingMutation<TVars, TResult>(fn: (vars: TVars) => Promise<
 
 /** Staff booking: walk-in or phone. Price is the slot's price, no service fee. */
 export function useCreateBooking() {
-  return useBookingMutation(async (body: CreateBookingInput) =>
-    (await api.post("/admin/bookings", body)).data.data as Booking);
+  return useBookingMutation(async ({ slotIds, ...body }: CreateBookingInput) =>
+    (await api.post("/admin/bookings", { ...body, ...staffSlotRequest(slotIds) })).data.data as Booking);
 }
 
 /**

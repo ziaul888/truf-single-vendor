@@ -1,5 +1,7 @@
 import { fromMinorUnits } from "@/lib/ground-format";
 import type { BlockReason } from "@/types/slot";
+import { MAX_SLOTS_PER_BOOKING } from "@/lib/booking-limits";
+export { MAX_SLOTS_PER_BOOKING } from "@/lib/booking-limits";
 
 const VENUE_TIME_ZONE = "Asia/Dhaka";
 
@@ -103,9 +105,6 @@ export const formatEventTime = (iso: string) =>
   });
 
 // ── Several slots in one booking (one ground and date, at most MAX_SLOTS_PER_BOOKING) ──
-
-/** The most slots one booking can hold; turf-api sends the real limit as `maxSlotsPerBooking`. */
-export const MAX_SLOTS_PER_BOOKING = 4;
 
 const START_TIME = /^(\d{1,2}):(00|30)$/;
 

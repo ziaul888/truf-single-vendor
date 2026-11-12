@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Ground } from "@/hooks/useGrounds";
 import type { TimeSlot } from "@/hooks/useAddBooking";
-import { MAX_SLOTS_PER_BOOKING, venueToday } from "@/lib/slot-format";
+import { venueToday } from "@/lib/slot-format";
 import type { AddBookingFormData } from "@/schemas";
 import { CalendarClock } from "lucide-react";
 import { takaLabel } from "@/components/features/bookings/booking-status-helpers";
@@ -20,9 +20,10 @@ interface GroundSlotSectionProps {
   groundsLoading: boolean;
   slots: TimeSlot[] | undefined;
   slotsLoading: boolean;
+  maxSlots: number;
 }
 
-export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsLoading }: GroundSlotSectionProps) {
+export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsLoading, maxSlots }: GroundSlotSectionProps) {
   const { control, register, watch, setValue, clearErrors, formState: { errors } } = form;
   const [groundId, date, slotIds, repeat] = [watch("groundId"), watch("date"), watch("slotIds") ?? [], watch("repeat") ?? false];
   const selectedGround = grounds?.find((g) => g.id === groundId);
@@ -74,7 +75,7 @@ export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsL
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Time Slots <span className="text-destructive">*</span></Label>
-              {groundId && date && !slotsLoading && <span className="text-xs text-muted-foreground">Pick up to {MAX_SLOTS_PER_BOOKING} · only open slots are shown</span>}
+              {groundId && date && !slotsLoading && <span className="text-xs text-muted-foreground">Pick up to {maxSlots} · only open slots are shown</span>}
             </div>
             {!groundId || !date ? (
               <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed py-10 text-center">
@@ -87,7 +88,8 @@ export function GroundSlotSection({ form, grounds, groundsLoading, slots, slotsL
                 </div>
               </div>
             ) : (
-              <SlotPicker slots={slots ?? []} value={slotIds} loading={slotsLoading} error={errors.slotIds?.message}
+              <SlotPicker slots={slots ?? []} value={slotIds} max={maxSlots} loading={slotsLoading}
+                error={slotIds.length > maxSlots ? `Remove slots: a booking holds up to ${maxSlots}.` : errors.slotIds?.message}
                 onChange={(ids) => { setValue("slotIds", ids); clearErrors("slotIds"); }} />
             )}
           </div>

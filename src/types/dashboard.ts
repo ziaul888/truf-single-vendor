@@ -23,6 +23,8 @@ export interface NeedsOutcomeBooking {
   customerName: string;
   groundName: string;
   slot: { date: string; startHour: number; endHour: number } & SlotMinutes;
+  /** Each booked time, so nonconsecutive slots keep their gaps. Missing from older APIs. */
+  slots?: ({ date: string; startHour: number; endHour: number } & SlotMinutes)[];
   total: number;
   /** Received so far: what stays if it's marked no-show. */
   paid: number;

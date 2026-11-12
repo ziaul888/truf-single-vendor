@@ -9,11 +9,12 @@ import type { Ground } from "@/types/api";
 import type { PublicClosure, PublicSlot } from "@/types/slot";
 import { formatPeakRanges } from "@/lib/ground-format";
 import {
-  addDays, formatSlotsParam, MAX_SLOTS_PER_BOOKING, slotCountLabel, slotStartTime, slotTimeLabel, venueToday,
+  addDays, formatSlotsParam, slotCountLabel, slotStartTime, slotTimeLabel, venueToday,
 } from "@/lib/slot-format";
 import { SkeletonBlock } from "@/components/portal/loading/skeleton-block";
 import { takaLabel } from "@/components/portal/checkout/checkout-totals";
-import { useCheckoutOptions } from "@/components/portal/checkout/use-checkout-options";
+import { useCheckoutOptions } from "@/hooks/useCheckoutOptions";
+import { bookingSlotLimit } from "@/lib/booking-limits";
 
 /** Days offered in the picker; turf-api returns at most 14 per request. */
 const DAYS_SHOWN = 7;
@@ -64,7 +65,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
   const { data: closures } = usePublicClosures(dates[0].iso, dates[dates.length - 1].iso);
   const closure = closureFor(closures ?? [], ground.id, activeDate);
   const { data: options } = useCheckoutOptions();
-  const maxSlots = options?.maxSlotsPerBooking ?? MAX_SLOTS_PER_BOOKING;
+  const maxSlots = bookingSlotLimit(options);
   // Only slots that are still free count (a refresh can take one away), earliest first.
   const selected = daySlots
     .filter((s) => s.available && selectedTimes.includes(slotStartTime(s)))
@@ -83,7 +84,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
   }
 
   function handleContinue() {
-    if (selected.length === 0) return;
+    if (selected.length === 0 || selected.length > maxSlots) return;
     const params = new URLSearchParams({
       groundId: ground.id,
       date: activeDate,
@@ -128,6 +129,9 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
       {atLimit && (
         <p role="status" className="mt-2 text-xs text-muted-foreground">Up to {maxSlots} slots per booking</p>
       )}
+      {selected.length > maxSlots && (
+        <p role="alert" className="mt-2 text-xs text-destructive">The booking limit changed. Remove slots to continue.</p>
+      )}
 
       {selected.length > 0 && (
         <div className="mt-5 space-y-1.5 border-t pt-4 text-sm">
@@ -148,7 +152,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
 
       {/* Once an hour is picked, phones continue from the sticky bar instead */}
       <button
-        disabled={selected.length === 0}
+        disabled={selected.length === 0 || selected.length > maxSlots}
         onClick={handleContinue}
         className={cn(
           "mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold",
@@ -165,6 +169,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
           amount={serviceFee != null ? subtotal + serviceFee : subtotal}
           isTotal={serviceFee != null}
           onContinue={handleContinue}
+          disabled={selected.length > maxSlots}
         />
       )}
     </div>
@@ -242,9 +247,9 @@ function HourGrid({
  * `data-mobile-cta` lets the portal layout pad its bottom so the bar never covers the footer.
  */
 function MobileContinueBar({
-  count, amount, isTotal, onContinue,
+  count, amount, isTotal, onContinue, disabled,
 }: {
-  count: number; amount: number; isTotal: boolean; onContinue: () => void;
+  count: number; amount: number; isTotal: boolean; onContinue: () => void; disabled: boolean;
 }) {
   return (
     <div
@@ -259,7 +264,8 @@ function MobileContinueBar({
         <button
           type="button"
           onClick={onContinue}
-          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-bold text-accent-foreground hover:opacity-90"
+          disabled={disabled}
+          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-bold text-accent-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue <ArrowRight className="h-4 w-4" />
         </button>

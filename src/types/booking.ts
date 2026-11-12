@@ -162,7 +162,7 @@ export interface CheckoutOptions {
   serviceFee: number;
   currency: string;
   holdMinutes: number;
-  /** Most slots one booking can hold. Missing from older APIs: assume 4. */
+  /** Most slots one booking can hold. Missing from older APIs: allow only 1. */
   maxSlotsPerBooking?: number;
 }
 

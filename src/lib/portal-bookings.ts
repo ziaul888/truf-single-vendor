@@ -1,6 +1,7 @@
 import type {
   CheckoutMethod, CheckoutOptions, CheckoutResult, CustomerBooking, CustomerSession, PayResult, PublicBooking,
 } from "@/types/booking";
+import { checkoutSlotRequest } from "@/lib/booking-requests";
 
 // Portal calls to turf-api through the /api/v1 proxy. Customers have no login: a booking is
 // reached with the signed `token` from its confirmation link.
@@ -44,7 +45,12 @@ export const startCheckout = (body: {
   /** bKash / Nagad: the TrxID and the number the money was sent from. */
   reference?: string;
   payerNumber?: string;
-}) => call<CheckoutResult>("/checkout", { method: "POST", body: JSON.stringify(body) });
+}) => {
+  const { slots, ...details } = body;
+  return call<CheckoutResult>("/checkout", {
+    method: "POST", body: JSON.stringify({ ...details, ...checkoutSlotRequest(slots) }),
+  });
+};
 
 const withToken = (path: string, token: string) => `${path}?token=${encodeURIComponent(token)}`;
 
