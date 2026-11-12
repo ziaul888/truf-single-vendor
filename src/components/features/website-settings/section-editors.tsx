@@ -26,7 +26,7 @@ export function SportChipsEditor({ form }: { form: Form }) {
 export function FeaturedGroundsEditor({ form }: { form: Form }) {
   const e = form.formState.errors.sections?.featuredGrounds;
   return (
-    <SectionCard form={form} sectionKey="featuredGrounds" title="Our grounds" icon={LayoutGrid} description="Cards for every ground. Ground details come from the Grounds page.">
+    <SectionCard form={form} sectionKey="featuredGrounds" title="Our grounds" icon={LayoutGrid} description="One ground shows its available slots directly; multiple grounds show cards. Ground details come from the Grounds page.">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField id="grounds-title" label="Title" error={e?.title?.message}>
           <Input id="grounds-title" {...form.register("sections.featuredGrounds.title")} />

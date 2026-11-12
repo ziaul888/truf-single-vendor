@@ -8,19 +8,18 @@ import type { Ground } from "@/types/api";
 import type { WebsiteSettings } from "@/validations/website-settings";
 
 /**
- * A full-width photo with a booking card floating at its bottom: the venue (or the one ground) with its
- * price, then the search. With one ground the photo is that ground's own, and the search asks only for a date.
+ * The website's hero photo with a booking card floating at its bottom. With one ground,
+ * the card shows that ground's details and the search asks only for a date.
  */
 export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["hero"]; venueName: string }) {
   const grounds = await listPublicGrounds();
   const single = grounds.length === 1 ? grounds[0] : null;
-  const cover = single?.images?.[0] ?? hero.imageUrl;
 
   return (
     <section>
       <div className="relative flex h-96 sm:h-112 items-end overflow-hidden">
         <FallbackImage
-          src={cover}
+          src={hero.imageUrl}
           alt=""
           fill
           priority
