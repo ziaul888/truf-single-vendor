@@ -3,6 +3,7 @@ import { Calendar, CircleDot, Grid3x3, Search } from "lucide-react";
 import { listPublicGrounds } from "@/services/portal-grounds";
 import { addDays, venueHourNow, venueToday } from "@/lib/slot-format";
 import { SPORT_META, SPORTS, SURFACE_LABEL } from "@/components/portal/sports";
+import { HeroMedia } from "./hero-media";
 import { SearchForm } from "./search-form";
 import type { Ground } from "@/types/api";
 import type { WebsiteSettings } from "@/validations/website-settings";
@@ -26,6 +27,7 @@ export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["
           sizes="100vw"
           className="object-cover object-center"
         />
+        <HeroMedia videoUrl={hero.videoUrl} posterUrl={hero.imageUrl} />
         {/* Light at the top so the photo shows, darker at the bottom behind the card */}
         <div className="absolute inset-0 bg-linear-to-b from-transparent via-sidebar/10 to-sidebar/70" />
         <OpenNow grounds={grounds} />

@@ -26,7 +26,12 @@ import { WebsitePreview } from "@/components/features/website-settings/website-p
 const FORM_ROOTS = ["hero", "sections", "social"];
 
 /** The form holds only the editable content, not the audit fields. */
-const toForm = ({ hero, sections, social }: WebsiteSection): WebsiteSettings => ({ hero, sections, social });
+const toForm = ({ hero, sections, social }: WebsiteSection): WebsiteSettings => ({
+  // An older turf-api doesn't send videoUrl yet.
+  hero: { ...hero, videoUrl: hero.videoUrl ?? "" },
+  sections,
+  social,
+});
 
 export default function WebsiteSettingsPage() {
   const { data, isLoading, isError, refetch } = useWebsiteSettings();
