@@ -9,7 +9,7 @@ import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
 import { formatBookingSlots } from "@/lib/booking-slots";
 import { Phone, UserX, XCircle } from "lucide-react";
 import {
-  PAYMENT_STATUS_LABEL, canMarkNoShow, isCancellable, paymentStatusVariant,
+  PAYMENT_STATUS_LABEL, canMarkNoShow, hasBookingMoney, isCancellable, paymentStatusVariant,
 } from "./booking-status-helpers";
 import { BookingPaidDue } from "./booking-paid-due";
 import { StatusCell } from "./booking-status-cell";
@@ -66,7 +66,7 @@ export function getBookingColumns(
         <div className="flex flex-col items-start gap-1">
           <Badge variant={paymentStatusVariant(row.original.paymentStatus)}>{PAYMENT_STATUS_LABEL[row.original.paymentStatus]}</Badge>
           {row.original.payAtVenue && <PayAtVenueBadge />}
-          {row.original.walletPayment && <WalletBadge payment={row.original.walletPayment} />}
+          {row.original.walletPayment && <WalletBadge payment={row.original.walletPayment} bookingMoney={hasBookingMoney(row.original)} />}
         </div>
       ),
     },

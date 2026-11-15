@@ -39,7 +39,7 @@ export function WebsitePreview({
       </div>
       <div className={cn("mx-auto overflow-hidden rounded-xl border shadow-sm transition-[max-width]", device === "mobile" ? "max-w-[300px]" : "max-w-full")}>
         <BrowserBar />
-        <div className="pitch max-h-[70vh] overflow-y-auto bg-background text-foreground">
+        <div className="max-h-[70vh] overflow-y-auto bg-background text-foreground">
           <PreviewHeader venue={venue} mobile={device === "mobile"} />
           <PreviewHero hero={values.hero} mobile={device === "mobile"} />
           <PreviewSections sections={values.sections} venue={venue} />

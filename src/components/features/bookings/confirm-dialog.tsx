@@ -21,7 +21,7 @@ import { OptionalTrxIdSchema } from "@/validations/wallet";
 import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, isAwaitingWalletVerification, paymentStatusVariant,
+  PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, bookingMoneyBalance, hasBookingMoney, isAwaitingWalletVerification, paymentStatusVariant,
 } from "./booking-status-helpers";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
 import { TrxIdField } from "./trx-id-field";
@@ -66,6 +66,8 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
   const cancelAsked = verify && booking.cancelRequestedAt !== null;
   // No email on the booking: there is nobody to email, so the toggle is hidden and off.
   const hasEmail = booking.contact.email !== null;
+  // A cash booking with booking money: verifying confirms it, the balance is still paid in cash at the venue.
+  const balance = booking.walletPayment && hasBookingMoney(booking) ? bookingMoneyBalance(booking, booking.walletPayment) : null;
   const { control, watch, register, handleSubmit, formState: { errors } } = useForm<ConfirmForm>({
     resolver: zodResolver(ConfirmSchema),
     defaultValues: { markPaid: false, method: "cash", reference: "", notifyCustomer: hasEmail && !cancelAsked },
@@ -109,7 +111,9 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
           <Row label="Ground">{booking.ground.name}</Row>
           <Row label="Date & Time">{formatSlotDate(booking.slot.date)} {formatBookingSlots(booking)}</Row>
           <Row label="Total">{slotPriceLabel(booking.total)}</Row>
-          <Row label="Due">{slotPriceLabel(booking.due)}</Row>
+          {verify && balance !== null
+            ? <Row label="Due at venue">{slotPriceLabel(balance)}</Row>
+            : <Row label="Due">{slotPriceLabel(booking.due)}</Row>}
           <Row label="Payment">
             <span className="flex items-center gap-1.5">
               {booking.payAtVenue && <PayAtVenueBadge />}
@@ -131,7 +135,10 @@ function ConfirmForm({ booking, onClose }: { booking: Booking; onClose: () => vo
               <div>
                 <Label htmlFor="markPaid" className="cursor-pointer font-medium">Mark payment as received</Label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {verify ? "Verifying records the payment the customer sent"
+                  {verify
+                    ? balance !== null
+                      ? `Verifying records the booking money the customer sent. The balance of ${slotPriceLabel(balance)} is still due in cash at the venue`
+                      : "Verifying records the payment the customer sent"
                     : hasDue ? `Record ${slotPriceLabel(booking.due)} collected now` : "Nothing due on this booking"}
                 </p>
               </div>

@@ -1,5 +1,5 @@
 import type {
-  Booking, BookingEventType, BookingStatus, PaymentMethod, PaymentStatus,
+  Booking, BookingEventType, BookingStatus, PaymentMethod, PaymentStatus, WalletPayment,
 } from "@/types/booking";
 import { toMinorUnits } from "@/lib/ground-format";
 import { slotPriceLabel, slotStartHours, venueHourNow, venueToday, type SlotTimes } from "@/lib/slot-format";
@@ -90,6 +90,13 @@ export const isAwaitingCardPayment = (b: Pick<Booking, "source" | "payAtVenue" |
 /** A portal bKash / Nagad payment staff still have to check in their own app (Verify or Reject). */
 export const isAwaitingWalletVerification = (b: Pick<Booking, "status" | "walletPayment">) =>
   b.status === "pending" && b.walletPayment?.status === "pending";
+
+/** A portal cash booking that also sent booking money by bKash / Nagad: the balance is paid in cash at the venue. */
+export const hasBookingMoney = (b: Pick<Booking, "payAtVenue" | "walletPayment">) => b.payAtVenue && b.walletPayment !== null;
+
+/** What is left to pay at the venue after the booking money (display only; turf-api owns `due`). */
+export const bookingMoneyBalance = (b: Pick<Booking, "total">, payment: Pick<WalletPayment, "amount">) =>
+  Math.max(0, b.total - payment.amount);
 
 /** The slot has started, venue time (a no-show can only be marked from then). */
 export const slotHasStarted = (slot: Pick<Booking["slot"], "date"> & SlotTimes) => {

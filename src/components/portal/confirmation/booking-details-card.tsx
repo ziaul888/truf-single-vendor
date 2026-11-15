@@ -5,7 +5,7 @@ import { fromMinorUnits } from "@/lib/ground-format";
 import { bookingSlotCount, formatBookingSlots } from "@/lib/booking-slots";
 import { formatSlotDate, slotCountLabel, slotStartTime, slotTimeLabel } from "@/lib/slot-format";
 import { FormatBadge } from "@/components/portal/format-badge";
-import { PAYMENT_STATUS_LABEL, WALLET_NAME, isUnderReview, type ConfirmationState } from "./confirmation-state";
+import { PAYMENT_STATUS_LABEL, WALLET_NAME, hasBookingMoney, isUnderReview, type ConfirmationState } from "./confirmation-state";
 
 const STATUS_PILL: Record<ConfirmationState, { label: string; className: string }> = {
   confirming: { label: "Processing", className: "bg-warning/15 text-warning" },
@@ -23,9 +23,14 @@ const taka = (minor: number) => `৳${fromMinorUnits(minor).toLocaleString()}`;
 /** "Paid · cash at venue", "Unpaid · bKash, being verified". */
 function paymentLabel(b: PublicBooking) {
   const status = PAYMENT_STATUS_LABEL[b.paymentStatus];
-  if (b.payAtVenue) return `${status} · cash at venue`;
   const w = b.walletPayment;
+  if (b.payAtVenue && !w) return `${status} · cash at venue`;
   if (!w) return status;
+  if (b.payAtVenue && (w.status === "pending" || w.status === "succeeded")) {
+    return w.status === "pending"
+      ? `Booking money · ${WALLET_NAME[w.method]}, being verified`
+      : `Booking money paid · ${WALLET_NAME[w.method]}, rest in cash at venue`;
+  }
   return w.status === "pending" ? `${WALLET_NAME[w.method]} · being verified` : `${status} · ${WALLET_NAME[w.method]}`;
 }
 
@@ -72,10 +77,16 @@ export function BookingDetailsCard({
         )}
         <Line label="Service fee" value={taka(b.serviceFee)} />
         <Line label="Total" value={taka(b.total)} bold />
+        {b.walletPayment && hasBookingMoney(b) && isUnderReview(b) && (
+          <>
+            <Line label="Booking money" value={`${taka(b.walletPayment.amount)} · being verified`} />
+            <Line label="To pay at the venue" value={taka(Math.max(0, b.total - b.walletPayment.amount))} bold />
+          </>
+        )}
         {b.paid > 0 && b.due > 0 && !isUnderReview(b) && (
           <>
             <Line label="Paid" value={taka(b.paid)} />
-            <Line label="Due" value={taka(b.due)} bold />
+            <Line label={b.payAtVenue ? "Due at the venue" : "Due"} value={taka(b.due)} bold />
           </>
         )}
         <Line label="Payment" value={paymentLabel(b)} />

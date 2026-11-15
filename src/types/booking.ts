@@ -164,6 +164,8 @@ export interface CheckoutOptions {
   holdMinutes: number;
   /** Most slots one booking can hold. Missing from older APIs: allow only 1. */
   maxSlotsPerBooking?: number;
+  /** Booking money: the percent of the total a cash booking pays by bKash / Nagad now (the rest at the venue). Null when off; missing from older APIs. */
+  cashDepositPercent?: number | null;
 }
 
 export const CHECKOUT_METHODS = ["card", "cash", ...WALLET_METHODS] as const;

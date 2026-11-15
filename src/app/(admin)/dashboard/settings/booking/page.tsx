@@ -10,6 +10,7 @@ import { ReadOnlyNotice } from "@/components/features/settings/read-only-notice"
 import { SettingsLoadError, SettingsLoading } from "@/components/features/settings/settings-load-state";
 import { SettingsSaveActions, SettingsSaveBar } from "@/components/features/settings/settings-save-actions";
 import { BookingBehaviourCard, GenerationSettingsCard } from "@/components/features/slots/booking-rule-cards";
+import { CashDepositSettings } from "@/components/features/slots/cash-deposit-settings";
 import { MultiSlotSettings } from "@/components/features/slots/multi-slot-settings";
 import { PortalCheckoutSettings } from "@/components/features/slots/portal-checkout-settings";
 import type { SlotSettingsInput } from "@/validations/slot-settings";
@@ -17,7 +18,7 @@ import type { SlotSettingsInput } from "@/validations/slot-settings";
 // The same live settings as Slots → Settings. The notify switches are on the Notifications page.
 const BOOKING_FIELDS = [
   "advanceBookingDays", "cancellationCutoffHours", "autoGenerate", "holdMinutes", "serviceFee", "portalCashEnabled",
-  "multiSlotEnabled", "maxSlotsPerBooking",
+  "multiSlotEnabled", "maxSlotsPerBooking", "cashDepositEnabled", "cashDepositPercent",
 ] as const satisfies readonly (keyof SlotSettingsInput)[];
 
 export default function BookingSettingsPage() {
@@ -49,6 +50,7 @@ export default function BookingSettingsPage() {
         <BookingBehaviourCard form={form} />
         <PortalCheckoutSettings form={form} />
         <MultiSlotSettings form={form} />
+        <CashDepositSettings form={form} />
       </fieldset>
       {canEdit && (
         <SettingsSaveBar>

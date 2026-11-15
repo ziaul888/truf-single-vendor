@@ -146,6 +146,10 @@ export interface SlotSettings {
   multiSlotEnabled: boolean;
   /** Most slots in one booking (2–4). Returned even while multi-slot is off. */
   maxSlotsPerBooking: number;
+  /** Cash bookings also pay a share of the total by bKash / Nagad (booking money); the rest is paid at the venue. Off by default. */
+  cashDepositEnabled: boolean;
+  /** The booking money share of the total, 1–100. Returned even while the deposit is off. */
+  cashDepositPercent: number;
   /** Card on the portal (also needs Stripe keys); bKash / Nagad (also need the number). Off keeps the number. Saved on Settings → Payments. */
   portalCardEnabled: boolean;
   portalBkashEnabled: boolean;

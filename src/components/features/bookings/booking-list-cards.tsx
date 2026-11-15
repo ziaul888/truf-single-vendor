@@ -8,7 +8,7 @@ import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
 import { formatBookingSlots } from "@/lib/booking-slots";
 import type { Booking } from "@/types/booking";
 import { Phone, UserX, XCircle } from "lucide-react";
-import { PAYMENT_STATUS_LABEL, canMarkNoShow, isCancellable, paymentStatusVariant } from "./booking-status-helpers";
+import { PAYMENT_STATUS_LABEL, canMarkNoShow, hasBookingMoney, isCancellable, paymentStatusVariant } from "./booking-status-helpers";
 import { BookingPaidDue } from "./booking-paid-due";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
@@ -65,7 +65,7 @@ function BookingListCard({ booking: b, showGround, onCancel, onNoShow }: Omit<Bo
         <Badge variant={paymentStatusVariant(b.paymentStatus)}>{PAYMENT_STATUS_LABEL[b.paymentStatus]}</Badge>
         {b.seriesId && <RepeatBadge />}
         {b.payAtVenue && <PayAtVenueBadge />}
-        {b.walletPayment && <WalletBadge payment={b.walletPayment} />}
+        {b.walletPayment && <WalletBadge payment={b.walletPayment} bookingMoney={hasBookingMoney(b)} />}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <StatusCell booking={b} onCancel={onCancel} triggerClassName="h-10 w-36" />

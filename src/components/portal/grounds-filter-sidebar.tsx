@@ -19,7 +19,7 @@ export function GroundsFilterSidebar({ query, layout }: { query: GroundsQuery; l
       icon={<SlidersHorizontal className="h-4 w-4" />}
       layout={layout}
       // The menu renders outside the portal layout, so it needs the portal's theme class too.
-      contentClassName="pitch max-h-[70vh] w-72 overflow-y-auto p-0"
+      contentClassName="max-h-[70vh] w-72 overflow-y-auto p-0"
     >
       <GroundsFilters query={query} anyFilter={anyFilter} />
     </FilterMenu>

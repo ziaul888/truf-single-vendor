@@ -69,7 +69,7 @@ export function RailNavItem({
         <span
           aria-hidden
           className={cn(
-            "absolute top-1/2 -left-[11px] h-6 w-1 -translate-y-1/2 rounded-r-full bg-current shadow-[0_0_10px_currentColor]",
+            "absolute top-1/2 -left-2.5 h-6 w-1 -translate-y-1/2 rounded-r-full bg-current shadow-[0_0_10px_currentColor]",
             item.color
           )}
         />

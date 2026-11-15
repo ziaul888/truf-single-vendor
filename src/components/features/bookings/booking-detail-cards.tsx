@@ -11,7 +11,9 @@ import { formatEventTime, slotPriceLabel, formatSlotDate } from "@/lib/slot-form
 import { bookingMinutes, bookingSlotCount, formatBookingSlots } from "@/lib/booking-slots";
 import type { BookingDetail } from "@/types/booking";
 import { CalendarDays, Clock, CreditCard, Mail, Pencil, Phone, Timer, Users } from "lucide-react";
-import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, isAwaitingWalletVerification, paymentStatusVariant } from "./booking-status-helpers";
+import {
+  PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL, bookingMoneyBalance, hasBookingMoney, isAwaitingWalletVerification, paymentStatusVariant,
+} from "./booking-status-helpers";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
 import { WalletBadge, WalletPaymentNotice } from "./wallet-payment-info";
 
@@ -121,11 +123,13 @@ export function BookingPaymentCard({ booking }: { booking: BookingDetail }) {
         <DetailRow label="Status">
           <span className="flex items-center gap-1.5">
             {booking.payAtVenue && <PayAtVenueBadge />}
-            {booking.walletPayment && <WalletBadge payment={booking.walletPayment} />}
+            {booking.walletPayment && <WalletBadge payment={booking.walletPayment} bookingMoney={hasBookingMoney(booking)} />}
             <Badge variant={paymentStatusVariant(booking.paymentStatus)}>{PAYMENT_STATUS_LABEL[booking.paymentStatus]}</Badge>
           </span>
         </DetailRow>
-        {booking.walletPayment && <WalletPaymentNotice payment={booking.walletPayment} />}
+        {booking.walletPayment && (
+          <WalletPaymentNotice payment={booking.walletPayment} balance={hasBookingMoney(booking) ? bookingMoneyBalance(booking, booking.walletPayment) : undefined} />
+        )}
         <Separator />
         <DetailRow label="Slot price"><span>{slotPriceLabel(booking.amount)}</span></DetailRow>
         {booking.serviceFee > 0 && <DetailRow label="Service fee"><span>{slotPriceLabel(booking.serviceFee)}</span></DetailRow>}

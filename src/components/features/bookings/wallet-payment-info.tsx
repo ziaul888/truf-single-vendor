@@ -11,10 +11,10 @@ const STATUS_LABEL: Record<WalletPayment["status"], string> = {
 };
 
 /** The portal customer paid by bKash / Nagad. */
-export function WalletBadge({ payment }: { payment: WalletPayment }) {
+export function WalletBadge({ payment, bookingMoney }: { payment: WalletPayment; bookingMoney?: boolean }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-semibold text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">
-      <Smartphone className="h-3 w-3" />{PAYMENT_METHOD_LABEL[payment.method]}
+      <Smartphone className="h-3 w-3" />{PAYMENT_METHOD_LABEL[payment.method]}{bookingMoney && " booking money"}
     </span>
   );
 }
@@ -40,7 +40,7 @@ export function WalletPaymentRows({ payment }: { payment: WalletPayment }) {
 }
 
 /** A short box on the review card and booking detail: what the customer sent. */
-export function WalletPaymentNotice({ payment }: { payment: WalletPayment }) {
+export function WalletPaymentNotice({ payment, balance }: { payment: WalletPayment; balance?: number }) {
   return (
     <div className="flex items-start gap-2 rounded-md bg-pink-50 px-3 py-2 text-xs text-pink-800 dark:bg-pink-950/30 dark:text-pink-200">
       <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -49,6 +49,7 @@ export function WalletPaymentNotice({ payment }: { payment: WalletPayment }) {
         <span className="font-mono font-semibold">{payment.reference ?? "—"}</span> · from {payment.payerNumber}
         {" · "}{STATUS_LABEL[payment.status]}
         {payment.status === "pending" && ". Check your app, then Verify or Reject."}
+        {balance !== undefined && ` Booking money for a cash booking: ${slotPriceLabel(balance)} is due in cash at the venue.`}
       </span>
     </div>
   );
