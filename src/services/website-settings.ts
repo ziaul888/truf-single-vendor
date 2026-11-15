@@ -7,18 +7,20 @@ import { DEFAULT_WEBSITE_SETTINGS, FALLBACK_VENUE } from "@/lib/website-defaults
 // Server code can't use the relative /api/v1 proxy path, so it calls turf-api directly.
 
 const API_TARGET = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
+// Cached for as long as turf-api caches it, so a visit doesn't wait on a round trip to the API server.
+const CACHE = { revalidate: 60, tags: ["website"] };
 
 export interface PublicWebsite extends WebsiteSettings {
   venue: PublicVenue;
 }
 
 /**
- * GET /website: the content plus the public venue profile, in one request. turf-api
- * caches it for 60 s and clears that on save, so this always asks it (no Next cache).
+ * GET /website: the content plus the public venue profile, in one request. Cached here for 60 s
+ * (turf-api caches it for 60 s too), so an admin's edit can take up to a minute to show on the portal.
  */
 export async function getPublicWebsite(): Promise<PublicWebsite> {
   try {
-    const res = await fetch(`${API_TARGET}/api/v1/website`, { cache: "no-store" });
+    const res = await fetch(`${API_TARGET}/api/v1/website`, { next: CACHE });
     const json = await res.json();
     if (json.success) return json.data;
     console.error("GET /website failed:", json.error);
@@ -33,7 +35,7 @@ export async function getPublicWebsite(): Promise<PublicWebsite> {
 /** GET /venue: just the public venue profile, for pages that don't need the website content. */
 export async function getPublicVenue(): Promise<PublicVenue> {
   try {
-    const res = await fetch(`${API_TARGET}/api/v1/venue`, { cache: "no-store" });
+    const res = await fetch(`${API_TARGET}/api/v1/venue`, { next: CACHE });
     const json = await res.json();
     if (json.success) return json.data;
     console.error("GET /venue failed:", json.error);
