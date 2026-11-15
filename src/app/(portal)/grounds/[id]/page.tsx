@@ -9,6 +9,9 @@ import { FormatBadge } from "@/components/portal/format-badge";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround, listPublicGrounds } from "@/services/portal-grounds";
 import { getPublicVenue } from "@/services/website-settings";
+import { JsonLd } from "@/components/json-ld";
+import { siteUrl } from "@/lib/site-url";
+import { socialMetadata } from "@/lib/seo";
 import { GroundLocation } from "@/components/portal/ground-location";
 import { GroundRules } from "@/components/portal/ground-rules";
 import { directionsUrl } from "@/lib/maps";
@@ -21,12 +24,11 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const ground = await getPublicGround(id).catch(() => null);
+  const [ground, venue] = await Promise.all([getPublicGround(id).catch(() => null), getPublicVenue()]);
   if (!ground) return { title: "Ground" };
-  return {
-    title: ground.format ? `${ground.name} · ${FORMAT_LABEL[ground.format]}` : ground.name,
-    description: ground.description ?? undefined,
-  };
+  const title = ground.format ? `${ground.name} · ${FORMAT_LABEL[ground.format]}` : ground.name;
+  const description = ground.description?.trim() || `Book ${ground.name} at ${venue.name} by the hour. See live availability and reserve in a few taps.`;
+  return { title, description, ...socialMetadata({ title: `${title} · ${venue.name}`, description, siteName: venue.name }) };
 }
 
 export default async function GroundDetailPage({
@@ -44,6 +46,20 @@ export default async function GroundDetailPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "SportsActivityLocation",
+          name: ground.name,
+          description: ground.description?.trim() || undefined,
+          url: `${siteUrl().origin}/grounds/${ground.id}`,
+          image: `${siteUrl().origin}/app-icon?size=512`,
+          telephone: venue.phone || undefined,
+          address: location ? { "@type": "PostalAddress", streetAddress: location } : undefined,
+          priceRange: `৳${ground.hourlyRate}/hour`,
+          isPartOf: { "@type": "SportsActivityLocation", name: venue.name },
+        }}
+      />
       <Breadcrumb name={ground.name} single={grounds.length === 1} />
       <Gallery images={ground.images ?? []} />
 

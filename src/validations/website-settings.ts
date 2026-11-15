@@ -29,6 +29,22 @@ export function isWebsiteImageSrc(value: string | undefined): boolean {
 
 const imageSrc = z.string().refine(isWebsiteImageSrc, "Upload an image or enter a link starting with https://");
 
+/** A direct https link to an .mp4 or .webm file (a query string is allowed). Empty = no video. */
+export function isHeroVideoUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && /\.(mp4|webm)$/i.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
+const heroVideoUrl = z
+  .string()
+  .trim()
+  .max(500, "Keep the link under 500 characters")
+  .refine((v) => v === "" || isHeroVideoUrl(v), "Use a direct https link to an .mp4 or .webm file, not a YouTube link");
+
 /* ---------- Amenity icons ---------- */
 
 export const AMENITY_ICON_KEYS = [
@@ -43,6 +59,7 @@ export const WebsiteHeroSchema = z.object({
   headline: text(60, "Add a headline"),
   description: text(280),
   imageUrl: imageSrc,
+  videoUrl: heroVideoUrl,
 });
 
 export const WebsiteSectionsSchema = z.object({

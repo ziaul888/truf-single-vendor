@@ -8,7 +8,7 @@ import {
   Eye, Facebook, Goal, Instagram, MessageCircle, Monitor, Phone, Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isWebsiteImageSrc, type WebsiteSettings } from "@/validations/website-settings";
+import { isHeroVideoUrl, isWebsiteImageSrc, type WebsiteSettings } from "@/validations/website-settings";
 import type { PublicVenue } from "@/types/settings";
 import { PreviewSections } from "./preview-sections";
 
@@ -132,6 +132,20 @@ function PreviewHero({ hero, mobile }: { hero: WebsiteSettings["hero"]; mobile: 
         <Image src={hero.imageUrl} alt="" fill unoptimized sizes="420px" className="object-cover" />
       ) : (
         <div className="absolute inset-0 bg-sidebar" />
+      )}
+      {hero.videoUrl && isHeroVideoUrl(hero.videoUrl) && (
+        <video
+          key={hero.videoUrl}
+          src={hero.videoUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden
+          tabIndex={-1}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
       )}
       <div className="absolute inset-0 bg-gradient-to-b from-sidebar/40 to-sidebar/85" />
       {/* The portal hero is the photo and the search box only */}

@@ -29,6 +29,14 @@ export function HeroFields({ form }: { form: Form }) {
         hint="JPG, PNG or WebP. Wide photos work best. Large images are resized to 1920px."
         defaultUrl={DEFAULT_WEBSITE_SETTINGS.hero.imageUrl}
       />
+      <FormField
+        id="hero-video"
+        label="Background video link (optional)"
+        hint="A short loop under 10 seconds and under 5 MB, as a direct .mp4 or .webm link. YouTube links don't work. The photo shows until the video loads, and for visitors who turned on Reduce motion or Data Saver."
+        error={e?.videoUrl?.message}
+      >
+        <Input id="hero-video" type="url" inputMode="url" placeholder="https://…/loop.mp4" {...register("hero.videoUrl")} />
+      </FormField>
     </SettingsSection>
   );
 }
