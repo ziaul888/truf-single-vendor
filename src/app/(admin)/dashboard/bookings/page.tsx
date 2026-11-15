@@ -27,13 +27,14 @@ export default function BookingsPage() {
   return <Suspense><BookingsView /></Suspense>;
 }
 
-/** ?due=overdue|today|any from the dashboard's attention cards. */
+/** ?due=overdue|today|any and ?refundDue=true from the dashboard's attention cards. */
 const dueFromUrl = (v: string | null): DueFilter | "all" =>
   DUE_FILTERS.includes(v as DueFilter) ? (v as DueFilter) : "all";
 
 function BookingsView() {
-  const initialDue = dueFromUrl(useSearchParams().get("due"));
-  const [filters, setFilters] = useState<BookingListFilters>({ ...EMPTY_BOOKING_FILTERS, due: initialDue });
+  const params = useSearchParams();
+  const initialDue = dueFromUrl(params.get("due"));
+  const [filters, setFilters] = useState<BookingListFilters>({ ...EMPTY_BOOKING_FILTERS, due: initialDue, refundDue: params.get("refundDue") === "true" });
   const [page, setPage] = useState(1);
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
   const [noShowTarget, setNoShowTarget] = useState<Booking | null>(null);
@@ -45,6 +46,7 @@ function BookingsView() {
     paymentStatus: filters.paymentStatus === "all" ? undefined : filters.paymentStatus,
     groundId: filters.groundId === "all" ? undefined : filters.groundId,
     due: filters.due === "all" ? undefined : filters.due,
+    refundDue: filters.refundDue || undefined,
     page,
     limit: PAGE_SIZE,
   });

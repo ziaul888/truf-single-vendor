@@ -22,6 +22,8 @@ export interface BookingFilters {
   search?: string;
   /** Money still owed: overdue, due today, or any. */
   due?: DueFilter;
+  /** Cancelled bookings whose bKash / Nagad refund staff have not yet sent back. */
+  refundDue?: boolean;
   sort?: "created" | "slot";
   page?: number;
   limit?: number;
@@ -116,6 +118,15 @@ export function useMarkNoShow() {
 export function useUndoNoShow() {
   return useBookingMutation(async (id: string) =>
     (await api.post(`/admin/bookings/${id}/undo-no-show`)).data.data as Booking);
+}
+
+/**
+ * Staff paid a bKash / Nagad refund back by hand and record it. 409 NO_REFUND_DUE if nothing is due.
+ * The shared refresh also covers the dashboard's attention cards.
+ */
+export function useMarkRefundSent() {
+  return useBookingMutation(async ({ id, ...body }: { id: string; note?: string }) =>
+    (await api.post(`/admin/bookings/${id}/refund-sent`, body)).data.data as Booking);
 }
 
 /** Records cash, a bank transfer, bKash or Nagad against a booking (collecting a due amount). */

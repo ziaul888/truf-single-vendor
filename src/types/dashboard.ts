@@ -14,6 +14,8 @@ export interface DashboardAttention {
   startingSoon: { count: number; withinMinutes: number };
   /** Still pending after the slot ended: collect, verify or mark no-show. Missing from older APIs. */
   needsOutcome?: { count: number; bookings?: NeedsOutcomeBooking[] };
+  /** Cancelled bookings with a bKash / Nagad refund still to pay back by hand. Missing from older APIs. */
+  refundDue?: { count: number };
 }
 
 /** A booking on the "Needs outcome" card (at most 10, most recently ended first). */

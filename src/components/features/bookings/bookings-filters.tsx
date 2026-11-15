@@ -16,9 +16,11 @@ export interface BookingListFilters {
   paymentStatus: PaymentStatus | "all";
   groundId: string;
   due: DueFilter | "all";
+  /** Cancelled bookings with a bKash / Nagad refund still to pay back by hand. */
+  refundDue: boolean;
 }
 
-export const EMPTY_BOOKING_FILTERS: BookingListFilters = { search: "", status: "all", paymentStatus: "all", groundId: "all", due: "all" };
+export const EMPTY_BOOKING_FILTERS: BookingListFilters = { search: "", status: "all", paymentStatus: "all", groundId: "all", due: "all", refundDue: false };
 
 export const DUE_LABEL: Record<DueFilter, string> = { any: "Money due", overdue: "Overdue", today: "Due today" };
 
@@ -30,7 +32,7 @@ interface BookingsFiltersProps {
 export function BookingsFilters({ value, onChange }: BookingsFiltersProps) {
   const { data: grounds } = useGrounds();
   const set = (patch: Partial<BookingListFilters>) => onChange({ ...value, ...patch });
-  const isFiltered = value.search !== "" || value.status !== "all" || value.paymentStatus !== "all" || value.groundId !== "all" || value.due !== "all";
+  const isFiltered = value.search !== "" || value.status !== "all" || value.paymentStatus !== "all" || value.groundId !== "all" || value.due !== "all" || value.refundDue;
 
   return (
     <div className="flex items-center gap-2 md:flex-col md:items-stretch md:gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -40,7 +42,7 @@ export function BookingsFilters({ value, onChange }: BookingsFiltersProps) {
           value={value.search} onChange={(e) => set({ search: e.target.value })} />
       </div>
       <div className="md:grid md:grid-cols-4 md:gap-2 lg:flex lg:flex-wrap lg:gap-1">
-        <FilterMenu activeCount={(value.status !== "all" ? 1 : 0) + (value.paymentStatus !== "all" ? 1 : 0) + (value.groundId !== "all" ? 1 : 0) + (value.due !== "all" ? 1 : 0)}>
+        <FilterMenu activeCount={(value.status !== "all" ? 1 : 0) + (value.paymentStatus !== "all" ? 1 : 0) + (value.groundId !== "all" ? 1 : 0) + (value.due !== "all" ? 1 : 0) + (value.refundDue ? 1 : 0)}>
           <Select value={value.status} onValueChange={(v) => set({ status: v as BookingListFilters["status"] })}>
             <SelectTrigger className="w-full lg:w-36"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
@@ -71,6 +73,10 @@ export function BookingsFilters({ value, onChange }: BookingsFiltersProps) {
               {DUE_FILTERS.map((d) => <SelectItem key={d} value={d}>{DUE_LABEL[d]}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button type="button" variant={value.refundDue ? "default" : "outline"} aria-pressed={value.refundDue}
+            onClick={() => set({ refundDue: !value.refundDue })} className="w-full lg:w-auto">
+            Refund due
+          </Button>
           {isFiltered && (
             <Button variant="ghost" size="sm" onClick={() => onChange(EMPTY_BOOKING_FILTERS)}
               className="gap-1.5 text-muted-foreground md:col-span-4 lg:col-span-1">

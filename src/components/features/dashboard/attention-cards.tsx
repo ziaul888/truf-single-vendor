@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlarmClock, AlertTriangle, CalendarCheck, CreditCard, Wallet } from "lucide-react";
+import { AlarmClock, AlertTriangle, CalendarCheck, CreditCard, Undo2, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { slotPriceLabel } from "@/lib/slot-format";
 import { useDashboardAttention } from "@/hooks/useDashboard";
@@ -52,8 +52,18 @@ export function AttentionCards() {
     { label: "Paying now", count: data.payingNow.count, tone: "info", Icon: CreditCard, sub: "Customers in card checkout" },
   ];
 
+  // Older APIs have no refund count: then there is no card. Manual refunds are paid back outside the system.
+  if (data.refundDue) {
+    cards.push({
+      label: "Refund due", count: data.refundDue.count, tone: "warn", Icon: Undo2, href: "/dashboard/bookings?refundDue=true",
+      sub: "Pay back by hand · not sent automatically",
+    });
+  }
+  // Two per row on phones; an odd last card spans the row so nothing sits alone.
+  const odd = cards.length % 2 === 1;
+
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+    <div className={cn("grid grid-cols-2 gap-3", cards.length > 5 ? "lg:grid-cols-3 xl:grid-cols-6" : "lg:grid-cols-5")}>
       {cards.map((c) => {
         const body = (
           <>
@@ -66,8 +76,8 @@ export function AttentionCards() {
           </>
         );
         const cls = cn(
-          // Two per row on phones; the fifth card spans the row so nothing sits alone.
-          "block min-w-0 rounded-xl border p-3 transition-colors last:col-span-2 sm:p-4 lg:last:col-span-1",
+          "block min-w-0 rounded-xl border p-3 transition-colors sm:p-4",
+          odd && "last:col-span-2 lg:last:col-span-1",
           c.count > 0 ? TONE[c.tone] : "bg-card text-muted-foreground",
           c.href && "hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         );

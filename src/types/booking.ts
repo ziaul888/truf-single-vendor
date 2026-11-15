@@ -33,6 +33,22 @@ export type BookingSource = "portal" | "staff";
 
 export interface StaffRef { id: string; name: string }
 
+/**
+ * A refunded bKash / Nagad payment that is paid back by hand (the system never sends it).
+ * `sentAt: null` means the refund is still due.
+ */
+export interface BookingRefund {
+  /** Smallest currency unit. */
+  amount: number;
+  method: WalletMethod;
+  /** The number to send it to. */
+  payerNumber: string | null;
+  sentAt: string | null;
+  /** Name of the staff member who recorded it. */
+  sentBy: string | null;
+  note: string | null;
+}
+
 /** One slot of a booking (a booking holds 1 to 4 on one ground and date). `price` is in the smallest unit. */
 export interface BookingSlot extends SlotMinutes {
   /** Missing on a customer's (public) booking. */
@@ -57,6 +73,8 @@ export interface Booking {
   payAtVenue: boolean;
   /** A portal customer paid by bKash / Nagad: what they sent, for staff to verify. */
   walletPayment: WalletPayment | null;
+  /** Manual bKash / Nagad refund to pay back; null when none. Missing from older APIs: treat as null. */
+  refund?: BookingRefund | null;
   /** The customer asked to cancel while their bKash / Nagad payment was under review. */
   cancelRequestedAt: string | null;
   ground: { id: string; name: string; sport: Sport };

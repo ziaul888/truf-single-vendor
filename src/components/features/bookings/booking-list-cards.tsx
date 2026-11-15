@@ -12,6 +12,7 @@ import { PAYMENT_STATUS_LABEL, canMarkNoShow, hasBookingMoney, isCancellable, pa
 import { BookingPaidDue } from "./booking-paid-due";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
+import { RefundBadge } from "./refund-badge";
 import { RepeatBadge } from "./repeat-badge";
 import { WalletBadge } from "./wallet-payment-info";
 
@@ -65,6 +66,7 @@ function BookingListCard({ booking: b, showGround, onCancel, onNoShow }: Omit<Bo
         <Badge variant={paymentStatusVariant(b.paymentStatus)}>{PAYMENT_STATUS_LABEL[b.paymentStatus]}</Badge>
         {b.seriesId && <RepeatBadge />}
         {b.payAtVenue && <PayAtVenueBadge />}
+        {b.refund && <RefundBadge refund={b.refund} />}
         {b.walletPayment && <WalletBadge payment={b.walletPayment} bookingMoney={hasBookingMoney(b)} />}
       </div>
       <div className="flex flex-wrap items-center gap-2">
