@@ -139,12 +139,12 @@
   --sidebar-ring:        oklch(0.65  0.24  28);
 }
 
-/* The pitch background, also painted on the document so a page load never flashes the light theme */
+/* The pitch background, also painted on the document so the pitch theme never flashes the light one */
 :root {
   --pitch-background: oklch(0.24 0.05 150);
 }
-html:has(.pitch),
-html:has(.pitch) body {
+html.pitch,
+html.pitch body {
   background-color: var(--pitch-background);
 }
 

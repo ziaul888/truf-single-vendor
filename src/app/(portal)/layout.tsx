@@ -11,20 +11,19 @@ import { MobileMenu } from "@/components/portal/mobile-menu";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
 import { PortalTabBar } from "@/components/portal/portal-tab-bar";
 
-/** The browser / status bar takes the pitch background. */
-export const viewport: Viewport = { themeColor: "#0b2612" };
+/** The browser / status bar takes the header colour (the sidebar token is dark in every theme). */
+export const viewport: Viewport = { themeColor: "#110d0c" };
 
 /**
- * The portal locks to the `pitch` theme regardless of the admin theme toggle —
- * every Tailwind token below resolves to the green/gold palette defined in
- * globals.css under `.pitch`.
+ * The portal follows the same theme as the admin (light / dark / pitch, from the theme toggle),
+ * so every Tailwind token below resolves to the active theme in globals.css.
  */
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const [{ venue, social }, bookHref] = await Promise.all([getPublicWebsite(), bookingHref()]);
   return (
     // Below lg, room at the bottom for a page's fixed action bar (`data-mobile-cta`) so it doesn't cover the footer;
     // while that bar is up, the phone tab bar (`data-portal-tabs`) steps aside for it.
-    <div className="pitch flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))] has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden">
+    <div className="flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))] has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden">
       <PortalHeader venue={venue} bookHref={bookHref} />
       <main className="flex-1">{children}</main>
       <PortalFooter venue={venue} social={social} />

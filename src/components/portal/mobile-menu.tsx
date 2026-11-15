@@ -25,8 +25,7 @@ export function MobileMenu({ phone, isAdmin, bookHref }: { phone: string; isAdmi
       >
         <Menu className="h-5 w-5" />
       </SheetTrigger>
-      {/* The sheet renders outside the portal's wrapper, so it needs the pitch theme itself. */}
-      <SheetContent className="pitch max-w-xs border-l border-white/10 bg-sidebar text-sidebar-foreground">
+      <SheetContent className="max-w-xs border-l border-white/10 bg-sidebar text-sidebar-foreground">
         <SheetTitle className="px-6 pb-2 pt-5 text-base">Menu</SheetTitle>
         <nav className="flex flex-col px-3">
           {LINKS.map(({ href, label, Icon }) => (

@@ -65,7 +65,7 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
           <div className="my-3 h-px w-9 bg-linear-to-r from-transparent via-sidebar-border to-transparent" />
 
           {/* Rail nav */}
-          <nav className="scrollbar-hover flex-1 w-full space-y-1.5 overflow-y-auto px-2.5">
+          <nav className="scrollbar-hover flex-1 w-full space-y-1.5 overflow-y-auto px-[13px] py-1">
             {nav.map((group, gi) => (
               <div key={group.label}>
                 {gi > 0 && <div className="my-2 mx-1 h-px bg-sidebar-border/50" />}
