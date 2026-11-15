@@ -1,4 +1,8 @@
-import { getPublicWebsite } from "@/services/website-settings";
+import type { Metadata } from "next";
+import { getPublicVenue, getPublicWebsite } from "@/services/website-settings";
+import { JsonLd } from "@/components/json-ld";
+import { siteUrl } from "@/lib/site-url";
+import { socialMetadata, venueDescription } from "@/lib/seo";
 import { listPublicGrounds } from "@/services/portal-grounds";
 import { HeroSection } from "@/components/portal/home/hero-section";
 import { SportChipsSection } from "@/components/portal/home/sport-chips-section";
@@ -11,12 +15,34 @@ import { VisitUsSection } from "@/components/portal/home/visit-us-section";
 // Website content and the venue profile can change at any time from the admin, so never prerender.
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata(): Promise<Metadata> {
+  const venue = await getPublicVenue();
+  const title = `${venue.name} · Book turf slots online`;
+  const description = venueDescription(venue.name, venue.address);
+  return { title: { absolute: title }, description, ...socialMetadata({ title, description, siteName: venue.name }) };
+}
+
 export default async function LandingPage() {
   const [{ hero, venue, sections }, grounds] = await Promise.all([getPublicWebsite(), listPublicGrounds()]);
   // Sport chips only help when there is more than one ground to tell apart.
   const multi = grounds.length > 1;
+  const origin = siteUrl().origin;
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "SportsActivityLocation",
+          name: venue.name,
+          description: venue.tagline || undefined,
+          url: origin,
+          image: `${origin}/app-icon?size=512`,
+          telephone: venue.phone || undefined,
+          email: venue.email || undefined,
+          address: venue.address ? { "@type": "PostalAddress", streetAddress: venue.address } : undefined,
+          hasMap: venue.mapUrl || undefined,
+        }}
+      />
       <HeroSection hero={hero} venueName={venue.name} />
       <StatsStrip />
       {multi && sections.sportChips.enabled && <SportChipsSection content={sections.sportChips} />}

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getPublicSlots, listPublicGrounds } from "@/services/portal-grounds";
 import { getPublicVenue } from "@/services/website-settings";
+import { socialMetadata } from "@/lib/seo";
 import {
   parseGroundsQuery,
   sortGrounds,
@@ -18,7 +19,8 @@ import type { PublicSlot } from "@/types/slot";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { name } = await getPublicVenue();
-  return { title: "Our grounds", description: `Browse the grounds at ${name} and book an hourly slot.` };
+  const description = `Browse the grounds at ${name} and book an hourly slot.`;
+  return { title: "Our grounds", description, ...socialMetadata({ title: `Our grounds · ${name}`, description, siteName: name }) };
 }
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;

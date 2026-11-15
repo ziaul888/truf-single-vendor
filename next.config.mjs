@@ -12,6 +12,13 @@ const nextConfig = {
       },
     ],
   },
+  // Private pages stay out of search results even if a crawler is linked to them (robots.txt only asks it not to crawl).
+  async headers() {
+    const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+    return ["/dashboard/:path*", "/login", "/sign-in", "/checkout/:path*", "/confirmation/:path*", "/my-bookings", "/account", "/api/:path*"].map(
+      (source) => ({ source, headers: noindex }),
+    );
+  },
   // Browser calls /api/v1/* on this origin; Next forwards them to turf-api so
   // the httpOnly admin_token cookie stays first-party (no CORS needed).
   async rewrites() {
