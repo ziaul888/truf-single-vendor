@@ -14,6 +14,7 @@ import {
 import { BookingPaidDue } from "./booking-paid-due";
 import { StatusCell } from "./booking-status-cell";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
+import { RefundBadge } from "./refund-badge";
 import { RepeatBadge } from "./repeat-badge";
 import { WalletBadge } from "./wallet-payment-info";
 
@@ -66,6 +67,7 @@ export function getBookingColumns(
         <div className="flex flex-col items-start gap-1">
           <Badge variant={paymentStatusVariant(row.original.paymentStatus)}>{PAYMENT_STATUS_LABEL[row.original.paymentStatus]}</Badge>
           {row.original.payAtVenue && <PayAtVenueBadge />}
+          {row.original.refund && <RefundBadge refund={row.original.refund} />}
           {row.original.walletPayment && <WalletBadge payment={row.original.walletPayment} bookingMoney={hasBookingMoney(row.original)} />}
         </div>
       ),
