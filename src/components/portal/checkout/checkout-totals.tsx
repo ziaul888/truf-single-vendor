@@ -4,6 +4,7 @@ import { fromMinorUnits } from "@/lib/ground-format";
 import { slotTimeLabel } from "@/lib/slot-format";
 import type { PublicSlot } from "@/types/slot";
 import { useCheckoutOptions } from "@/hooks/useCheckoutOptions";
+import { cashDepositAmount } from "@/lib/cash-deposit";
 
 /** "৳1,550" from an amount in the smallest unit. */
 export const takaLabel = (minor: number) => `৳${fromMinorUnits(minor).toLocaleString()}`;
@@ -17,6 +18,8 @@ export function CheckoutTotals({ slots }: { slots: PublicSlot[] }) {
   const fee = options ? takaLabel(options.serviceFee) : isPending ? "…" : "—";
   const total = options ? takaLabel(slotsSubtotal(slots) + options.serviceFee) : isPending ? "…" : "—";
 
+  const depositPercent = options?.cashEnabled ? (options.cashDepositPercent ?? null) : null;
+
   return (
     <div className="mt-4 space-y-1.5 border-t pt-4 text-sm">
       {slots.map((s) => (
@@ -24,6 +27,12 @@ export function CheckoutTotals({ slots }: { slots: PublicSlot[] }) {
       ))}
       <Line label="Service fee" value={fee} />
       <Line label="Total" value={total} bold />
+      {options && depositPercent !== null && (
+        <p className="text-xs text-muted-foreground">
+          Paying at the venue? Send {takaLabel(cashDepositAmount(slotsSubtotal(slots) + options.serviceFee, depositPercent))} ({depositPercent}%)
+          booking money by bKash / Nagad when you book; the rest is paid in cash at the venue.
+        </p>
+      )}
       {isError && <p className="text-xs text-destructive">Couldn&apos;t load the service fee.</p>}
     </div>
   );

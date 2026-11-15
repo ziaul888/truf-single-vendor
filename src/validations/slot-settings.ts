@@ -21,6 +21,8 @@ export const SlotSettingsSchema = z.object({
   portalCashEnabled: z.boolean(),
   multiSlotEnabled: z.boolean(),
   maxSlotsPerBooking: wholeNumber(2, 4),
+  cashDepositEnabled: z.boolean(),
+  cashDepositPercent: wholeNumber(1, 100),
 });
 export type SlotSettingsForm = z.infer<typeof SlotSettingsSchema>;
 
@@ -35,7 +37,10 @@ export type SlotSettingsInput = Omit<
 >;
 
 export const toSlotSettingsForm = ({ updatedAt: _a, updatedBy: _b, ...s }: SlotSettings): SlotSettingsForm =>
-  // An older API doesn't return the multi-slot fields yet: treat them as off, limit 4.
-  ({ ...s, serviceFee: fromMinorUnits(s.serviceFee), multiSlotEnabled: s.multiSlotEnabled ?? false, maxSlotsPerBooking: s.maxSlotsPerBooking ?? 4 });
+  // An older API doesn't return the multi-slot or booking money fields yet: treat them as off (limit 4, 30%).
+  ({
+    ...s, serviceFee: fromMinorUnits(s.serviceFee), multiSlotEnabled: s.multiSlotEnabled ?? false, maxSlotsPerBooking: s.maxSlotsPerBooking ?? 4,
+    cashDepositEnabled: s.cashDepositEnabled ?? false, cashDepositPercent: s.cashDepositPercent ?? 30,
+  });
 
 export const fromSlotSettingsForm = (f: SlotSettingsForm): SlotSettingsInput => ({ ...f, serviceFee: toMinorUnits(f.serviceFee) });

@@ -42,7 +42,9 @@ export function PayNow({ booking, token, onNothingDue }: {
         {busy ? "Taking you to payment…" : `Pay ${due} now`}
       </button>
       {booking.payAtVenue && !busy && (
-        <p className="mt-2 text-xs opacity-70">Or pay in cash at the venue, as you chose.</p>
+        <p className="mt-2 text-xs opacity-70">
+          {booking.walletPayment ? `Or pay the remaining ${due} in cash at the venue.` : "Or pay in cash at the venue, as you chose."}
+        </p>
       )}
       {pay.isError && !(pay.error instanceof PortalApiError && pay.error.code === "NOTHING_DUE") && (
         <p role="alert" className="mt-2 text-sm text-destructive">{pay.error.message}</p>

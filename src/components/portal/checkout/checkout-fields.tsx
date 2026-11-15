@@ -47,10 +47,12 @@ export const WALLET_LABEL = { bkash: "bKash", nagad: "Nagad" } as const;
 
 /** Card (Stripe Checkout), cash at the venue, bKash and Nagad, each only when it's available. */
 export function PaymentChoice({
-  value, onChange, cardEnabled, cashEnabled, wallets, holdMinutes,
+  value, onChange, cardEnabled, cashEnabled, wallets, holdMinutes, depositPercent = null,
 }: {
   value: Method; onChange: (m: Method) => void; cardEnabled: boolean; cashEnabled: boolean;
   wallets: CheckoutOptions["wallets"]; holdMinutes?: number;
+  /** Booking money (percent of the total) a cash booking pays by bKash / Nagad; null when off. */
+  depositPercent?: number | null;
 }) {
   if (!cardEnabled && !cashEnabled && wallets.length === 0) {
     return (
@@ -78,7 +80,9 @@ export function PaymentChoice({
           onSelect={() => onChange("cash")}
           icon={<Banknote className="h-4 w-4" />}
           title="Pay at venue (cash)"
-          description="Reserve now and pay in cash when you arrive. The venue confirms your booking."
+          description={depositPercent === null
+            ? "Reserve now and pay in cash when you arrive. The venue confirms your booking."
+            : `Pay ${depositPercent}% booking money by bKash / Nagad now and the rest in cash at the venue. The venue verifies your payment and confirms your booking.`}
         />
       )}
       {wallets.map(({ method, number }) => (

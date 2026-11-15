@@ -15,7 +15,7 @@ const CheckoutFields = z.object({
     .trim()
     .refine((v) => v.replace(/\D/g, "").length >= 10, "Enter a phone number with at least 10 digits"),
   paymentMethod: z.enum(["card", "cash", "bkash", "nagad"]),
-  /** bKash / Nagad only: the TrxID and the number the money was sent from. */
+  /** bKash / Nagad, or cash with booking money: the TrxID and the number the money was sent from. */
   reference: z.string(),
   payerNumber: z.string(),
   acceptTerms: z.boolean().refine((v) => v, "Please accept the terms to continue"),
@@ -23,11 +23,12 @@ const CheckoutFields = z.object({
 
 /**
  * A guest must give an email, as the booking link only reaches them there (turf-api: 400
- * EMAIL_REQUIRED); signed in with their phone it's optional.
+ * EMAIL_REQUIRED); signed in with their phone it's optional. The TrxID and sender number are
+ * checked for bKash / Nagad, and for cash only while booking money is on (`cashDeposit`).
  */
-export const checkoutFormSchema = (signedIn: boolean) => CheckoutFields.superRefine((v, ctx) => {
+export const checkoutFormSchema = (signedIn: boolean, cashDeposit = false) => CheckoutFields.superRefine((v, ctx) => {
   if (!signedIn && !v.customerEmail) ctx.addIssue({ code: "custom", path: ["customerEmail"], message: EMAIL_REQUIRED_MESSAGE });
-  if (!isWallet(v.paymentMethod)) return;
+  if (!isWallet(v.paymentMethod) && !(cashDeposit && v.paymentMethod === "cash")) return;
   const trx = TrxIdSchema.safeParse(v.reference);
   if (!trx.success) ctx.addIssue({ code: "custom", path: ["reference"], message: trx.error.issues[0]?.message ?? "Enter the TrxID" });
   if (v.payerNumber.replace(/\D/g, "").length < 10) {

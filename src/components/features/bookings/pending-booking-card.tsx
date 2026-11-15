@@ -9,7 +9,7 @@ import { formatSlotDate, slotPriceLabel } from "@/lib/slot-format";
 import { formatBookingSlots } from "@/lib/booking-slots";
 import { Phone, MapPin, CalendarDays, Banknote, Clock, StickyNote, CheckCircle2, XCircle, CreditCard } from "lucide-react";
 import {
-  PAYMENT_STATUS_LABEL, isAwaitingCardPayment, isAwaitingWalletVerification, paymentStatusVariant, timeAgo,
+  PAYMENT_STATUS_LABEL, bookingMoneyBalance, hasBookingMoney, isAwaitingCardPayment, isAwaitingWalletVerification, paymentStatusVariant, timeAgo,
 } from "./booking-status-helpers";
 import { PayAtVenueBadge } from "./pay-at-venue-badge";
 import { CancelRequestedBadge, WalletBadge, WalletPaymentNotice } from "./wallet-payment-info";
@@ -43,7 +43,7 @@ export function PendingBookingCard({
               </div>
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
                 {booking.payAtVenue && <PayAtVenueBadge />}
-                {booking.walletPayment && <WalletBadge payment={booking.walletPayment} />}
+                {booking.walletPayment && <WalletBadge payment={booking.walletPayment} bookingMoney={hasBookingMoney(booking)} />}
                 {booking.cancelRequestedAt && booking.status === "pending" && <CancelRequestedBadge />}
                 <Badge variant={paymentStatusVariant(booking.paymentStatus)} className="text-xs">
                   {PAYMENT_STATUS_LABEL[booking.paymentStatus]}
@@ -75,7 +75,9 @@ export function PendingBookingCard({
               </div>
             )}
 
-            {booking.walletPayment && <WalletPaymentNotice payment={booking.walletPayment} />}
+            {booking.walletPayment && (
+              <WalletPaymentNotice payment={booking.walletPayment} balance={hasBookingMoney(booking) ? bookingMoneyBalance(booking, booking.walletPayment) : undefined} />
+            )}
 
             {awaitingCard && (
               <div className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">

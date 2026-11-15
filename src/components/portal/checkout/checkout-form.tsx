@@ -17,7 +17,9 @@ import { bookingSlotLimit } from "@/lib/booking-limits";
 import type { PublicSlot } from "@/types/slot";
 import { slotsSubtotal, takaLabel } from "./checkout-totals";
 import { useCheckoutOptions } from "@/hooks/useCheckoutOptions";
-import { WalletFields } from "./wallet-fields";
+import { DepositWalletPicker, WalletFields } from "./wallet-fields";
+import { cashDepositAmount } from "@/lib/cash-deposit";
+import type { WalletMethod } from "@/types/booking";
 
 interface FormError { message: string; slotTaken: boolean; myBookings?: boolean }
 
@@ -39,7 +41,10 @@ export function CheckoutForm({
   const [formError, setFormError] = useState<FormError | null>(null);
   const [leaving, setLeaving] = useState(false);
   // Email is optional once signed in, required for a guest.
-  const schema = useMemo(() => checkoutFormSchema(!!session), [session]);
+  // Booking money: a cash booking also pays a share by bKash / Nagad (null = off or an older API).
+  const depositPercent = options.data?.cashDepositPercent ?? null;
+  const schema = useMemo(() => checkoutFormSchema(!!session, depositPercent !== null), [session, depositPercent]);
+  const [depositChoice, setDepositChoice] = useState<WalletMethod | null>(null);
   const { register, handleSubmit, watch, setValue, setError, formState: { errors, isSubmitting } } =
     useForm<CheckoutFormValues>({
       resolver: zodResolver(schema),
@@ -67,6 +72,10 @@ export function CheckoutForm({
   const chosen = watch("paymentMethod");
   const method = available.includes(chosen) ? chosen : (available[0] ?? "card");
   const wallet = wallets.find((w) => w.method === method);
+  const bookingMoneyOn = method === "cash" && depositPercent !== null;
+  // The wallet for booking money: the customer's pick, else the first one available.
+  const depositWallet = wallets.find((w) => w.method === depositChoice) ?? wallets[0];
+  const payWallet = bookingMoneyOn ? depositWallet : wallet;
   const busy = isSubmitting || leaving;
   // Cash, bKash and Nagad need a signed-in customer (turf-api: 401 SIGN_IN_REQUIRED); card stays open to guests.
   const needsSignIn = method !== "card" && !session;
@@ -89,7 +98,10 @@ export function CheckoutForm({
       const result = await startCheckout({
         groundId, date, slots: slots.map((s) => ({ startHour: s.startHour, startMinute: slotStartMinute(s) })),
         customerName, customerEmail, customerPhone, paymentMethod: method,
-        ...(wallet && { reference: reference.trim().toUpperCase(), payerNumber: payerNumber.trim() }),
+        ...(payWallet && {
+          ...(bookingMoneyOn && { depositMethod: payWallet.method }),
+          reference: reference.trim().toUpperCase(), payerNumber: payerNumber.trim(),
+        }),
       });
       setLeaving(true);
       if (result.checkoutUrl) {
@@ -136,7 +148,14 @@ export function CheckoutForm({
     else setFormError({ message: err.message, slotTaken: false });
   };
 
-  const total = options.data ? takaLabel(slotsSubtotal(slots) + options.data.serviceFee) : null;
+  const totalMinor = options.data ? slotsSubtotal(slots) + options.data.serviceFee : null;
+  const total = totalMinor === null ? null : takaLabel(totalMinor);
+  const depositMinor = totalMinor !== null && depositPercent !== null ? cashDepositAmount(totalMinor, depositPercent) : null;
+  const bookingMoney = totalMinor !== null && depositMinor !== null && depositPercent !== null
+    ? { deposit: takaLabel(depositMinor), balance: takaLabel(totalMinor - depositMinor), percent: depositPercent }
+    : undefined;
+  // Booking money needs a wallet to send it to; turf-api hides cash otherwise, this guards a stale page.
+  const noDepositWallet = bookingMoneyOn && !depositWallet;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8 space-y-6 rounded-2xl border bg-card p-4 sm:p-6">
@@ -181,12 +200,23 @@ export function CheckoutForm({
             cashEnabled={cashEnabled}
             wallets={wallets}
             holdMinutes={options.data.holdMinutes}
+            depositPercent={depositPercent}
           />
         )}
         {/* Signed out, cash and wallets ask to sign in first, before any TrxID is typed (it would be lost on the way). */}
         {needsSignIn
           ? !sessionPending && <SignInNotice href={signInHref} />
-          : wallet && !exceedsSlotLimit && <WalletFields method={wallet.method} number={wallet.number} total={total} register={register} errors={errors} />}
+          : noDepositWallet
+            ? <p role="alert" className="mt-4 text-sm text-destructive">Booking money can&apos;t be paid right now. Please choose another payment method or call the venue.</p>
+            : payWallet && !exceedsSlotLimit && (
+              <>
+                {bookingMoneyOn && <DepositWalletPicker wallets={wallets} value={payWallet.method} onChange={setDepositChoice} />}
+                <WalletFields
+                  method={payWallet.method} number={payWallet.number} total={total}
+                  bookingMoney={bookingMoneyOn ? bookingMoney : undefined} register={register} errors={errors}
+                />
+              </>
+            )}
         {errors.paymentMethod && <p className="mt-1 text-xs text-destructive">{errors.paymentMethod.message}</p>}
       </div>
 
@@ -221,20 +251,21 @@ export function CheckoutForm({
 
       <button
         type="submit"
-        disabled={disabled || busy || !canPay || needsSignIn || exceedsSlotLimit}
+        disabled={disabled || busy || !canPay || needsSignIn || exceedsSlotLimit || noDepositWallet}
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
         {options.data && !canPay
           ? "Online booking unavailable"
-          : needsSignIn && !sessionPending ? "Sign in above to continue" : submitLabel(method, total, busy)}
+          : needsSignIn && !sessionPending ? "Sign in above to continue" : submitLabel(method, total, busy, bookingMoneyOn ? bookingMoney?.deposit : undefined)}
       </button>
     </form>
   );
 }
 
-function submitLabel(method: CheckoutMethod, total: string | null, busy: boolean) {
+function submitLabel(method: CheckoutMethod, total: string | null, busy: boolean, bookingMoney?: string) {
   if (busy) return method === "card" ? "Taking you to payment…" : "Reserving your slot…";
+  if (method === "cash" && bookingMoney) return `Book · I've sent ${bookingMoney} booking money`;
   if (method === "cash") return total ? `Reserve · pay ${total} at the venue` : "Reserve slot";
   if (method !== "card") return total ? `Book · I've sent ${total}` : "Book slot";
   return total ? `Continue to pay ${total}` : "Continue to payment";

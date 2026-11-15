@@ -1,5 +1,5 @@
 import type {
-  CheckoutMethod, CheckoutOptions, CheckoutResult, CustomerBooking, CustomerSession, PayResult, PublicBooking,
+  CheckoutMethod, CheckoutOptions, CheckoutResult, CustomerBooking, CustomerSession, PayResult, PublicBooking, WalletMethod,
 } from "@/types/booking";
 import { checkoutSlotRequest } from "@/lib/booking-requests";
 
@@ -42,9 +42,11 @@ export const startCheckout = (body: {
   customerEmail: string;
   customerPhone: string;
   paymentMethod: CheckoutMethod;
-  /** bKash / Nagad: the TrxID and the number the money was sent from. */
+  /** bKash / Nagad, or cash with booking money: the TrxID and the number the money was sent from. */
   reference?: string;
   payerNumber?: string;
+  /** Cash with booking money only: the wallet the booking money was sent through. Never sent for other methods. */
+  depositMethod?: WalletMethod;
 }) => {
   const { slots, ...details } = body;
   return call<CheckoutResult>("/checkout", {

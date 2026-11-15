@@ -38,6 +38,9 @@ export const WALLET_NAME = { bkash: "bKash", nagad: "Nagad" } as const;
 export const isUnderReview = (b: Pick<PublicBooking, "status" | "walletPayment">) =>
   b.status === "pending" && b.walletPayment?.status === "pending";
 
+/** A cash booking that also paid booking money by bKash / Nagad: the rest is due in cash at the venue. */
+export const hasBookingMoney = (b: Pick<PublicBooking, "payAtVenue" | "walletPayment">) => b.payAtVenue && b.walletPayment !== null;
+
 export const PAYMENT_STATUS_LABEL: Record<PublicBooking["paymentStatus"], string> = {
   unpaid: "Unpaid",
   partial: "Partly paid",
