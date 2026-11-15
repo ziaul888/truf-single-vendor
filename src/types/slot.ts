@@ -142,6 +142,10 @@ export interface SlotSettings {
   serviceFee: number;
   /** Lets portal customers choose "pay at venue". */
   portalCashEnabled: boolean;
+  /** Lets customers and staff put several slots of one ground and date in one booking. Off by default. */
+  multiSlotEnabled: boolean;
+  /** Most slots in one booking (2–4). Returned even while multi-slot is off. */
+  maxSlotsPerBooking: number;
   /** Card on the portal (also needs Stripe keys); bKash / Nagad (also need the number). Off keeps the number. Saved on Settings → Payments. */
   portalCardEnabled: boolean;
   portalBkashEnabled: boolean;
