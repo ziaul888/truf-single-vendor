@@ -12,8 +12,9 @@ import { AmenitiesSection } from "@/components/portal/home/amenities-section";
 import { HowItWorksSection } from "@/components/portal/home/how-it-works-section";
 import { VisitUsSection } from "@/components/portal/home/visit-us-section";
 
-// Website content and the venue profile can change at any time from the admin, so never prerender.
-export const dynamic = "force-dynamic";
+// No `force-dynamic` here: it turns every fetch on this page to no-store, which would defeat the
+// 60 s cache on the website, venue and grounds reads. The portal layout reads cookies, so the page
+// is still rendered per request, never prerendered.
 
 export async function generateMetadata(): Promise<Metadata> {
   const venue = await getPublicVenue();
