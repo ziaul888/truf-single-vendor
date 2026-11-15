@@ -10,6 +10,7 @@ import { useSlotSettingsForm } from "@/hooks/useSlotSettingsForm";
 import { useMe } from "@/hooks/useMe";
 import { SettingsSaveBar } from "@/components/features/settings/settings-save-actions";
 import { SettingToggle } from "@/components/features/slots/setting-fields";
+import { MultiSlotSettings } from "@/components/features/slots/multi-slot-settings";
 import { PortalCheckoutSettings } from "@/components/features/slots/portal-checkout-settings";
 import {
   BookingBehaviourCard, GenerationSettingsCard, PerGroundSettingsCard,
@@ -55,6 +56,7 @@ export default function SlotSettingsPage() {
         <PerGroundSettingsCard />
         <BookingBehaviourCard form={form} />
         <PortalCheckoutSettings form={form} />
+        <MultiSlotSettings form={form} />
 
         {/* Notifications */}
         <Card>

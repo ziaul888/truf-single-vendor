@@ -19,6 +19,8 @@ export const SlotSettingsSchema = z.object({
     .max(10000, "At most ৳10,000")
     .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, "At most 2 decimal places"),
   portalCashEnabled: z.boolean(),
+  multiSlotEnabled: z.boolean(),
+  maxSlotsPerBooking: wholeNumber(2, 4),
 });
 export type SlotSettingsForm = z.infer<typeof SlotSettingsSchema>;
 
@@ -33,6 +35,7 @@ export type SlotSettingsInput = Omit<
 >;
 
 export const toSlotSettingsForm = ({ updatedAt: _a, updatedBy: _b, ...s }: SlotSettings): SlotSettingsForm =>
-  ({ ...s, serviceFee: fromMinorUnits(s.serviceFee) });
+  // An older API doesn't return the multi-slot fields yet: treat them as off, limit 4.
+  ({ ...s, serviceFee: fromMinorUnits(s.serviceFee), multiSlotEnabled: s.multiSlotEnabled ?? false, maxSlotsPerBooking: s.maxSlotsPerBooking ?? 4 });
 
 export const fromSlotSettingsForm = (f: SlotSettingsForm): SlotSettingsInput => ({ ...f, serviceFee: toMinorUnits(f.serviceFee) });
