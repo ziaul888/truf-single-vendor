@@ -50,7 +50,8 @@ export function PreviewSidebar({
   // Slots are 1, 1.5 or 2 hours; a 90-minute slot costs 1.5× the hourly price, shown per slot.
   const step = Number(v.slotDuration ?? "60") / 60;
   const slotsPerDay = Math.floor(calcSlots(v.openingTime ?? "", v.closingTime ?? "") / step);
-  const perSlot = (perHour: number) => (step === 1.5 ? ` · ${formatCurrency(perHour * step)} per slot` : "");
+  const perSlot = (perHour: number) =>
+    step === 1.5 ? ` · ${formatCurrency(perHour * step)} per slot` : "";
 
   const requiredFilled = [
     !!v.name?.trim(),
@@ -120,24 +121,28 @@ export function PreviewSidebar({
               {(v.peakPrice ?? 0) > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                    <TrendingUp className="h-3 w-3 text-amber-500" />
+                    <TrendingUp className="text-primary h-3 w-3" />
                     Peak/hr
                   </span>
-                  <span className="font-semibold text-amber-600">
+                  <span className="text-primary font-semibold">
                     {formatCurrency(Number(v.peakPrice))}
-                    <span className="text-muted-foreground text-xs font-normal">{perSlot(Number(v.peakPrice))}</span>
+                    <span className="text-muted-foreground text-xs font-normal">
+                      {perSlot(Number(v.peakPrice))}
+                    </span>
                   </span>
                 </div>
               )}
               {(v.offPeakPrice ?? 0) > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                    <TrendingDown className="h-3 w-3 text-blue-500" />
+                    <TrendingDown className="text-info h-3 w-3" />
                     {(v.peakPrice ?? 0) > 0 ? "Off-peak/hr" : "Price/hr"}
                   </span>
-                  <span className="font-semibold text-blue-600">
+                  <span className="text-info font-semibold">
                     {formatCurrency(Number(v.offPeakPrice))}
-                    <span className="text-muted-foreground text-xs font-normal">{perSlot(Number(v.offPeakPrice))}</span>
+                    <span className="text-muted-foreground text-xs font-normal">
+                      {perSlot(Number(v.offPeakPrice))}
+                    </span>
                   </span>
                 </div>
               )}

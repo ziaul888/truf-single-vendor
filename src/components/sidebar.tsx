@@ -41,34 +41,45 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
   return (
     <TooltipProvider delayDuration={0}>
       <aside
-        onMouseLeave={() => { if (!drawer) showSection(null); }}
+        onMouseLeave={() => {
+          if (!drawer) showSection(null);
+        }}
         className={cn(
-          "relative flex h-dvh overflow-hidden pt-[env(safe-area-inset-top)] bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out border-r border-sidebar-border",
-          collapsed ? "w-18" : drawer ? "w-[min(20rem,88vw)]" : "w-72",
+          "bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-dvh overflow-hidden border-r pt-[env(safe-area-inset-top)] transition-all duration-300 ease-in-out",
+          collapsed ? "w-18" : drawer ? "w-[min(20rem,88vw)]" : "w-72"
         )}
       >
         {/* ─── Ambient brand glows ─── */}
-        <div aria-hidden className="pointer-events-none absolute -left-24 -top-32 -z-10 h-72 w-72 rounded-full bg-primary/15 blur-3xl dark:bg-primary/20" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-16 -z-10 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
+        <div
+          aria-hidden
+          className="bg-primary/15 dark:bg-primary/20 pointer-events-none absolute -top-32 -left-24 -z-10 h-72 w-72 rounded-full blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="bg-accent/15 pointer-events-none absolute -right-16 -bottom-32 -z-10 h-72 w-72 rounded-full blur-3xl"
+        />
 
         {/* ═══ RAIL ═══ */}
-        <div className="relative flex w-18 shrink-0 flex-col items-center border-r border-sidebar-border/70 bg-sidebar-accent/20 py-3 backdrop-blur-sm">
+        <div className="border-sidebar-border/70 bg-sidebar-accent/20 relative flex w-18 shrink-0 flex-col items-center border-r py-3 backdrop-blur-sm">
           {/* Brand */}
           <div className="relative">
             <SidebarBrand />
-            <span aria-hidden className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success shadow-[0_0_8px_var(--color-success)] ring-2 ring-sidebar" />
+            <span aria-hidden className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+              <span className="bg-success absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" />
+              <span className="bg-success ring-sidebar relative inline-flex h-2.5 w-2.5 rounded-full shadow-[0_0_8px_var(--color-success)] ring-2" />
             </span>
           </div>
 
-          <div className="my-3 h-px w-9 bg-linear-to-r from-transparent via-sidebar-border to-transparent" />
+          <div className="via-sidebar-border my-3 h-px w-9 bg-linear-to-r from-transparent to-transparent" />
 
           {/* Rail nav */}
-          <nav className="scrollbar-hover flex-1 w-full space-y-1.5 overflow-y-auto px-[13px] py-1">
+          <nav
+            aria-label="Admin navigation"
+            className="scrollbar-hover w-full flex-1 space-y-1.5 overflow-y-auto px-[13px] py-1"
+          >
             {nav.map((group, gi) => (
               <div key={group.label}>
-                {gi > 0 && <div className="my-2 mx-1 h-px bg-sidebar-border/50" />}
+                {gi > 0 && <div className="bg-sidebar-border/50 mx-1 my-2 h-px" />}
                 <div className="space-y-1">
                   {group.items.map((item) => (
                     <RailNavItem
@@ -93,10 +104,14 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
             <TooltipTrigger asChild>
               <button
                 onClick={() => onCollapse(!collapsed)}
-                className="mt-2 hidden h-10 w-10 items-center justify-center rounded-xl text-sidebar-foreground/55 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground lg:flex"
+                className="text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-foreground mt-2 hidden h-10 w-10 items-center justify-center rounded-xl transition-colors lg:flex"
                 aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
-                {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+                {collapsed ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">{collapsed ? "Expand" : "Collapse"}</TooltipContent>
@@ -109,22 +124,27 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
             {/* Section header */}
             <div
               key={`hdr-${panelItem.href}`}
-              className="relative flex h-16 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/70 px-4 animate-in fade-in slide-in-from-left-1 duration-300"
+              className="border-sidebar-border/70 animate-in fade-in slide-in-from-left-1 relative flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 duration-300"
             >
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/45">
+                <div className="text-sidebar-foreground/45 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.18em] uppercase">
                   <span className={cn("h-1 w-1 rounded-full bg-current", panelItem.color)} />
                   <span className="truncate">{panelItem.group}</span>
                 </div>
                 <div className="mt-0.5 flex items-baseline gap-2">
-                  <p className={cn("truncate text-[17px] font-bold tracking-tight leading-tight", panelItem.color)}>
+                  <p
+                    className={cn(
+                      "truncate text-[17px] leading-tight font-bold tracking-tight",
+                      panelItem.color
+                    )}
+                  >
                     {panelItem.label}
                   </p>
                   {panelItem.children && panelItem.children.length > 0 && (
                     <span
                       className={cn(
                         "shrink-0 rounded-full px-1.5 py-px text-[10px] font-bold tracking-wider",
-                        panelItem.color,
+                        panelItem.color
                       )}
                       style={{
                         backgroundColor: "color-mix(in oklab, currentColor 15%, transparent)",
@@ -138,7 +158,7 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="rounded-lg p-1.5 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground lg:hidden"
+                  className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-lg p-1.5 transition-colors lg:hidden"
                   aria-label="Close menu"
                 >
                   <X className="h-4 w-4" />
@@ -148,16 +168,17 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
               <span
                 aria-hidden
                 className={cn(
-                  "pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-linear-to-r from-current via-current/40 to-transparent",
-                  panelItem.color,
+                  "pointer-events-none absolute right-4 bottom-0 left-4 h-px bg-linear-to-r from-current via-current/40 to-transparent",
+                  panelItem.color
                 )}
               />
             </div>
 
             {/* Section children */}
             <nav
+              aria-label={`${panelItem.label} pages`}
               key={`body-${panelItem.href}`}
-              className="scrollbar-hover flex-1 overflow-y-auto px-3 py-4 animate-in fade-in slide-in-from-left-2 duration-300"
+              className="scrollbar-hover animate-in fade-in slide-in-from-left-2 flex-1 overflow-y-auto px-3 py-4 duration-300"
             >
               {panelItem.children && panelItem.children.length > 0 ? (
                 <ul className="space-y-1">
@@ -168,15 +189,22 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
                         <Link
                           href={child.href}
                           onClick={onClose}
+                          aria-current={childActive ? "page" : undefined}
                           className={cn(
                             "group/sub relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
                             childActive
-                              ? cn("font-semibold shadow-sm ring-1 ring-current/20", panelItem.color)
-                              : "font-medium text-sidebar-foreground/75 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground hover:translate-x-0.5",
+                              ? cn(
+                                  "font-semibold shadow-sm ring-1 ring-current/20",
+                                  panelItem.color
+                                )
+                              : "text-sidebar-foreground/75 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground font-medium hover:translate-x-0.5"
                           )}
                           style={
                             childActive
-                              ? { backgroundColor: "color-mix(in oklab, currentColor 14%, transparent)" }
+                              ? {
+                                  backgroundColor:
+                                    "color-mix(in oklab, currentColor 14%, transparent)",
+                                }
                               : undefined
                           }
                         >
@@ -185,8 +213,8 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
                             className={cn(
                               "h-1.5 w-1.5 shrink-0 rounded-full transition-all duration-200",
                               childActive
-                                ? "bg-current shadow-[0_0_8px_currentColor] scale-110"
-                                : "bg-sidebar-foreground/25 group-hover/sub:bg-sidebar-foreground/50",
+                                ? "scale-110 bg-current shadow-[0_0_8px_currentColor]"
+                                : "bg-sidebar-foreground/25 group-hover/sub:bg-sidebar-foreground/50"
                             )}
                           />
                           <child.icon
@@ -194,7 +222,7 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
                               "h-4 w-4 shrink-0 transition-transform duration-200 group-hover/sub:scale-110",
                               childActive
                                 ? ""
-                                : "text-sidebar-foreground/55 group-hover/sub:text-sidebar-foreground",
+                                : "text-sidebar-foreground/55 group-hover/sub:text-sidebar-foreground"
                             )}
                           />
                           <span className="flex-1 truncate text-[13.5px]">{child.label}</span>
@@ -202,8 +230,8 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
                             className={cn(
                               "h-3.5 w-3.5 shrink-0 transition-all duration-200",
                               childActive
-                                ? "opacity-100 translate-x-0"
-                                : "opacity-0 -translate-x-1 text-sidebar-foreground/40 group-hover/sub:opacity-100 group-hover/sub:translate-x-0",
+                                ? "translate-x-0 opacity-100"
+                                : "text-sidebar-foreground/40 -translate-x-1 opacity-0 group-hover/sub:translate-x-0 group-hover/sub:opacity-100"
                             )}
                           />
                         </Link>
@@ -212,20 +240,20 @@ export function Sidebar({ collapsed, onCollapse, drawer = false, onClose }: Side
                   })}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-sidebar-border/80 bg-sidebar-accent/15 p-6 text-center">
+                <div className="border-sidebar-border/80 bg-sidebar-accent/15 flex flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center">
                   <div
                     className={cn(
                       "mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ring-1 ring-current/30",
-                      panelItem.color,
+                      panelItem.color
                     )}
-                    style={{ backgroundColor: "color-mix(in oklab, currentColor 14%, transparent)" }}
+                    style={{
+                      backgroundColor: "color-mix(in oklab, currentColor 14%, transparent)",
+                    }}
                   >
                     <panelItem.icon className="h-6 w-6" />
                   </div>
-                  <p className="text-sm font-semibold text-sidebar-foreground">
-                    {panelItem.label}
-                  </p>
-                  <p className="mt-1 text-[11px] text-sidebar-foreground/55">
+                  <p className="text-sidebar-foreground text-sm font-semibold">{panelItem.label}</p>
+                  <p className="text-sidebar-foreground/55 mt-1 text-[11px]">
                     Single page · no subsections
                   </p>
                 </div>

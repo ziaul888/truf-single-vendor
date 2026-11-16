@@ -335,6 +335,47 @@ html.pitch body {
   }
 }
 
+/* Native date/time controls share icon placement, including the portal's plain GET forms. */
+input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"]) {
+  position: relative;
+  min-width: 0;
+  color-scheme: light;
+}
+
+@supports selector(input::-webkit-calendar-picker-indicator) {
+  input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"]) {
+    padding-inline-end: 2.75rem;
+  }
+}
+
+:is(.dark, .pitch) input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"]) {
+  color-scheme: dark;
+}
+
+input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"])::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0;
+  width: 2.75rem;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-position: center;
+  background-size: 1rem 1rem;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"])::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
+}
+
+input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"])::-webkit-date-and-time-value {
+  text-align: start;
+}
+
 /* ─── Themed scrollbars ──────────────────────────────────────── */
 /* Generic thin scrollbar — adapts to surrounding background */
 .scrollbar-thin {

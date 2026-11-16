@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Clock, House, Menu, Plus } from "lucide-react";
+import { DialogTrigger } from "@radix-ui/react-dialog";
 import type { LucideIcon } from "lucide-react";
 import { useDashboardAttention } from "@/hooks/useDashboard";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,8 @@ const NEW_BOOKING = "/dashboard/bookings/new";
 
 type TabKey = "home" | "bookings" | "new" | "slots";
 
-const under = (pathname: string, base: string) => pathname === base || pathname.startsWith(`${base}/`);
+const under = (pathname: string, base: string) =>
+  pathname === base || pathname.startsWith(`${base}/`);
 
 function activeTab(pathname: string): TabKey | null {
   if (pathname === "/dashboard") return "home";
@@ -24,20 +26,30 @@ function activeTab(pathname: string): TabKey | null {
 const tabClass = (active: boolean) =>
   cn(
     "relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-transform active:scale-95",
-    active ? "text-primary" : "text-muted-foreground",
+    active ? "text-primary" : "text-muted-foreground"
   );
 
 function CountBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="absolute -top-1.5 left-1/2 ml-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-none font-semibold text-destructive-foreground">
+    <span className="bg-destructive text-destructive-foreground absolute -top-1.5 left-1/2 ml-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-semibold">
       {count > 99 ? "99+" : count}
     </span>
   );
 }
 
-function TabLink({ href, label, Icon, active, badge = 0 }: {
-  href: string; label: string; Icon: LucideIcon; active: boolean; badge?: number;
+function TabLink({
+  href,
+  label,
+  Icon,
+  active,
+  badge = 0,
+}: {
+  href: string;
+  label: string;
+  Icon: LucideIcon;
+  active: boolean;
+  badge?: number;
 }) {
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className={tabClass(active)}>
@@ -52,8 +64,13 @@ function TabLink({ href, label, Icon, active, badge = 0 }: {
 
 function NewButton({ active }: { active: boolean }) {
   return (
-    <Link href={NEW_BOOKING} aria-current={active ? "page" : undefined} aria-label="New booking" className={tabClass(active)}>
-      <span className="relative z-10 -mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-card">
+    <Link
+      href={NEW_BOOKING}
+      aria-current={active ? "page" : undefined}
+      aria-label="New booking"
+      className={tabClass(active)}
+    >
+      <span className="bg-primary text-primary-foreground ring-card relative z-10 -mt-5 flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-4">
         <Plus className="h-6 w-6" />
       </span>
       New
@@ -62,7 +79,7 @@ function NewButton({ active }: { active: boolean }) {
 }
 
 /** Phone/tablet bottom navigation; the Menu tab opens the sidebar drawer. Hidden on lg+. */
-export function AdminTabBar({ menuOpen, onMenuClick }: { menuOpen: boolean; onMenuClick: () => void }) {
+export function AdminTabBar({ menuOpen }: { menuOpen: boolean }) {
   const pathname = usePathname();
   const { data: attention } = useDashboardAttention();
   const tab = activeTab(pathname);
@@ -73,17 +90,29 @@ export function AdminTabBar({ menuOpen, onMenuClick }: { menuOpen: boolean; onMe
     <nav
       data-tab-bar
       aria-label="Main"
-      className="shrink-0 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur select-none lg:hidden"
+      className="bg-card/95 shrink-0 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur select-none lg:hidden"
     >
       <div className="flex h-14 items-stretch px-1">
         <TabLink href="/dashboard" label="Home" Icon={House} active={tab === "home"} />
-        <TabLink href="/dashboard/bookings" label="Bookings" Icon={CalendarDays} active={tab === "bookings"} badge={waiting} />
+        <TabLink
+          href="/dashboard/bookings"
+          label="Bookings"
+          Icon={CalendarDays}
+          active={tab === "bookings"}
+          badge={waiting}
+        />
         <NewButton active={tab === "new"} />
         <TabLink href="/dashboard/slots" label="Slots" Icon={Clock} active={tab === "slots"} />
-        <button type="button" onClick={onMenuClick} aria-expanded={menuOpen} className={tabClass(menuOpen || tab === null)}>
-          <Menu className="h-5 w-5" />
-          Menu
-        </button>
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            aria-expanded={menuOpen}
+            className={tabClass(menuOpen || tab === null)}
+          >
+            <Menu className="h-5 w-5" />
+            Menu
+          </button>
+        </DialogTrigger>
       </div>
     </nav>
   );

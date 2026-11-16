@@ -104,6 +104,7 @@ function BookingCard({ grounds, single, venueName }: { grounds: Ground[]; single
           <input
             type="date"
             name="date"
+            aria-label="Booking date"
             className="w-full bg-transparent text-base font-medium outline-none sm:text-sm"
             required
             min={today}
@@ -162,7 +163,7 @@ function Field({
     <div className={`rounded-xl border bg-card px-3 py-2 ${colSpan ? span[colSpan] : ""}`}>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
       <div className="mt-0.5 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-primary" />
+        <Icon className="h-4 w-4 shrink-0 text-primary" />
         {children}
       </div>
     </div>

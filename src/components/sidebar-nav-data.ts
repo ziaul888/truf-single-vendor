@@ -1,102 +1,138 @@
 import {
-  LayoutDashboard, MapPin, MapPinPlus, List, CalendarDays,
-  CalendarCheck, CalendarRange, Users, UserCog,
-  UserCheck, BarChart3,
-  TrendingUp, FileText, Clock, Ban, SlidersHorizontal, LayoutGrid,
-  Settings, Building2, CalendarCog, Wallet, Bell, ShieldCheck, Database, Globe, CalendarOff, History,
+  LayoutDashboard,
+  MapPin,
+  MapPinPlus,
+  List,
+  CalendarDays,
+  CalendarPlus,
+  CalendarCheck,
+  CalendarRange,
+  Users,
+  UserCog,
+  UserCheck,
+  BarChart3,
+  TrendingUp,
+  FileText,
+  Clock,
+  Ban,
+  SlidersHorizontal,
+  LayoutGrid,
+  Settings,
+  Building2,
+  CalendarCog,
+  Wallet,
+  Bell,
+  ShieldCheck,
+  Database,
+  Globe,
+  CalendarOff,
+  History,
+  Undo2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export interface SubItem { label: string; href: string; icon: LucideIcon }
-export interface NavItem  {
-  label: string; href: string; icon: LucideIcon; color: string; children?: SubItem[];
+export interface SubItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
+export interface NavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  color: string;
+  children?: SubItem[];
   /** Hidden for managers — the API rejects them anyway. */
   adminOnly?: boolean;
 }
-export interface NavGroup { label: string; items: NavItem[] }
+export interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
 
 export const NAV: NavGroup[] = [
   {
-    label: "Main",
+    label: "Daily work",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-primary" },
+      {
+        label: "Bookings",
+        href: "/dashboard/bookings",
+        icon: CalendarDays,
+        color: "text-info",
+        children: [
+          { label: "All bookings", href: "/dashboard/bookings", icon: List },
+          { label: "New booking", href: "/dashboard/bookings/new", icon: CalendarPlus },
+          { label: "Calendar", href: "/dashboard/bookings/calendar", icon: CalendarRange },
+          { label: "Confirm bookings", href: "/dashboard/bookings/confirmed", icon: CalendarCheck },
+          { label: "Refund bookings", href: "/dashboard/bookings/refunds", icon: Undo2 },
+        ],
+      },
+      {
+        label: "Slots",
+        href: "/dashboard/slots",
+        icon: Clock,
+        color: "text-warning",
+        children: [
+          { label: "All slots", href: "/dashboard/slots", icon: LayoutGrid },
+          { label: "Blocked slots", href: "/dashboard/slots/blocked", icon: Ban },
+          { label: "Closures", href: "/dashboard/slots/closures", icon: CalendarOff },
+          { label: "Activity", href: "/dashboard/slots/activity", icon: History },
+          { label: "Slot settings", href: "/dashboard/slots/settings", icon: SlidersHorizontal },
+        ],
+      },
+      { label: "Customers", href: "/dashboard/customers", icon: Users, color: "text-accent" },
     ],
   },
   {
-    label: "Management",
+    label: "Manage venue",
     items: [
       {
-        label: "Grounds", href: "/dashboard/grounds", icon: MapPin, color: "text-success",
+        label: "Grounds",
+        href: "/dashboard/grounds",
+        icon: MapPin,
+        color: "text-success",
         children: [
-          { label: "All Grounds", href: "/dashboard/grounds",     icon: List       },
-          { label: "Add Ground",  href: "/dashboard/grounds/new", icon: MapPinPlus },
+          { label: "All grounds", href: "/dashboard/grounds", icon: List },
+          { label: "Add ground", href: "/dashboard/grounds/new", icon: MapPinPlus },
         ],
       },
       {
-        label: "Bookings", href: "/dashboard/bookings", icon: CalendarDays, color: "text-info",
+        label: "Staff",
+        href: "/dashboard/staff",
+        icon: UserCog,
+        color: "text-chart-4",
+        adminOnly: true,
         children: [
-          { label: "All Bookings",    href: "/dashboard/bookings",           icon: List          },
-          { label: "Calendar View",   href: "/dashboard/bookings/calendar",  icon: CalendarRange },
-          { label: "Confirm Booking", href: "/dashboard/bookings/confirmed", icon: CalendarCheck },
+          { label: "All staff", href: "/dashboard/staff", icon: List },
+          { label: "Roles", href: "/dashboard/staff/roles", icon: UserCheck },
         ],
       },
       {
-        label: "Slots", href: "/dashboard/slots", icon: Clock, color: "text-warning",
+        label: "Reports",
+        href: "/dashboard/reports",
+        icon: BarChart3,
+        color: "text-destructive",
         children: [
-          { label: "All Slots",     href: "/dashboard/slots",          icon: LayoutGrid        },
-          { label: "Blocked Slots", href: "/dashboard/slots/blocked",  icon: Ban               },
-          { label: "Closures",      href: "/dashboard/slots/closures", icon: CalendarOff       },
-          { label: "Activity",      href: "/dashboard/slots/activity", icon: History           },
-          { label: "Settings",      href: "/dashboard/slots/settings", icon: SlidersHorizontal },
-        ],
-      },
-      {
-        label: "Customers", href: "/dashboard/customers", icon: Users, color: "text-accent",
-        children: [
-          { label: "All Customers", href: "/dashboard/customers", icon: List },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      {
-        label: "Staff", href: "/dashboard/staff", icon: UserCog, color: "text-chart-4", adminOnly: true,
-        children: [
-          { label: "All Staff",  href: "/dashboard/staff",       icon: List      },
-          { label: "Roles",      href: "/dashboard/staff/roles", icon: UserCheck },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Analytics",
-    items: [
-      {
-        label: "Reports", href: "/dashboard/reports", icon: BarChart3, color: "text-destructive",
-        children: [
-          { label: "Overview", href: "/dashboard/reports",          icon: BarChart3    },
-          { label: "Sales",    href: "/dashboard/reports/revenue",  icon: TrendingUp   },
+          { label: "Overview", href: "/dashboard/reports", icon: BarChart3 },
+          { label: "Sales", href: "/dashboard/reports/revenue", icon: TrendingUp },
           { label: "Bookings", href: "/dashboard/reports/bookings", icon: CalendarDays },
-          { label: "Export",   href: "/dashboard/reports/export",   icon: FileText     },
+          { label: "Export", href: "/dashboard/reports/export", icon: FileText },
         ],
       },
-    ],
-  },
-  {
-    label: "Settings",
-    items: [
       {
-        label: "Settings", href: "/dashboard/settings", icon: Settings, color: "text-muted-foreground",
+        label: "Settings",
+        href: "/dashboard/settings",
+        icon: Settings,
+        color: "text-muted-foreground",
         children: [
-          { label: "General",       href: "/dashboard/settings/general",       icon: Building2   },
-          { label: "Website",       href: "/dashboard/settings/website",       icon: Globe       },
-          { label: "Booking",       href: "/dashboard/settings/booking",       icon: CalendarCog },
-          { label: "Payments",      href: "/dashboard/settings/payments",      icon: Wallet      },
-          { label: "Notifications", href: "/dashboard/settings/notifications", icon: Bell        },
-          { label: "Access",        href: "/dashboard/settings/access",        icon: ShieldCheck },
-          { label: "System",        href: "/dashboard/settings/system",        icon: Database    },
+          { label: "General", href: "/dashboard/settings/general", icon: Building2 },
+          { label: "Website", href: "/dashboard/settings/website", icon: Globe },
+          { label: "Booking", href: "/dashboard/settings/booking", icon: CalendarCog },
+          { label: "Payments", href: "/dashboard/settings/payments", icon: Wallet },
+          { label: "Notifications", href: "/dashboard/settings/notifications", icon: Bell },
+          { label: "Access", href: "/dashboard/settings/access", icon: ShieldCheck },
+          { label: "System", href: "/dashboard/settings/system", icon: Database },
         ],
       },
     ],
@@ -106,7 +142,8 @@ export const NAV: NavGroup[] = [
 /** NAV without admin-only items unless the signed-in user is an admin. */
 export function navForRole(role: string | undefined): NavGroup[] {
   if (role === "admin") return NAV;
-  return NAV
-    .map((g) => ({ ...g, items: g.items.filter((i) => !i.adminOnly) }))
-    .filter((g) => g.items.length > 0);
+  return NAV.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.adminOnly),
+  })).filter((group) => group.items.length > 0);
 }

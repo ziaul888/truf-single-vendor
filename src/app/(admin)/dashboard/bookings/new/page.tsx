@@ -213,8 +213,8 @@ export default function AddBookingPage() {
   };
 
   return (
-    // Room below lg for the pinned submit bar.
-    <div className="space-y-6 max-lg:pb-28">
+    // Reserve only the pinned submit bar's height, including the phone's safe area.
+    <div className="space-y-6 max-lg:pb-[calc(4.25rem_+_env(safe-area-inset-bottom))]">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 rounded-xl" asChild>
           <Link href="/dashboard/bookings"><ChevronLeft className="h-4 w-4" /></Link>
@@ -226,8 +226,8 @@ export default function AddBookingPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="space-y-5 lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
+          <div className="flex flex-col gap-5 lg:col-span-2">
             <GroundSlotSection form={form} grounds={grounds} groundsLoading={groundsLoading} slots={slots} slotsLoading={slotsLoading} maxSlots={maxSlots} />
             {repeat && <SeriesPreviewCard {...previewProps} className="lg:hidden" />}
             <CustomerSection form={form} onCustomerFound={setKnownCustomer} />
@@ -267,7 +267,7 @@ export default function AddBookingPage() {
               </div>
             </SectionCard>
 
-            <div className="hidden items-center justify-end gap-3 pb-4 lg:flex">
+            <div className="hidden items-center justify-end gap-3 lg:flex">
               <Button variant="outline" className="h-10 px-6" asChild>
                 <Link href="/dashboard/bookings">Cancel</Link>
               </Button>

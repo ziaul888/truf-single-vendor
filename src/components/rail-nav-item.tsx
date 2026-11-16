@@ -34,12 +34,15 @@ export function RailNavItem({
   onHover?: () => void;
   onNavClick?: () => void;
 }) {
-  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+  const isActive =
+    pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
   const children = showMenu ? (item.children ?? []) : [];
 
   const link = (
     <Link
       href={item.href}
+      aria-label={item.label}
+      aria-current={pathname === item.href ? "page" : undefined}
       onClick={(e) => {
         if (selectOnly) {
           e.preventDefault();
@@ -110,6 +113,7 @@ export function RailNavItem({
                 <Link
                   key={child.href}
                   href={child.href}
+                  aria-current={childActive ? "page" : undefined}
                   onClick={onNavClick}
                   className={cn(
                     "group/fly flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] transition-colors",

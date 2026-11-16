@@ -104,10 +104,10 @@ export default function ExportPage() {
               <Label htmlFor="export-from">
                 Date range {rangeOptional && <span className="font-normal text-muted-foreground">(optional)</span>}
               </Label>
-              <div className="flex flex-wrap items-center gap-2">
-                <Input id="export-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-9 min-w-0 flex-[1_1_7rem]" />
+              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <Input id="export-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-11 min-w-0 sm:flex-[1_1_10rem]" />
                 <span className="shrink-0 text-sm text-muted-foreground">to</span>
-                <Input id="export-to" aria-label="End date" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-9 min-w-0 flex-[1_1_7rem]" />
+                <Input id="export-to" aria-label="End date" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-11 min-w-0 sm:flex-[1_1_10rem]" />
                 {rangeOptional && (from || to) && (
                   <Button variant="ghost" size="sm" onClick={() => { setFrom(""); setTo(""); }}>Clear</Button>
                 )}

@@ -285,6 +285,8 @@ export type CustomerSort = "lastBooking" | "totalSpent" | "bookings" | "since" |
 // ── Dashboard ──
 
 export interface DashboardStats {
+  /** All-time received sales after refunds. Missing from older APIs. */
+  totalRevenue?: number;
   todayRevenue: number;
   todayRevenueTrend: number | null;
   todayBookings: number;

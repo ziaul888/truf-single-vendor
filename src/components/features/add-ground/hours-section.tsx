@@ -65,8 +65,7 @@ export function HoursSection({ form }: { form: UseFormReturn<AddGroundFormData> 
           </div>
         </div>
         <p className="text-muted-foreground text-xs">
-          Time slots will be auto-generated between these hours. Minutes are set to :00; a closing
-          time of 00:00 means midnight.
+          Slots are generated between these hours. 24:00 closes at the end of the day.
         </p>
 
         <div className="grid grid-cols-2 gap-4">

@@ -1,88 +1,177 @@
 "use client";
 
 import Link from "next/link";
-import { AlarmClock, AlertTriangle, CalendarCheck, CreditCard, Undo2, Wallet } from "lucide-react";
+import {
+  AlarmClock,
+  AlertTriangle,
+  ArrowRight,
+  CalendarCheck,
+  CheckCircle2,
+  CreditCard,
+  Undo2,
+  Wallet,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { slotPriceLabel } from "@/lib/slot-format";
 import { useDashboardAttention } from "@/hooks/useDashboard";
 import type { DashboardAttention } from "@/types/dashboard";
 
-type Tone = "warn" | "crit" | "info";
-
-const TONE: Record<Tone, string> = {
-  warn: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200",
-  crit: "border-red-300 bg-red-50 text-red-900 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
-  info: "border-sky-300 bg-sky-50 text-sky-900 dark:border-sky-500/40 dark:bg-sky-500/10 dark:text-sky-200",
-};
-
-interface AttentionCard {
+interface AttentionItem {
   label: string;
   count: number;
-  sub: string;
-  href?: string;
-  tone: Tone;
-  Icon: React.ElementType;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  urgent?: boolean;
 }
 
-/** "2 pay at venue · 1 to verify": what's behind the To confirm count. */
-function toConfirmSub(data: DashboardAttention) {
+function confirmationDescription(data: DashboardAttention) {
   const parts = [
     data.toConfirm.payAtVenue ? `${data.toConfirm.payAtVenue} pay at venue` : "",
-    data.toVerify?.count ? `${data.toVerify.count} to verify` : "",
+    data.toVerify?.count
+      ? `${data.toVerify.count} wallet ${data.toVerify.count === 1 ? "payment" : "payments"} to verify`
+      : "",
   ].filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : "Waiting for staff";
+  return parts.length ? parts.join(" · ") : "Review and confirm these bookings";
 }
 
-/** The action cards at the top: each one turns colored while it has something to do, and links to the list that clears it. */
+/** A short action list: only show follow-ups that have work waiting. */
 export function AttentionCards() {
-  const { data, isLoading } = useDashboardAttention();
+  const { data, isLoading, isError, isFetching, refetch } = useDashboardAttention();
 
-  if (isLoading || !data) {
-    return <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">{[...Array(5)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-muted last:col-span-2 lg:last:col-span-1" />)}</div>;
+  if (isLoading) {
+    return <div aria-label="Loading tasks" className="bg-muted h-24 animate-pulse rounded-lg" />;
   }
 
-  const cards: AttentionCard[] = [
-    {
-      label: "To confirm", count: data.toConfirm.count, tone: "warn", Icon: CalendarCheck, href: "/dashboard/bookings/confirmed",
-      sub: toConfirmSub(data),
-    },
-    { label: "Overdue", count: data.overdue.count, tone: "crit", Icon: AlertTriangle, href: "/dashboard/bookings?due=overdue", sub: `${slotPriceLabel(data.overdue.amount)} to collect` },
-    { label: "Due today", count: data.dueToday.count, tone: "warn", Icon: Wallet, href: "/dashboard/bookings?due=today", sub: `${slotPriceLabel(data.dueToday.amount)} to collect` },
-    { label: "Starting soon", count: data.startingSoon.count, tone: "info", Icon: AlarmClock, href: "#upcoming", sub: `In the next ${data.startingSoon.withinMinutes} min` },
-    { label: "Paying now", count: data.payingNow.count, tone: "info", Icon: CreditCard, sub: "Customers in card checkout" },
-  ];
+  if (isError || !data) {
+    return (
+      <div
+        role="alert"
+        className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4 text-sm"
+      >
+        <p>Pending tasks couldn&apos;t be loaded.</p>
+        <Button variant="outline" size="sm" disabled={isFetching} onClick={() => void refetch()}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
 
-  // Older APIs have no refund count: then there is no card. Manual refunds are paid back outside the system.
+  const items: AttentionItem[] = [
+    {
+      label: "Overdue payments",
+      count: data.overdue.count,
+      description: `${slotPriceLabel(data.overdue.amount)} to collect`,
+      href: "/dashboard/bookings?due=overdue",
+      icon: AlertTriangle,
+      urgent: true,
+    },
+    {
+      label: "Confirm bookings",
+      count: data.toConfirm.count,
+      description: confirmationDescription(data),
+      href: "/dashboard/bookings/confirmed",
+      icon: CalendarCheck,
+    },
+    {
+      label: "Payments due today",
+      count: data.dueToday.count,
+      description: `${slotPriceLabel(data.dueToday.amount)} to collect`,
+      href: "/dashboard/bookings?due=today",
+      icon: Wallet,
+    },
+  ];
   if (data.refundDue) {
-    cards.push({
-      label: "Refund due", count: data.refundDue.count, tone: "warn", Icon: Undo2, href: "/dashboard/bookings?refundDue=true",
-      sub: "Pay back by hand · not sent automatically",
+    items.push({
+      label: "Send refunds",
+      count: data.refundDue.count,
+      description: "Send manually, then record the refund",
+      href: "/dashboard/bookings/refunds?status=due",
+      icon: Undo2,
     });
   }
-  // Two per row on phones; an odd last card spans the row so nothing sits alone.
-  const odd = cards.length % 2 === 1;
+  const pending = items.filter((item) => item.count > 0);
 
   return (
-    <div className={cn("grid grid-cols-2 gap-3", cards.length > 5 ? "lg:grid-cols-3 xl:grid-cols-6" : "lg:grid-cols-5")}>
-      {cards.map((c) => {
-        const body = (
-          <>
-            <div className="flex items-center justify-between">
-              <span className="truncate text-sm font-medium">{c.label}</span>
-              <c.Icon className="h-4 w-4 opacity-70" />
-            </div>
-            <div className="mt-1 text-xl font-bold tabular-nums sm:text-2xl">{c.count}</div>
-            <div className="truncate text-xs opacity-75">{c.count > 0 ? c.sub : "Nothing right now"}</div>
-          </>
-        );
-        const cls = cn(
-          "block min-w-0 rounded-xl border p-3 transition-colors sm:p-4",
-          odd && "last:col-span-2 lg:last:col-span-1",
-          c.count > 0 ? TONE[c.tone] : "bg-card text-muted-foreground",
-          c.href && "hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        );
-        return c.href ? <Link key={c.label} href={c.href} className={cls}>{body}</Link> : <div key={c.label} className={cls}>{body}</div>;
-      })}
-    </div>
+    <Card>
+      {pending.length > 0 ? (
+        <>
+          <CardHeader className="p-4 pb-2 sm:p-5 sm:pb-2">
+            <CardTitle className="text-base">Needs your attention</CardTitle>
+          </CardHeader>
+          <CardContent className="px-2 pt-0 pb-2 sm:px-3 sm:pb-3">
+            <ul className="divide-border/60 divide-y">
+              {pending.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="hover:bg-muted/60 focus-visible:ring-ring flex min-h-18 items-center gap-3 rounded-lg px-2 py-3 focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    <span
+                      className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                        item.urgent
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-warning/10 text-foreground"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium">{item.label}</span>
+                      <span className="text-muted-foreground mt-0.5 block text-xs">
+                        {item.description}
+                      </span>
+                    </span>
+                    <span
+                      className={cn(
+                        "bg-muted shrink-0 rounded-md px-2 py-1 text-sm font-semibold tabular-nums",
+                        item.urgent && "bg-destructive/10 text-destructive"
+                      )}
+                    >
+                      {item.count}
+                    </span>
+                    <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </>
+      ) : (
+        <div className="flex items-center gap-3 p-4 sm:p-5">
+          <CheckCircle2 className="text-success h-5 w-5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium">No payment or confirmation tasks</p>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              You&apos;re up to date on confirmations, collections, and refunds.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {(data.startingSoon.count > 0 || data.payingNow.count > 0) && (
+        <div className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-2 border-t px-4 py-3 text-xs sm:px-5">
+          {data.startingSoon.count > 0 && (
+            <Link
+              href="#upcoming"
+              className="hover:text-foreground flex min-h-8 items-center gap-1.5 hover:underline"
+            >
+              <AlarmClock className="h-3.5 w-3.5" />
+              {data.startingSoon.count} starting in the next {data.startingSoon.withinMinutes} min
+            </Link>
+          )}
+          {data.payingNow.count > 0 && (
+            <span className="flex min-h-8 items-center gap-1.5">
+              <CreditCard className="h-3.5 w-3.5" />
+              {data.payingNow.count} in card checkout
+            </span>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }

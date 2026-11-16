@@ -1,6 +1,7 @@
 /** First matching prefix wins, so more specific paths come first. */
 const SECTIONS: { prefix: string; title: string }[] = [
   { prefix: "/dashboard/bookings/new", title: "New booking" },
+  { prefix: "/dashboard/bookings/refunds", title: "Refund bookings" },
   { prefix: "/dashboard/bookings", title: "Bookings" },
   { prefix: "/dashboard/slots", title: "Slots" },
   { prefix: "/dashboard/customers", title: "Customers" },
