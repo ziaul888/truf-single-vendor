@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { HelpCircle, LayoutDashboard, LogOut, MapPin, Menu, Phone } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCustomerSession, useCustomerSignOut } from "@/components/portal/account/use-customer-session";
+import { useIsAdmin } from "@/components/portal/account/use-admin-hint";
 
 const LINKS = [
   { href: "/#how", label: "How it works", Icon: HelpCircle },
@@ -13,7 +14,8 @@ const LINKS = [
 ];
 
 /** The header's links for phones and small tablets, where the inline nav is hidden (the tab bar has Book and My bookings). */
-export function MobileMenu({ phone, isAdmin, bookHref }: { phone: string; isAdmin: boolean; bookHref: string }) {
+export function MobileMenu({ phone, bookHref }: { phone: string; bookHref: string }) {
+  const isAdmin = useIsAdmin();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 

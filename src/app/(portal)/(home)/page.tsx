@@ -12,9 +12,10 @@ import { AmenitiesSection } from "@/components/portal/home/amenities-section";
 import { HowItWorksSection } from "@/components/portal/home/how-it-works-section";
 import { VisitUsSection } from "@/components/portal/home/visit-us-section";
 
-// No `force-dynamic` here: it turns every fetch on this page to no-store, which would defeat the
-// 60 s cache on the website, venue and grounds reads. The portal layout reads cookies, so the page
-// is still rendered per request, never prerendered.
+// Rendered once a minute and served from the CDN in between. No `force-dynamic` (it would make every
+// fetch no-store) and no cookies on the page or layout, or it would render on every visit. An admin's
+// edit shows up within a minute.
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const venue = await getPublicVenue();

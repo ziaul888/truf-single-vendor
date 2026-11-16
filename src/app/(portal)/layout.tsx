@@ -1,13 +1,13 @@
 import type { Viewport } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { Facebook, Instagram, LayoutDashboard, MessageCircle, Phone } from "lucide-react";
+import { Facebook, Instagram, MessageCircle, Phone } from "lucide-react";
 import { getPublicWebsite } from "@/services/website-settings";
 import { bookingHref } from "@/services/portal-grounds";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import type { PublicVenue } from "@/types/settings";
 import { VenueMark } from "@/components/portal/venue-mark";
 import { MobileMenu } from "@/components/portal/mobile-menu";
+import { AdminDashboardLink } from "@/components/portal/admin-dashboard-link";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
 import { PortalTabBar } from "@/components/portal/portal-tab-bar";
 
@@ -32,10 +32,7 @@ export default async function PortalLayout({ children }: { children: React.React
   );
 }
 
-async function PortalHeader({ venue, bookHref }: { venue: PublicVenue; bookHref: string }) {
-  const cookieStore = await cookies();
-  const isAdmin = Boolean(cookieStore.get("admin_token")?.value);
-
+function PortalHeader({ venue, bookHref }: { venue: PublicVenue; bookHref: string }) {
   return (
     // The top padding clears the status bar when the app runs full-screen.
     <header className="sticky top-0 z-40 border-b border-white/10 bg-sidebar pt-[env(safe-area-inset-top)] text-sidebar-foreground">
@@ -64,15 +61,7 @@ async function PortalHeader({ venue, bookHref }: { venue: PublicVenue; bookHref:
               <Phone className="h-3.5 w-3.5" /> {venue.phone}
             </a>
           )}
-          {isAdmin && (
-            <Link
-              href="/dashboard"
-              className="hidden h-10 items-center gap-1.5 rounded-lg border border-accent/40 px-3 text-sm font-semibold text-accent hover:bg-accent hover:text-accent-foreground md:inline-flex"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </Link>
-          )}
+          <AdminDashboardLink />
           {/* Phones reach the account and booking from the tab bar, leaving the venue name room */}
           <span className="hidden md:contents"><CustomerNav /></span>
           <Link
@@ -81,7 +70,7 @@ async function PortalHeader({ venue, bookHref }: { venue: PublicVenue; bookHref:
           >
             Book now
           </Link>
-          <MobileMenu phone={venue.phone} isAdmin={isAdmin} bookHref={bookHref} />
+          <MobileMenu phone={venue.phone} bookHref={bookHref} />
         </div>
       </div>
     </header>
