@@ -15,12 +15,29 @@ const nextConfig = {
   // Private pages stay out of search results even if a crawler is linked to them (robots.txt only asks it not to crawl).
   async headers() {
     const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
-    return ["/dashboard/:path*", "/login", "/sign-in", "/checkout/:path*", "/confirmation/:path*", "/my-bookings", "/account", "/api/:path*"].map(
-      (source) => ({ source, headers: noindex }),
-    );
+    return [
+      "/dashboard/:path*",
+      "/platform/:path*",
+      "/owner/:path*",
+      "/login",
+      "/sign-in",
+      "/checkout/:path*",
+      "/confirmation/:path*",
+      "/my-bookings",
+      "/account",
+      "/api/:path*",
+    ]
+      .map((source) => ({ source, headers: noindex }))
+      .concat([
+        { source: "/owner/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
+      ]);
   },
-  // Browser calls /api/v1/* on this origin; Next forwards them to turf-api so
-  // the httpOnly admin_token cookie stays first-party (no CORS needed).
+  // Existing workspace bookmarks open the owner's dashboard.
+  async redirects() {
+    return [{ source: "/businesses/:path*", destination: "/dashboard", permanent: false }];
+  },
+  // Staff and platform calls stay on this origin; Next forwards them to turf-api
+  // so their separate httpOnly session cookies remain first-party.
   async rewrites() {
     return [
       {

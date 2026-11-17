@@ -15,6 +15,22 @@ export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const host = req.headers.get("host") ?? "";
   const isAdminHost = host.startsWith("admin.") || ADMIN_HOSTS.has(host);
+  const platformRoot = host.startsWith("manage.") && pathname === "/";
+  const platformPage = pathname === "/platform" || pathname.startsWith("/platform/");
+  if (platformRoot || platformPage) {
+    if (pathname === "/platform/login") return NextResponse.next();
+    const url = req.nextUrl.clone();
+    if (!req.cookies.get("platform_token")?.value) {
+      url.pathname = "/platform/login";
+      url.searchParams.set("from", platformRoot ? "/platform" : pathname);
+      return NextResponse.redirect(url);
+    }
+    if (platformRoot) {
+      url.pathname = "/platform";
+      return NextResponse.rewrite(url);
+    }
+    return NextResponse.next();
+  }
 
   if (isAdminHost && pathname === "/") {
     const url = req.nextUrl.clone();
@@ -27,10 +43,18 @@ export function proxy(req: NextRequest) {
   }
 
   const adminToken = req.cookies.get("admin_token")?.value;
-  if (!adminToken) {
+  const ownerToken = req.cookies.get("owner_token")?.value;
+  if (!adminToken && !ownerToken) {
     const url = req.nextUrl.clone();
     url.pathname = ADMIN_LOGIN;
     url.searchParams.set("from", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (ownerToken && pathname !== ADMIN_PREFIX && pathname !== `${ADMIN_PREFIX}/`) {
+    const url = req.nextUrl.clone();
+    url.pathname = ADMIN_PREFIX;
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
@@ -40,5 +64,5 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/platform/:path*"],
 };

@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "eslint src",
     "test:booking-requests": "node --experimental-strip-types --test test/booking-requests.test.mjs",
+    "test:platform-navigation": "node --experimental-strip-types --test test/platform-navigation.test.mjs",
+    "test:platform-billing": "node --experimental-strip-types --test test/platform-billing.test.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "dependencies": {

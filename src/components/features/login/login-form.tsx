@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginSchema, type LoginInput } from "@/validations/auth";
@@ -17,10 +18,11 @@ interface ApiFailure {
   details?: { field: string; message: string }[];
 }
 
-type LoginResponse = { success: true } | ApiFailure;
+type LoginResponse = { success: true; data?: { audience?: string } } | ApiFailure;
 
 export function LoginForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState("");
   const [locked, setLocked] = useState(false);
@@ -56,6 +58,12 @@ export function LoginForm() {
       });
       const json = (await res.json()) as LoginResponse;
       if (!json.success) return showFailure(json);
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      if (json.data?.audience === "owner") {
+        window.location.assign("/dashboard");
+        return;
+      }
       router.push(safeRedirectPath(searchParams.get("from")));
       router.refresh();
     } catch {
@@ -92,8 +100,15 @@ export function LoginForm() {
             onClick={() => setShowPass(!showPass)}
             aria-label={showPass ? "Hide password" : "Show password"}
             style={{
-              position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
-              background: "none", border: "none", cursor: "pointer", color: C.faint, fontSize: 14,
+              position: "absolute",
+              right: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: C.faint,
+              fontSize: 14,
             }}
           >
             {showPass ? "🙈" : "👁"}
@@ -105,9 +120,14 @@ export function LoginForm() {
         <div
           role="alert"
           style={{
-            background: "rgba(224,82,82,0.1)", border: "1px solid rgba(224,82,82,0.3)",
-            borderRadius: 8, padding: "10px 14px", marginBottom: 16,
-            fontSize: 12, color: C.danger, animation: "slideUp 0.3s ease",
+            background: "rgba(224,82,82,0.1)",
+            border: "1px solid rgba(224,82,82,0.3)",
+            borderRadius: 8,
+            padding: "10px 14px",
+            marginBottom: 16,
+            fontSize: 12,
+            color: C.danger,
+            animation: "slideUp 0.3s ease",
           }}
         >
           ⚠ {serverError}
@@ -138,8 +158,12 @@ function LoginField({ label, icon, error, registration, trailing, ...input }: Lo
       <label
         htmlFor={id}
         style={{
-          fontSize: 11, letterSpacing: 2, color: C.muted,
-          textTransform: "uppercase", display: "block", marginBottom: 8,
+          fontSize: 11,
+          letterSpacing: 2,
+          color: C.muted,
+          textTransform: "uppercase",
+          display: "block",
+          marginBottom: 8,
         }}
       >
         {label}
@@ -148,8 +172,12 @@ function LoginField({ label, icon, error, registration, trailing, ...input }: Lo
         <span
           aria-hidden
           style={{
-            position: "absolute", left: 14, top: "50%",
-            transform: "translateY(-50%)", color: C.faint, fontSize: 15,
+            position: "absolute",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: C.faint,
+            fontSize: 15,
           }}
         >
           {icon}
@@ -213,14 +241,21 @@ function SubmitButton({ loading, locked }: { loading: boolean; locked: boolean }
           <span
             aria-hidden
             style={{
-              width: 16, height: 16, borderRadius: "50%",
-              border: `2px solid ${C.accent}`, borderTopColor: "transparent",
+              width: 16,
+              height: 16,
+              borderRadius: "50%",
+              border: `2px solid ${C.accent}`,
+              borderTopColor: "transparent",
               animation: "spin 0.8s linear infinite",
             }}
           />
           Signing in…
         </>
-      ) : locked ? "🔒 Try again in a minute" : "Sign In"}
+      ) : locked ? (
+        "🔒 Try again in a minute"
+      ) : (
+        "Sign In"
+      )}
     </button>
   );
 }
