@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import Link from "next/link";
 import { LoginForm } from "@/components/features/login/login-form";
 import {
   LoginBrandPanel,
@@ -34,9 +35,24 @@ const GLOBAL_STYLES = `
 // Phone, tablet and desktop layouts are picked by CSS breakpoints (md 768px, lg 1024px), so the
 // server-rendered first paint already matches the screen. Inline styles hold only what never changes.
 const ORBS = [
-  { sizeCls: "h-[250px] w-[250px] md:h-[400px] md:w-[400px]", pos: { top: "-10%", left: "-8%" }, color: "rgba(26,122,74,0.12)", delay: "0s" },
-  { sizeCls: "h-[200px] w-[200px] md:h-[300px] md:w-[300px]", pos: { bottom: "-5%", right: "-5%" }, color: "rgba(37,164,98,0.08)", delay: "3s" },
-  { sizeCls: "h-[150px] w-[150px] md:h-[200px] md:w-[200px]", pos: { top: "40%", right: "10%" }, color: "rgba(46,204,113,0.06)", delay: "1.5s" },
+  {
+    sizeCls: "h-[250px] w-[250px] md:h-[400px] md:w-[400px]",
+    pos: { top: "-10%", left: "-8%" },
+    color: "rgba(26,122,74,0.12)",
+    delay: "0s",
+  },
+  {
+    sizeCls: "h-[200px] w-[200px] md:h-[300px] md:w-[300px]",
+    pos: { bottom: "-5%", right: "-5%" },
+    color: "rgba(37,164,98,0.08)",
+    delay: "3s",
+  },
+  {
+    sizeCls: "h-[150px] w-[150px] md:h-[200px] md:w-[200px]",
+    pos: { top: "40%", right: "10%" },
+    color: "rgba(46,204,113,0.06)",
+    delay: "1.5s",
+  },
 ];
 
 function Backdrop() {
@@ -44,7 +60,9 @@ function Backdrop() {
     <>
       <div
         style={{
-          position: "fixed", inset: 0, zIndex: 0,
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
           background: `repeating-linear-gradient(180deg,
             rgba(26,122,74,0.06) 0px, rgba(26,122,74,0.06) 80px,
             transparent 80px, transparent 160px)`,
@@ -55,9 +73,13 @@ function Backdrop() {
           key={i}
           className={sizeCls}
           style={{
-            position: "fixed", borderRadius: "50%", ...pos,
+            position: "fixed",
+            borderRadius: "50%",
+            ...pos,
             background: `radial-gradient(circle, ${color}, transparent 70%)`,
-            animation: "drift 8s ease-in-out infinite", animationDelay: delay, zIndex: 0,
+            animation: "drift 8s ease-in-out infinite",
+            animationDelay: delay,
+            zIndex: 0,
           }}
         />
       ))}
@@ -68,10 +90,21 @@ function Backdrop() {
 function FormHeader() {
   return (
     <div className="mt-8 mb-7 md:mt-0 md:mb-10">
-      <div style={{ fontSize: 11, letterSpacing: 3, color: C.muted, textTransform: "uppercase", marginBottom: 8 }}>
+      <div
+        style={{
+          fontSize: 11,
+          letterSpacing: 3,
+          color: C.muted,
+          textTransform: "uppercase",
+          marginBottom: 8,
+        }}
+      >
         Secure Login
       </div>
-      <div className="text-[28px] md:text-[32px]" style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>
+      <div
+        className="text-[28px] md:text-[32px]"
+        style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}
+      >
         ADMIN PANEL
       </div>
     </div>
@@ -95,11 +128,21 @@ function FormColumn() {
         <LoginForm />
       </Suspense>
 
+      <p className="mt-5 text-center text-xs" style={{ color: C.muted }}>
+        Own a turf?{" "}
+        <Link href="/saas/apply" style={{ color: C.accent, fontWeight: 600 }}>
+          Apply for access
+        </Link>
+      </p>
+
       <div
         className="md:hidden"
         style={{
-          marginTop: 28, padding: 16, background: "rgba(17,26,21,0.6)",
-          borderRadius: 10, border: "1px solid rgba(37,164,98,0.1)",
+          marginTop: 28,
+          padding: 16,
+          background: "rgba(17,26,21,0.6)",
+          borderRadius: 10,
+          border: "1px solid rgba(37,164,98,0.1)",
         }}
       >
         <RoleCapabilities small />
@@ -107,11 +150,17 @@ function FormColumn() {
 
       <div
         style={{
-          marginTop: 24, paddingTop: 20, borderTop: "1px solid rgba(37,164,98,0.1)",
-          textAlign: "center", fontSize: 11, color: C.faint, lineHeight: 2,
+          marginTop: 24,
+          paddingTop: 20,
+          borderTop: "1px solid rgba(37,164,98,0.1)",
+          textAlign: "center",
+          fontSize: 11,
+          color: C.faint,
+          lineHeight: 2,
         }}
       >
-        Turf Management System · Initial Release v1.0<br />
+        Turf Management System · Initial Release v1.0
+        <br />
         Secured with SSL + JWT · Session: 8hrs
       </div>
     </div>
@@ -125,8 +174,12 @@ export default function LoginPage() {
     <div
       className="flex flex-col md:flex-row"
       style={{
-        minHeight: "100vh", background: "#060d09", fontFamily: "'DM Sans', sans-serif",
-        color: C.text, position: "relative", overflow: "hidden",
+        minHeight: "100vh",
+        background: "#060d09",
+        fontFamily: "'DM Sans', sans-serif",
+        color: C.text,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       <style>{GLOBAL_STYLES}</style>

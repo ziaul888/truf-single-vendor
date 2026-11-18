@@ -6,16 +6,16 @@ export { MAX_SLOTS_PER_BOOKING } from "@/lib/booking-limits";
 const VENUE_TIME_ZONE = "Asia/Dhaka";
 
 /** Today's date at the venue, "YYYY-MM-DD" — slot dates are venue-local, not UTC. */
-export function venueToday(offsetDays = 0): string {
-  const d = new Date(Date.now() + offsetDays * 86_400_000);
-  // en-CA formats as YYYY-MM-DD.
-  return new Intl.DateTimeFormat("en-CA", { timeZone: VENUE_TIME_ZONE }).format(d);
+export function venueToday(offsetDays = 0, timeZone = VENUE_TIME_ZONE): string {
+  // en-CA formats as YYYY-MM-DD. Apply the offset to the local date, including on DST changes.
+  const date = new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
+  return offsetDays ? addDays(date, offsetDays) : date;
 }
 
 /** The time now at the venue in hours, e.g. 18.5 at 18:30. */
-export function venueHourNow(): number {
+export function venueHourNow(timeZone = VENUE_TIME_ZONE): number {
   const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: VENUE_TIME_ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
   }).formatToParts(new Date());
   const part = (type: "hour" | "minute") => Number(parts.find((p) => p.type === type)?.value);
   return part("hour") + part("minute") / 60;

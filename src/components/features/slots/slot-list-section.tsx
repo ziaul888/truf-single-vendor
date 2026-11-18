@@ -18,13 +18,17 @@ import { SlotBulkBar } from "./slot-bulk-bar";
 import { SlotHistorySheet } from "./slot-history-sheet";
 import { SlotRowActions } from "./slot-row-actions";
 import { BlockBookedSlotDialog } from "./block-booked-slot-dialog";
+import { SettingsLoadError } from "@/components/features/settings/settings-load-state";
+import { useDashboardAudience } from "@/components/dashboard-audience";
+import { useMe } from "@/hooks/useMe";
 import { SlotCardList, SlotCustomer, SlotStatusPill, isSelectable } from "./slot-card-list";
 
 const PAGE_SIZE = 10;
 
-export function SlotListSection() {
+export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
+  const { data: me } = useMe(useDashboardAudience());
   const [groundId, setGroundId] = useState("all");
-  const [date,     setDate]     = useState(venueToday);
+  const [date,     setDate]     = useState(() => venueToday(0, me?.role === "owner" ? me.tenant.timezone : undefined));
   const [status,   setStatus]   = useState<SlotStatus | "all">("all");
   const [page,     setPage]     = useState(1);
   // Ticked slot ids on this page; cleared whenever the filters or page change.
@@ -33,7 +37,7 @@ export function SlotListSection() {
   const [blockingBooked, setBlockingBooked] = useState<Slot | null>(null);
 
   const { data: grounds } = useGrounds();
-  const { data, isLoading } = useSlots({
+  const { data, isLoading, isError, refetch } = useSlots({
     groundId, date, status: status === "all" ? undefined : status, page, limit: PAGE_SIZE,
   });
   const stats      = data?.stats;
@@ -43,7 +47,7 @@ export function SlotListSection() {
   const groundName = groundId === "all" ? "All grounds" : grounds?.find((g) => g.id === groundId)?.name ?? "";
 
   // Only free and blocked slots can be acted on in bulk.
-  const selectable = slotRows.filter(isSelectable);
+  const selectable = readOnly ? [] : slotRows.filter(isSelectable);
   const selectedSlots = slotRows.filter((s) => selected.has(s.id));
   const allSelected = selectable.length > 0 && selectable.every((s) => selected.has(s.id));
   const clearSelection = () => setSelected(new Set());
@@ -56,6 +60,8 @@ export function SlotListSection() {
       return next;
     });
   }
+
+  if (isError) return <SettingsLoadError what="slots" onRetry={() => refetch()} />;
 
   return (
     <div className="space-y-4">
@@ -125,19 +131,19 @@ export function SlotListSection() {
                 </label>
               )}
               <SlotCardList slots={slotRows} selected={selected} showGround={hasGroundChoice(grounds)} onToggle={toggleOne}
-                onHistory={setHistoryOf} onBlockBooked={setBlockingBooked} />
+                onHistory={setHistoryOf} onBlockBooked={setBlockingBooked} readOnly={readOnly} />
             </div>
             <Table className="hidden md:table">
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead className="w-10">
+                  {!readOnly && <TableHead className="w-10">
                     <Checkbox
                       aria-label="Select all slots on this page"
                       checked={allSelected}
                       disabled={selectable.length === 0}
                       onCheckedChange={(v) => toggleAll(v === true)}
                     />
-                  </TableHead>
+                  </TableHead>}
                   <TableHead>Slot time</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Ground</TableHead>
@@ -145,27 +151,27 @@ export function SlotListSection() {
                   <TableHead>Booking ID</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  {!readOnly && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {slotRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="py-12 text-center text-muted-foreground">
+                    <TableCell colSpan={readOnly ? 7 : 9} className="py-12 text-center text-muted-foreground">
                       No slots found for this filter.
                     </TableCell>
                   </TableRow>
                 ) : (
                   slotRows.map((slot) => (
                     <TableRow key={slot.id} className={slot.status === "blocked" ? "opacity-60" : ""} data-state={selected.has(slot.id) ? "selected" : undefined}>
-                      <TableCell>
+                      {!readOnly && <TableCell>
                         <Checkbox
                           aria-label={`Select ${slotTimeLabel(slot)}`}
                           checked={selected.has(slot.id)}
                           disabled={!isSelectable(slot)}
                           onCheckedChange={(v) => toggleOne(slot.id, v === true)}
                         />
-                      </TableCell>
+                      </TableCell>}
                       <TableCell className="font-medium whitespace-nowrap">{slotTimeLabel(slot)}</TableCell>
                       <TableCell className="text-sm">{durationLabel(slot.durationMinutes)}</TableCell>
                       <TableCell className="text-sm">{slot.groundName}</TableCell>
@@ -177,9 +183,9 @@ export function SlotListSection() {
                       </TableCell>
                       <TableCell className="text-sm font-medium whitespace-nowrap">{slotPriceLabel(slot.price)}</TableCell>
                       <TableCell><SlotStatusPill slot={slot} /></TableCell>
-                      <TableCell className="text-right">
+                      {!readOnly && <TableCell className="text-right">
                         <SlotRowActions slot={slot} onHistory={setHistoryOf} onBlockBooked={setBlockingBooked} />
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 )}

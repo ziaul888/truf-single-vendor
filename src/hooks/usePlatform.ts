@@ -7,6 +7,8 @@ import type {
   PlatformTenant,
   PlatformTenantFilters,
   PlatformTenantPage,
+  OwnerApplicationFilters,
+  OwnerApplicationPage,
 } from "@/types/platform";
 
 export function usePlatformMe() {
@@ -57,6 +59,26 @@ export function usePlatformTenant(userId: string | undefined, id: string) {
       (
         await platformApi.get<ApiSuccess<PlatformTenant>>(`/tenants/${encodeURIComponent(id)}`, {
           signal,
+        })
+      ).data.data,
+  });
+}
+
+export function usePlatformApplications(
+  userId: string | undefined,
+  filters: OwnerApplicationFilters
+) {
+  return useQuery({
+    queryKey: ["platform", userId, "applications", filters],
+    enabled: !!userId,
+    retry: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    queryFn: async ({ signal }) =>
+      (
+        await platformApi.get<ApiSuccess<OwnerApplicationPage>>("/applications", {
+          signal,
+          params: filters,
         })
       ).data.data,
   });

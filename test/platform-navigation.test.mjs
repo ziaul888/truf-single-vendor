@@ -5,6 +5,7 @@ import { platformRedirectPath } from "../src/lib/platform-redirect.ts";
 test("platform sign-in returns only to platform console routes", () => {
   for (const value of [
     "/platform",
+    "/platform/applications",
     "/platform/tenants",
     "/platform/tenants?status=active",
     "/platform/tenants/11111111-1111-4111-8111-111111111111",

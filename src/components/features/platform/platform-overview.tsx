@@ -1,15 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, CircleCheck, Clock3, CirclePause, ArrowRight, UsersRound } from "lucide-react";
-import { usePlatformMe, usePlatformOverview } from "@/hooks/usePlatform";
+import {
+  Building2,
+  CircleCheck,
+  Clock3,
+  CirclePause,
+  ArrowRight,
+  UsersRound,
+  ClipboardList,
+} from "lucide-react";
+import { usePlatformApplications, usePlatformMe, usePlatformOverview } from "@/hooks/usePlatform";
 import { Button } from "@/components/ui/button";
+import { formatBdt } from "@/lib/platform-billing";
 import { PlatformEmpty, PlatformLoading, PlatformReadError } from "./platform-states";
 import { PlatformTenantList } from "./platform-tenant-list";
 
 export function PlatformOverviewView() {
   const me = usePlatformMe(),
     overview = usePlatformOverview(me.data?.id);
+  const applications = usePlatformApplications(me.data?.id, {
+    page: 1,
+    limit: 3,
+    status: "pending",
+  });
   if (overview.isError)
     return <PlatformReadError error={overview.error} onRetry={() => overview.refetch()} />;
   if (!overview.data) return <PlatformLoading />;
@@ -63,6 +77,49 @@ export function PlatformOverviewView() {
           </Link>
         </Button>
       </div>
+      {!applications.isError && applications.data && applications.data.total > 0 && (
+        <section className="border-warning/35 bg-warning/10 rounded-2xl border p-5 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="bg-warning/20 text-warning-foreground flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+                <ClipboardList className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {applications.data.total.toLocaleString()} activation request
+                  {applications.data.total === 1 ? "" : "s"} waiting
+                </h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Review the plan and owner details before activating access.
+                </p>
+              </div>
+            </div>
+            <Button asChild className="h-11">
+              <Link href="/platform/applications">
+                Review applications
+                <ArrowRight />
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            {applications.data.data.map((application) => (
+              <Link
+                key={application.id}
+                href="/platform/applications"
+                className="bg-card hover:border-primary/35 focus-visible:ring-ring rounded-xl border p-4 outline-none focus-visible:ring-2"
+              >
+                <p className="font-semibold">{application.turfName}</p>
+                <p className="text-muted-foreground mt-1 text-xs">{application.ownerName}</p>
+                <p className="mt-3 text-sm font-medium">
+                  {application.plan
+                    ? `${application.plan.name} · ${formatBdt(application.plan.selectedAmount)}/${application.plan.interval === "monthly" ? "month" : "year"}`
+                    : "Plan unavailable"}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map(({ label, value, Icon, href, description }) => (
           <Link

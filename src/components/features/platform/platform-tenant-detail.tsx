@@ -5,7 +5,6 @@ import { ArrowLeft, Building2, UserRound, UsersRound } from "lucide-react";
 import { usePlatformMe, usePlatformTenant } from "@/hooks/usePlatform";
 import { PlatformLoading, PlatformReadError } from "./platform-states";
 import { PlatformTenantStatusBadge } from "./platform-tenant-list";
-import { PlatformOwnerAccess } from "./platform-owner-access";
 import { PlatformTenantBilling, PlatformTenantActivity } from "./platform-tenant-billing";
 
 export function PlatformTenantDetail({ id }: { id: string }) {
@@ -93,11 +92,10 @@ export function PlatformTenantDetail({ id }: { id: string }) {
               </div>
             </section>
           </div>
-          <PlatformOwnerAccess userId={me.data?.id} tenantId={id} />
           {tenant.data.status === "draft" && (
             <p className="bg-muted rounded-xl border p-4 text-sm leading-relaxed">
-              This turf is being set up. Recording a subscription payment does not activate the turf
-              or owner access.
+              This turf is being set up. Recording a subscription payment does not change the turf
+              status.
             </p>
           )}
           <PlatformTenantBilling userId={me.data?.id} tenantId={id} />

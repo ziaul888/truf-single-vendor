@@ -1,5 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { ownerApi } from "@/lib/owner-api";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import type {
   BlockReason, BulkBlockInput, BulkBlockResult, BulkSlotsResult, Closure, CreateClosureInput,
   CreateClosureResult, GenerateResult, Slot, SlotCalendar, SlotEvent, SlotEventAction,
@@ -28,9 +30,11 @@ function cleanParams(filters: object) {
 }
 
 export function useSlots(filters: SlotFilters, { enabled = true } = {}) {
+  const audience = useDashboardAudience();
+  const client = audience === "owner" ? ownerApi : api;
   return useQuery<SlotPage>({
-    queryKey: [...SLOTS_KEY, "list", filters],
-    queryFn: async () => (await api.get("/admin/slots", { params: cleanParams(filters) })).data.data,
+    queryKey: [...SLOTS_KEY, "list", audience, filters],
+    queryFn: async () => (await client.get("/admin/slots", { params: cleanParams(filters) })).data.data,
     placeholderData: keepPreviousData,
     enabled,
   });
@@ -42,7 +46,7 @@ function useSlotMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) 
     mutationFn: fn,
     onSuccess: () => {
       // Blocking a booked slot cancels its booking, so booking and dashboard numbers move too.
-      for (const key of [SLOTS_KEY, ["calendar"], ["bookings"], ["dashboard"]]) qc.invalidateQueries({ queryKey: key });
+      for (const key of [SLOTS_KEY, ["calendar"], ["bookings"], ["dashboard"], ["owner", "dashboard"]]) qc.invalidateQueries({ queryKey: key });
     },
   });
 }
@@ -75,15 +79,18 @@ export function useUnblockDay() {
 }
 
 export function useGenerateSlots() {
+  const client = useDashboardAudience() === "owner" ? ownerApi : api;
   return useSlotMutation(async (body: { groundId: string; fromDate: string; toDate: string }) =>
-    (await api.post("/admin/slots/generate", body)).data.data as GenerateResult);
+    (await client.post("/admin/slots/generate", body)).data.data as GenerateResult);
 }
 
 /** The generate form's preview: what would be created, without saving anything. */
 export function useGeneratePreview(body: { groundId: string; fromDate: string; toDate: string }, enabled: boolean) {
+  const audience = useDashboardAudience();
+  const client = audience === "owner" ? ownerApi : api;
   return useQuery<GenerateResult>({
-    queryKey: [...SLOTS_KEY, "generate-preview", body],
-    queryFn: async () => (await api.post("/admin/slots/generate", { ...body, dryRun: true })).data.data,
+    queryKey: [...SLOTS_KEY, "generate-preview", audience, body],
+    queryFn: async ({ signal }) => (await client.post("/admin/slots/generate", { ...body, dryRun: true }, { signal })).data.data,
     enabled,
     retry: false,
     placeholderData: keepPreviousData,

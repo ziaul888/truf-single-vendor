@@ -6,9 +6,16 @@ import { GlobalSearch } from "@/components/global-search";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { sectionTitle } from "@/components/section-title";
 import { useMe } from "@/hooks/useMe";
+import type { DashboardAudience } from "@/hooks/useMe";
 
-export function Topbar({ title }: { title?: string }) {
-  const { data: me } = useMe();
+export function Topbar({
+  title,
+  audience = "staff",
+}: {
+  title?: string;
+  audience?: DashboardAudience;
+}) {
+  const { data: me } = useMe(audience);
   const pathname = usePathname();
 
   // Below lg the header clears the iOS status bar (full-screen app) and names the current section;
@@ -26,13 +33,13 @@ export function Topbar({ title }: { title?: string }) {
 
       {/* Phones: the search trigger shrinks to an icon button; it opens the same palette. */}
       <div className="flex justify-center sm:flex-1 max-sm:[&>button]:w-9 max-sm:[&>button]:justify-center max-sm:[&>button]:px-0 max-sm:pointer-coarse:[&>button]:w-10 max-sm:[&>button>span]:hidden">
-        <GlobalSearch />
+        {audience === "staff" ? <GlobalSearch /> : <span />}
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
         <ThemeToggle />
         <Link
-          href="/dashboard/profile"
+          href={audience === "owner" ? "/dashboard" : "/dashboard/profile"}
           aria-label="Profile"
           title={me ? `${me.name} (${me.role})` : undefined}
           className="bg-primary text-primary-foreground focus-visible:ring-ring ml-1 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-coarse:h-10 pointer-coarse:w-10"

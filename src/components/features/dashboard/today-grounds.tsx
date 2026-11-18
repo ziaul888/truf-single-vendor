@@ -15,6 +15,8 @@ import {
   venueHourNow,
 } from "@/lib/slot-format";
 import { useDashboardToday } from "@/hooks/useDashboard";
+import { useDashboardAudience } from "@/components/dashboard-audience";
+import { useMe } from "@/hooks/useMe";
 import type { SlotStatus } from "@/types/slot";
 import type { TodayGround } from "@/types/dashboard";
 import { CollectByIdDialog } from "./collect-by-id-dialog";
@@ -32,9 +34,9 @@ const SLOT_NAME: Record<SlotStatus, string> = {
   blocked: "Blocked",
 };
 
-function Timeline({ g, nowHour }: { g: TodayGround; nowHour: number }) {
+function Timeline({ g, nowHour, timeZone }: { g: TodayGround; nowHour: number; timeZone?: string }) {
   // turf-api sends the whole hour; add the minutes so a 16:30 slot isn't "now" at 16:10.
-  const clock = venueHourNow();
+  const clock = venueHourNow(timeZone);
   const nowAt = Math.floor(clock) === nowHour ? clock : nowHour;
   return (
     <div
@@ -65,10 +67,12 @@ function Timeline({ g, nowHour }: { g: TodayGround; nowHour: number }) {
 function GroundRow({
   g,
   nowHour,
+  timeZone,
   onCollect,
 }: {
   g: TodayGround;
   nowHour: number;
+  timeZone?: string;
   onCollect: (id: string) => void;
 }) {
   return (
@@ -91,7 +95,7 @@ function GroundRow({
         )}
       </div>
 
-      {!g.closedReason && g.timeline.length > 0 && <Timeline g={g} nowHour={nowHour} />}
+      {!g.closedReason && g.timeline.length > 0 && <Timeline g={g} nowHour={nowHour} timeZone={timeZone} />}
 
       {!g.closedReason && (
         <div className="grid gap-2 text-sm sm:grid-cols-2">
@@ -143,6 +147,8 @@ function GroundRow({
 /** One row per active ground: today's slots as a strip, who's playing now and who's next. */
 export function TodayGrounds() {
   const { data, isLoading, isError, isFetching, refetch } = useDashboardToday();
+  const { data: me } = useMe(useDashboardAudience());
+  const timeZone = me?.role === "owner" ? me.tenant.timezone : undefined;
   const [collecting, setCollecting] = useState<string | null>(null);
 
   return (
@@ -188,7 +194,7 @@ export function TodayGrounds() {
         ) : (
           <div className="divide-y">
             {data.grounds.map((g) => (
-              <GroundRow key={g.groundId} g={g} nowHour={data.nowHour} onCollect={setCollecting} />
+              <GroundRow key={g.groundId} g={g} nowHour={data.nowHour} timeZone={timeZone} onCollect={setCollecting} />
             ))}
           </div>
         )}

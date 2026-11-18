@@ -55,10 +55,11 @@ interface SlotCardListProps {
   onToggle: (id: string, on: boolean) => void;
   onHistory: (slot: Slot) => void;
   onBlockBooked: (slot: Slot) => void;
+  readOnly?: boolean;
 }
 
 /** The slots table as stacked cards for phones, where Block / Unblock would sit off-screen. */
-export function SlotCardList({ slots, selected, showGround, onToggle, onHistory, onBlockBooked }: SlotCardListProps) {
+export function SlotCardList({ slots, selected, showGround, onToggle, onHistory, onBlockBooked, readOnly = false }: SlotCardListProps) {
   if (slots.length === 0) return <p className="py-12 text-center text-sm text-muted-foreground">No slots found for this filter.</p>;
 
   return (
@@ -67,14 +68,14 @@ export function SlotCardList({ slots, selected, showGround, onToggle, onHistory,
         <li key={slot.id} className={cn("space-y-2 px-4 py-3", slot.status === "blocked" && "opacity-60", selected.has(slot.id) && "bg-muted/50")}>
           <div className="flex items-start gap-1">
             {/* The label is the tap target, so the 20px box is easy to hit */}
-            <label className="-m-2 flex shrink-0 cursor-pointer p-2.5">
+            {!readOnly && <label className="-m-2 flex shrink-0 cursor-pointer p-2.5">
               <Checkbox
                 aria-label={`Select ${slotTimeLabel(slot)}`}
                 checked={selected.has(slot.id)}
                 disabled={!isSelectable(slot)}
                 onCheckedChange={(v) => onToggle(slot.id, v === true)}
               />
-            </label>
+            </label>}
             <div className="min-w-0 flex-1 text-sm">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium">{slotTimeLabel(slot)}</span>
@@ -87,7 +88,7 @@ export function SlotCardList({ slots, selected, showGround, onToggle, onHistory,
               {(slot.booking?.customerName || slot.status === "held") && <div className="mt-0.5"><SlotCustomer slot={slot} /></div>}
             </div>
           </div>
-          <SlotRowActions slot={slot} onHistory={onHistory} onBlockBooked={onBlockBooked} large />
+          {!readOnly && <SlotRowActions slot={slot} onHistory={onHistory} onBlockBooked={onBlockBooked} large />}
         </li>
       ))}
     </ul>

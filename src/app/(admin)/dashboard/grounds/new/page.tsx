@@ -11,7 +11,8 @@ import { AddGroundSchema, toGroundWriteInput, type AddGroundFormData } from "@/s
 import { showGroundApiError } from "@/components/features/add-ground/ground-api-errors";
 import { useCreateGround, type Ground } from "@/hooks/useGrounds";
 import { movePhotoSlot, syncGroundPhotos } from "@/lib/ground-photos";
-import { emptyPhotoSlots, photoSlotsFrom } from "@/components/features/add-ground/photos-section";
+import { emptyPhotoSlots } from "@/components/features/add-ground/photos-section";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { ChevronLeft } from "lucide-react";
@@ -20,13 +21,14 @@ import { AdminOnly } from "@/components/features/admin-only";
 
 export default function AddGroundPage() {
   return (
-    <AdminOnly reason="Only admins can add grounds.">
+    <AdminOnly reason="Only admins can add grounds." allowTenantOwner>
       <AddGroundForm />
     </AdminOnly>
   );
 }
 
 function AddGroundForm() {
+  const tenant = useDashboardAudience() === "owner";
   const router = useRouter();
   const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>(emptyPhotoSlots);
   const create = useCreateGround();
@@ -73,7 +75,7 @@ function AddGroundForm() {
     try {
       const body = toGroundWriteInput(data);
       created = await create.mutateAsync(isDraft ? { ...body, isActive: false } : body);
-      await syncGroundPhotos(created.id, [], photoSlots);
+      if (!tenant) await syncGroundPhotos(created.id, [], photoSlots);
       toast.success(isDraft ? "Ground saved as draft (inactive)" : `${data.name} added successfully`);
       router.push("/dashboard/grounds");
     } catch (err) {
@@ -106,7 +108,7 @@ function AddGroundForm() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px] items-start">
-        <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} onPhotoMove={handlePhotoMove} />
+        <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} onPhotoMove={handlePhotoMove} tenant={tenant} />
         <div className="sticky top-6">
           <PreviewSidebar
             control={form.control}

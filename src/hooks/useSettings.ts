@@ -1,5 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { ownerApi } from "@/lib/owner-api";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import type { WebsiteSettings, WebsiteImageSlot } from "@/validations/website-settings";
 import type {
   Audited, EmailLogPage, NotificationSettings, NotificationsInput, PaymentStatus, Permissions, PublicVenue,
@@ -26,13 +28,33 @@ function useSectionMutation<TVars, TResult>(key: readonly string[], fn: (vars: T
 
 // ── General: venue profile ──
 
-export const useVenue = () => useQuery<VenueProfile>({ queryKey: KEY.venue, queryFn: () => get("/admin/settings/venue") });
+const OWNER_VENUE_KEY = ["owner", ...KEY.venue] as const;
+
+export function useVenue() {
+  const owner = useDashboardAudience() === "owner";
+  return useQuery<VenueProfile>({
+    queryKey: owner ? OWNER_VENUE_KEY : KEY.venue,
+    queryFn: async () => owner
+      ? (await ownerApi.get("/admin/settings/venue")).data.data
+      : get("/admin/settings/venue"),
+  });
+}
 
 /** The public venue profile (name and logo), for pages nobody is signed in to, like the login page. */
 export const usePublicVenue = () => useQuery<PublicVenue>({ queryKey: ["venue", "public"], queryFn: () => get("/venue") });
 
-export const useUpdateVenue = () =>
-  useSectionMutation(KEY.venue, async (body: VenueInput) => (await api.put("/admin/settings/venue", body)).data.data as VenueProfile);
+export function useUpdateVenue() {
+  const owner = useDashboardAudience() === "owner";
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: VenueInput) =>
+      (await (owner ? ownerApi : api).put("/admin/settings/venue", body)).data.data as VenueProfile,
+    onSuccess: async (venue) => {
+      qc.setQueryData(owner ? OWNER_VENUE_KEY : KEY.venue, venue);
+      if (owner) await qc.invalidateQueries({ queryKey: ["owner", "me"] });
+    },
+  });
+}
 
 /** PNG or JPG, 200 KB at most. */
 export const useUploadLogo = () =>

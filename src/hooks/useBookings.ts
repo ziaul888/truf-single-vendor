@@ -1,8 +1,15 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { staffSlotRequest } from "@/lib/booking-requests";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import type {
-  Booking, BookingDetail, BookingPage, BookingStatus, CreateBookingInput, OfflineMethod, PaymentStatus,
+  Booking,
+  BookingDetail,
+  BookingPage,
+  BookingStatus,
+  CreateBookingInput,
+  OfflineMethod,
+  PaymentStatus,
 } from "@/types/booking";
 
 export type { Booking, BookingDetail };
@@ -32,13 +39,16 @@ export interface BookingFilters {
 const BOOKINGS_KEY = ["bookings"] as const;
 
 const cleanParams = (filters: object) =>
-  Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== undefined && v !== "" && v !== "all"));
+  Object.fromEntries(
+    Object.entries(filters).filter(([, v]) => v !== undefined && v !== "" && v !== "all")
+  );
 
 /** Admin bookings list. `counts` ignore the status filter (stat cards). */
 export function useBookings(filters: BookingFilters = {}, { enabled = true } = {}) {
   return useQuery<BookingPage>({
     queryKey: [...BOOKINGS_KEY, "list", filters],
-    queryFn: async () => (await api.get("/admin/bookings", { params: cleanParams(filters) })).data.data,
+    queryFn: async () =>
+      (await api.get("/admin/bookings", { params: cleanParams(filters) })).data.data,
     placeholderData: keepPreviousData,
     enabled,
   });
@@ -55,9 +65,13 @@ export function useBookingDetail(id: string | undefined) {
 
 /** The next pending or confirmed bookings (dashboard home). */
 export function useUpcomingBookings(limit = 5) {
+  const audience = useDashboardAudience();
   return useQuery<Booking[]>({
-    queryKey: [...BOOKINGS_KEY, "upcoming", limit],
-    queryFn: async () => (await api.get("/admin/bookings/upcoming", { params: { limit } })).data.data,
+    queryKey: [audience, ...BOOKINGS_KEY, "upcoming", limit],
+    queryFn: async () =>
+      audience === "owner"
+        ? []
+        : (await api.get("/admin/bookings/upcoming", { params: { limit } })).data.data,
   });
 }
 
@@ -70,7 +84,14 @@ export function useBookingMutation<TVars, TResult>(fn: (vars: TVars) => Promise<
   return useMutation({
     mutationFn: fn,
     onSuccess: () => {
-      for (const key of [BOOKINGS_KEY, ["slots"], ["calendar"], ["customers"], ["dashboard"], ["booking-series"]]) {
+      for (const key of [
+        BOOKINGS_KEY,
+        ["slots"],
+        ["calendar"],
+        ["customers"],
+        ["dashboard"],
+        ["booking-series"],
+      ]) {
         qc.invalidateQueries({ queryKey: key });
       }
     },
@@ -79,8 +100,11 @@ export function useBookingMutation<TVars, TResult>(fn: (vars: TVars) => Promise<
 
 /** Staff booking: walk-in or phone. Price is the slot's price, no service fee. */
 export function useCreateBooking() {
-  return useBookingMutation(async ({ slotIds, ...body }: CreateBookingInput) =>
-    (await api.post("/admin/bookings", { ...body, ...staffSlotRequest(slotIds) })).data.data as Booking);
+  return useBookingMutation(
+    async ({ slotIds, ...body }: CreateBookingInput) =>
+      (await api.post("/admin/bookings", { ...body, ...staffSlotRequest(slotIds) })).data
+        .data as Booking
+  );
 }
 
 /**
@@ -89,8 +113,16 @@ export function useCreateBooking() {
  */
 export function useConfirmBooking() {
   return useBookingMutation(
-    async ({ id, ...body }: { id: string; markPaid?: boolean; method?: OfflineMethod; reference?: string; notifyCustomer?: boolean }) =>
-      (await api.post(`/admin/bookings/${id}/confirm`, body)).data.data as Booking,
+    async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      markPaid?: boolean;
+      method?: OfflineMethod;
+      reference?: string;
+      notifyCustomer?: boolean;
+    }) => (await api.post(`/admin/bookings/${id}/confirm`, body)).data.data as Booking
   );
 }
 
@@ -100,8 +132,16 @@ export function useConfirmBooking() {
  */
 export function useCancelBooking() {
   return useBookingMutation(
-    async ({ id, ...body }: { id: string; refund: boolean; reason?: string; notifyCustomer?: boolean; rejectWalletPayment?: boolean }) =>
-      (await api.post(`/admin/bookings/${id}/cancel`, body)).data.data as Booking,
+    async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      refund: boolean;
+      reason?: string;
+      notifyCustomer?: boolean;
+      rejectWalletPayment?: boolean;
+    }) => (await api.post(`/admin/bookings/${id}/cancel`, body)).data.data as Booking
   );
 }
 
@@ -110,14 +150,18 @@ export function useCancelBooking() {
  * the due is written off. The shared refresh already covers the dashboard's attention cards.
  */
 export function useMarkNoShow() {
-  return useBookingMutation(async ({ id, ...body }: { id: string; reason?: string }) =>
-    (await api.post(`/admin/bookings/${id}/no-show`, body)).data.data as Booking);
+  return useBookingMutation(
+    async ({ id, ...body }: { id: string; reason?: string }) =>
+      (await api.post(`/admin/bookings/${id}/no-show`, body)).data.data as Booking
+  );
 }
 
 /** Back to completed (slot ended) or confirmed; the due comes back. */
 export function useUndoNoShow() {
-  return useBookingMutation(async (id: string) =>
-    (await api.post(`/admin/bookings/${id}/undo-no-show`)).data.data as Booking);
+  return useBookingMutation(
+    async (id: string) =>
+      (await api.post(`/admin/bookings/${id}/undo-no-show`)).data.data as Booking
+  );
 }
 
 /**
@@ -125,28 +169,47 @@ export function useUndoNoShow() {
  * The shared refresh also covers the dashboard's attention cards.
  */
 export function useMarkRefundSent() {
-  return useBookingMutation(async ({ id, ...body }: { id: string; note?: string }) =>
-    (await api.post(`/admin/bookings/${id}/refund-sent`, body)).data.data as Booking);
+  return useBookingMutation(
+    async ({ id, ...body }: { id: string; note?: string }) =>
+      (await api.post(`/admin/bookings/${id}/refund-sent`, body)).data.data as Booking
+  );
 }
 
 /** Records cash, a bank transfer, bKash or Nagad against a booking (collecting a due amount). */
 export function useRecordPayment() {
   return useBookingMutation(
-    async ({ id, ...body }: { id: string; amount: number; method: OfflineMethod; reference?: string; note?: string }) =>
-      (await api.post(`/admin/bookings/${id}/payments`, body)).data.data as Booking,
+    async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      amount: number;
+      method: OfflineMethod;
+      reference?: string;
+      note?: string;
+    }) => (await api.post(`/admin/bookings/${id}/payments`, body)).data.data as Booking
   );
 }
 
 /** Notes and due date; `null` clears a field. */
 export function useUpdateBooking() {
   return useBookingMutation(
-    async ({ id, ...body }: { id: string; notes?: string | null; dueDate?: string | null; dueNote?: string | null }) =>
-      (await api.patch(`/admin/bookings/${id}`, body)).data.data as Booking,
+    async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      notes?: string | null;
+      dueDate?: string | null;
+      dueNote?: string | null;
+    }) => (await api.patch(`/admin/bookings/${id}`, body)).data.data as Booking
   );
 }
 
 /** `sent: false` when email isn't configured on the server. */
 export function useResendConfirmation() {
-  return useBookingMutation(async (id: string) =>
-    (await api.post(`/admin/bookings/${id}/resend-confirmation`)).data.data as { sent: boolean });
+  return useBookingMutation(
+    async (id: string) =>
+      (await api.post(`/admin/bookings/${id}/resend-confirmation`)).data.data as { sent: boolean }
+  );
 }

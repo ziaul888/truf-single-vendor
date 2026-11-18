@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useDashboardAudience } from "@/components/dashboard-audience";
+import { useMe } from "@/hooks/useMe";
 import { useGeneratePreview, useGenerateSlots } from "@/hooks/useSlots";
 import { useGrounds } from "@/hooks/useGrounds";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,9 +22,11 @@ interface Props { onSuccess?: () => void; compact?: boolean }
 
 // Hours, slot length and prices always come from the ground; existing slots are never overwritten.
 export function GenerateSlotsForm({ onSuccess, compact }: Props) {
+  const { data: me } = useMe(useDashboardAudience());
+  const today = venueToday(0, me?.role === "owner" ? me.tenant.timezone : undefined);
   const [groundId, setGroundId] = useState("all");
-  const [fromDate, setFromDate] = useState(venueToday);
-  const [toDate,   setToDate]   = useState(() => addDays(venueToday(), 6));
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate,   setToDate]   = useState(() => addDays(today, 6));
 
   const { data: grounds } = useGrounds();
   const activeGrounds = grounds?.filter((g) => g.isActive) ?? [];
@@ -32,12 +37,14 @@ export function GenerateSlotsForm({ onSuccess, compact }: Props) {
   const body = { groundId: dGround, fromDate: dFrom, toDate: dTo };
   const preview  = useGeneratePreview(body, Boolean(body.fromDate && body.toDate));
   const generate = useGenerateSlots();
+  const previewMatches = dGround === groundId && dFrom === fromDate && dTo === toDate;
   const previewError = preview.isError ? toApiFailure(preview.error).error : null;
-  const result = preview.isError ? undefined : preview.data;
+  const result = !previewMatches || preview.isError || preview.isPlaceholderData ? undefined : preview.data;
   const newSlots = result?.generated ?? 0;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!newSlots || generate.isPending) return;
     generate.mutate(
       { groundId, fromDate, toDate },
       {
@@ -59,6 +66,11 @@ export function GenerateSlotsForm({ onSuccess, compact }: Props) {
         </CardHeader>
       )}
       <CardContent className={cn("space-y-4", compact && "pt-4")}>
+        {grounds && activeGrounds.length === 0 && (
+          <p className="text-muted-foreground text-sm">
+            Add or activate a ground in <Link href="/dashboard/grounds" className="text-primary underline">Grounds</Link> to generate slots.
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Ground <span className="text-destructive">*</span></Label>
@@ -79,7 +91,7 @@ export function GenerateSlotsForm({ onSuccess, compact }: Props) {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>From date <span className="text-destructive">*</span></Label>
-              <Input type="date" min={venueToday()} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <Input type="date" min={today} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>To date <span className="text-destructive">*</span></Label>

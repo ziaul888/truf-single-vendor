@@ -51,13 +51,6 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (ownerToken && pathname !== ADMIN_PREFIX && pathname !== `${ADMIN_PREFIX}/`) {
-    const url = req.nextUrl.clone();
-    url.pathname = ADMIN_PREFIX;
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
-
   // Presence check only: turf-api verifies the token on every request, and a 401
   // there sends the user back to /login. The frontend never holds JWT_SECRET.
   return NextResponse.next();

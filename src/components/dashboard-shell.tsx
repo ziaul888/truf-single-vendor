@@ -5,10 +5,19 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { AdminTabBar } from "@/components/admin-tab-bar";
+import type { DashboardAudience } from "@/hooks/useMe";
+import { DashboardAudienceProvider } from "@/components/dashboard-audience";
+import { TenantDashboardContent } from "@/components/tenant-dashboard-content";
 
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({
+  children,
+  audience = "staff",
+}: {
+  children: React.ReactNode;
+  audience?: DashboardAudience;
+}) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -23,37 +32,40 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
-      {/* The tab bar steps aside while a page shows its own MobileActionBar. */}
-      <div className="bg-background flex h-dvh overflow-hidden has-[[data-mobile-action-bar]]:[&_[data-tab-bar]]:hidden">
-        <div className="hidden lg:block">
-          <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />
+    <DashboardAudienceProvider audience={audience}>
+      <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
+        {/* The tab bar steps aside while a page shows its own MobileActionBar. */}
+        <div className="bg-background flex h-dvh overflow-hidden has-[[data-mobile-action-bar]]:[&_[data-tab-bar]]:hidden">
+          <div className="hidden lg:block">
+            <Sidebar collapsed={collapsed} onCollapse={setCollapsed} audience={audience} />
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <Topbar audience={audience} />
+            <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 md:px-10 md:py-6">
+              {audience === "owner" ? <TenantDashboardContent>{children}</TenantDashboardContent> : children}
+            </main>
+            <AdminTabBar menuOpen={mobileOpen} />
+          </div>
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <Topbar />
-          <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 md:px-10 md:py-6">
-            {children}
-          </main>
-          <AdminTabBar menuOpen={mobileOpen} />
-        </div>
-      </div>
-
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 lg:hidden" />
-        <Dialog.Content
-          aria-describedby={undefined}
-          className="fixed inset-y-0 left-0 z-50 outline-none lg:hidden"
-        >
-          <Dialog.Title className="sr-only">Admin navigation menu</Dialog.Title>
-          <Sidebar
-            collapsed={false}
-            onCollapse={setCollapsed}
-            drawer
-            onClose={() => setMobileOpen(false)}
-          />
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 lg:hidden" />
+          <Dialog.Content
+            aria-describedby={undefined}
+            className="fixed inset-y-0 left-0 z-50 outline-none lg:hidden"
+          >
+            <Dialog.Title className="sr-only">Admin navigation menu</Dialog.Title>
+            <Sidebar
+              collapsed={false}
+              onCollapse={setCollapsed}
+              drawer
+              audience={audience}
+              onClose={() => setMobileOpen(false)}
+            />
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </DashboardAudienceProvider>
   );
 }

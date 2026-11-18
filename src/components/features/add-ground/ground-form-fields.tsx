@@ -29,9 +29,10 @@ interface GroundFormFieldsProps {
   photoSlots: PhotoSlot[];
   onPhotoChange: (idx: number, file: File | null) => void;
   onPhotoMove: (from: number, to: number) => void;
+  tenant?: boolean;
 }
 
-export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove }: GroundFormFieldsProps) {
+export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove, tenant = false }: GroundFormFieldsProps) {
   const {
     register,
     control,
@@ -158,7 +159,7 @@ export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove 
       </SectionCard>
 
       {/* Section 2 — Photos (not stored by turf-api v1) */}
-      <PhotosSection photoSlots={photoSlots} onPhotoChange={onPhotoChange} onPhotoMove={onPhotoMove} />
+      {!tenant && <PhotosSection photoSlots={photoSlots} onPhotoChange={onPhotoChange} onPhotoMove={onPhotoMove} />}
 
       {/* Section 3 — Operating hours */}
       <HoursSection form={form} />
@@ -208,14 +209,14 @@ export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove 
             {
               name: "isActive" as const,
               label: "Ground active",
-              desc: "Customers can see and book this ground",
+              desc: tenant ? "Slots can be generated for this ground" : "Customers can see and book this ground",
             },
             {
               name: "showOnPortal" as const,
               label: "Show on portal",
               desc: "Listed on the customer booking portal",
             },
-          ].map(({ name, label, desc }) => (
+          ].filter(({ name }) => !tenant || name !== "showOnPortal").map(({ name, label, desc }) => (
             <div key={name} className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium">{label}</p>

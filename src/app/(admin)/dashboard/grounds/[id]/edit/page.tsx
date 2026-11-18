@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AdminOnly } from "@/components/features/admin-only";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 
 const toTimeInput = (hour: number) => (hour === 24 ? "00:00" : hourToTime(hour));
 
@@ -52,13 +53,14 @@ function groundToFormData(g: Ground): AddGroundFormData {
 
 export default function EditGroundPage() {
   return (
-    <AdminOnly reason="Only admins can edit grounds.">
+    <AdminOnly reason="Only admins can edit grounds." allowTenantOwner>
       <EditGroundForm />
     </AdminOnly>
   );
 }
 
 function EditGroundForm() {
+  const tenant = useDashboardAudience() === "owner";
   const router      = useRouter();
   const { id }      = useParams<{ id: string }>();
   const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>(emptyPhotoSlots);
@@ -104,7 +106,7 @@ function EditGroundForm() {
     try {
       const changes = toGroundWriteInput(data);
       const updated = await update.mutateAsync({ id, changes: isDraft ? { ...changes, isActive: false } : changes });
-      await syncGroundPhotos(id, ground.photos, photoSlots);
+      if (!tenant) await syncGroundPhotos(id, ground.photos, photoSlots);
       toast.success(isDraft ? `${data.name} saved as draft (inactive)` : `${data.name} updated successfully`, {
         description: updated.slotSync ? slotSyncMessage(updated.slotSync) : undefined,
       });
@@ -168,7 +170,7 @@ function EditGroundForm() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px] items-start">
-        <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} onPhotoMove={handlePhotoMove} />
+        <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} onPhotoMove={handlePhotoMove} tenant={tenant} />
         <div className="sticky top-6">
           <PreviewSidebar
             control={form.control}

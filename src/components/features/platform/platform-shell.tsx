@@ -14,8 +14,9 @@ import {
   CreditCard,
   Repeat2,
   FileText,
+  ClipboardList,
 } from "lucide-react";
-import { usePlatformMe } from "@/hooks/usePlatform";
+import { usePlatformApplications, usePlatformMe } from "@/hooks/usePlatform";
 import { platformApi } from "@/lib/platform-api";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -30,12 +31,19 @@ import {
 } from "@/components/ui/sheet";
 import { PlatformLoading, PlatformReadError } from "./platform-states";
 
-function PlatformNavigation({ onNavigate }: { onNavigate?: () => void }) {
+function PlatformNavigation({
+  onNavigate,
+  pendingApplications = 0,
+}: {
+  onNavigate?: () => void;
+  pendingApplications?: number;
+}) {
   const path = usePathname();
   return (
     <nav aria-label="Platform navigation" className="space-y-1.5">
       {[
         { href: "/platform", label: "Overview", Icon: LayoutDashboard },
+        { href: "/platform/applications", label: "Applications", Icon: ClipboardList },
         { href: "/platform/tenants", label: "Turf businesses", Icon: Building2 },
         { href: "/platform/plans", label: "Plans", Icon: CreditCard },
         { href: "/platform/subscriptions", label: "Subscriptions", Icon: Repeat2 },
@@ -56,7 +64,12 @@ function PlatformNavigation({ onNavigate }: { onNavigate?: () => void }) {
             )}
           >
             <Icon className="h-5 w-5" />
-            {label}
+            <span>{label}</span>
+            {href === "/platform/applications" && pendingApplications > 0 && (
+              <span className="bg-warning text-warning-foreground ml-auto min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-bold tabular-nums">
+                {pendingApplications > 99 ? "99+" : pendingApplications}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -85,6 +98,11 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
   const user = usePlatformMe(),
     router = useRouter(),
     queryClient = useQueryClient();
+  const pendingApplications = usePlatformApplications(user.data?.id, {
+    page: 1,
+    limit: 1,
+    status: "pending",
+  });
   const [open, setOpen] = useState(false),
     [signingOut, setSigningOut] = useState(false),
     [signOutError, setSignOutError] = useState("");
@@ -116,7 +134,7 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
         <p className="text-sidebar-foreground/40 mt-10 mb-3 px-4 text-[11px] font-semibold tracking-widest uppercase">
           Manage platform
         </p>
-        <PlatformNavigation />
+        <PlatformNavigation pendingApplications={pendingApplications.data?.total} />
         <div className="text-sidebar-foreground/55 border-sidebar-border mt-auto border-t px-3 pt-5 text-xs leading-relaxed">
           <ShieldCheck className="text-sidebar-primary mb-2 h-5 w-5" />
           Platform administrator access
@@ -145,7 +163,10 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
                       </SheetDescription>
                     </SheetHeader>
                     <div className="p-5">
-                      <PlatformNavigation onNavigate={() => setOpen(false)} />
+                      <PlatformNavigation
+                        pendingApplications={pendingApplications.data?.total}
+                        onNavigate={() => setOpen(false)}
+                      />
                     </div>
                   </SheetContent>
                 </Sheet>

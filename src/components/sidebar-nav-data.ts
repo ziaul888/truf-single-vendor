@@ -141,6 +141,7 @@ export const NAV: NavGroup[] = [
 
 /** NAV without admin-only items unless the signed-in user is an admin. */
 export function navForRole(role: string | undefined): NavGroup[] {
+  if (role === "owner") return NAV;
   if (role === "admin") return NAV;
   return NAV.map((group) => ({
     ...group,

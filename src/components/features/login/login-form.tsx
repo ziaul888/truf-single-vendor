@@ -18,7 +18,12 @@ interface ApiFailure {
   details?: { field: string; message: string }[];
 }
 
-type LoginResponse = { success: true; data?: { audience?: string } } | ApiFailure;
+type LoginResponse =
+  | {
+      success: true;
+      data?: { audience?: string; tenant?: { setupComplete: boolean } };
+    }
+  | ApiFailure;
 
 export function LoginForm() {
   const router = useRouter();
@@ -61,7 +66,9 @@ export function LoginForm() {
       await queryClient.cancelQueries();
       queryClient.clear();
       if (json.data?.audience === "owner") {
-        window.location.assign("/dashboard");
+        window.location.assign(
+          json.data.tenant?.setupComplete ? "/dashboard" : "/dashboard/settings/general"
+        );
         return;
       }
       router.push(safeRedirectPath(searchParams.get("from")));

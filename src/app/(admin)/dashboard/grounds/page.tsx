@@ -13,6 +13,7 @@ import { GroundCard } from "@/components/features/grounds/ground-card";
 import { GroundTable } from "@/components/features/grounds/ground-table";
 import { useGrounds, useToggleGroundStatus, type Ground } from "@/hooks/useGrounds";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useDashboardStats } from "@/hooks/useDashboard";
 import { toApiFailure } from "@/lib/api-error";
 import { ConfirmDialog } from "@/components/features/confirm-dialog";
@@ -51,8 +52,8 @@ export default function GroundsPage() {
   const { data: stats } = useDashboardStats();
   const bookedToday = stats?.bookingsTodayByGround.reduce((sum, b) => sum + b.bookings, 0);
   const toggle = useToggleGroundStatus();
-  const { data: me } = useMe();
-  const canEdit = me?.role === "admin";
+  const { data: me } = useMe(useDashboardAudience());
+  const canEdit = me?.role === "admin" || me?.role === "owner";
 
   const [search,      setSearch]      = useState("");
   const [typeFilter,  setTypeFilter]  = useState("all");

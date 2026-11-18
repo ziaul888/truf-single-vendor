@@ -14,6 +14,7 @@ import {
 } from "@/components/features/grounds/ground-card";
 import { useGround } from "@/hooks/useGrounds";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useDashboardStats } from "@/hooks/useDashboard";
 import { formatPeakRanges } from "@/lib/ground-format";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -43,12 +44,13 @@ export default function GroundDetailPage() {
   const { id } = useParams<{ id: string }>();
 
   const ground = useGround(id);
-  const { data: me } = useMe();
+  const { data: me } = useMe(useDashboardAudience());
   const { data: stats } = useDashboardStats();
   const todayBookings = stats ? stats.bookingsTodayByGround.find((b) => b.groundId === id)?.bookings ?? 0 : undefined;
 
   // Today's real slots at the venue; booked and blocked both count as taken here.
-  const daySlots = useSlots({ groundId: id, date: venueToday(), limit: 100 }, { enabled: !!id });
+  const today = venueToday(0, me?.role === "owner" ? me.tenant.timezone : undefined);
+  const daySlots = useSlots({ groundId: id, date: today, limit: 100 }, { enabled: !!id });
   const slots = {
     ...daySlots,
     data: daySlots.data?.data.map((s): TimeSlot => ({
@@ -131,7 +133,7 @@ export default function GroundDetailPage() {
             </p>
           )}
         </div>
-        {me?.role === "admin" && (
+        {(me?.role === "admin" || me?.role === "owner") && (
           <Button asChild className="gap-2">
             <Link href={`/dashboard/grounds/${g.id}/edit`}>
               <Pencil className="h-4 w-4" /> Edit ground

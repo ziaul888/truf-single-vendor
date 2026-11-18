@@ -18,7 +18,6 @@ const nextConfig = {
     return [
       "/dashboard/:path*",
       "/platform/:path*",
-      "/owner/:path*",
       "/login",
       "/sign-in",
       "/checkout/:path*",
@@ -26,11 +25,7 @@ const nextConfig = {
       "/my-bookings",
       "/account",
       "/api/:path*",
-    ]
-      .map((source) => ({ source, headers: noindex }))
-      .concat([
-        { source: "/owner/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
-      ]);
+    ].map((source) => ({ source, headers: noindex }));
   },
   // Existing workspace bookmarks open the owner's dashboard.
   async redirects() {

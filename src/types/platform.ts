@@ -32,3 +32,40 @@ export interface PlatformTenantFilters {
   status?: PlatformTenantStatus;
 }
 export type PlatformTenantPage = Paginated<PlatformTenant>;
+
+export const OWNER_APPLICATION_STATUSES = ["pending", "activated", "rejected"] as const;
+export type OwnerApplicationStatus = (typeof OWNER_APPLICATION_STATUSES)[number];
+export interface OwnerApplication {
+  id: string;
+  turfName: string;
+  slug: string;
+  ownerName: string;
+  ownerEmail: string;
+  timezone: string;
+  currency: string;
+  billingInterval: "monthly" | "yearly" | null;
+  plan: {
+    id: string;
+    versionId: string;
+    version: number;
+    code: string;
+    name: string;
+    description: string | null;
+    interval: "monthly" | "yearly";
+    currency: string;
+    monthlyAmount: number;
+    yearlyAmount: number;
+    selectedAmount: number;
+  } | null;
+  status: OwnerApplicationStatus;
+  reviewedAt: string | null;
+  tenantId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface OwnerApplicationFilters {
+  page: number;
+  limit: number;
+  status?: OwnerApplicationStatus;
+}
+export type OwnerApplicationPage = Paginated<OwnerApplication>;

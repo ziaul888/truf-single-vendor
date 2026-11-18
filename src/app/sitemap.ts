@@ -10,8 +10,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const grounds = await listPublicGrounds();
   return [
     { url: origin, changeFrequency: "weekly", priority: 1 },
+    { url: `${origin}/saas`, changeFrequency: "monthly", priority: 0.7 },
     // With one ground, /grounds redirects to it, so it isn't a page of its own.
-    ...(grounds.length > 1 ? [{ url: `${origin}/grounds`, changeFrequency: "weekly" as const, priority: 0.8 }] : []),
-    ...grounds.map((g) => ({ url: `${origin}/grounds/${g.id}`, changeFrequency: "weekly" as const, priority: 0.8 })),
+    ...(grounds.length > 1
+      ? [{ url: `${origin}/grounds`, changeFrequency: "weekly" as const, priority: 0.8 }]
+      : []),
+    ...grounds.map((g) => ({
+      url: `${origin}/grounds/${g.id}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
   ];
 }

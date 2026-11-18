@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { ownerApi } from "@/lib/owner-api";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { fromMinorUnits, hourToTime } from "@/lib/ground-format";
 import type { ApiGround, GroundWriteInput } from "@/types/ground";
 import type { SlotSync } from "@/types/slot";
@@ -31,6 +33,11 @@ export function toGround(g: ApiGround): Ground {
 
 const GROUNDS_KEY = ["grounds"] as const;
 
+function useGroundApi() {
+  const audience = useDashboardAudience();
+  return audience === "owner" ? ownerApi : api;
+}
+
 /**
  * Ground filters only make sense with more than one ground. Shown while the list is still
  * loading, so a multi-ground venue doesn't see them pop in.
@@ -40,19 +47,21 @@ export const hasGroundChoice = (grounds: readonly unknown[] | undefined) => grou
 // A venue has a handful of grounds, so the dashboard loads them in one page (API max 100)
 // and keeps its existing client-side search and filters.
 export function useGrounds() {
+  const client = useGroundApi();
   return useQuery<Ground[]>({
-    queryKey: [...GROUNDS_KEY, "list"],
+    queryKey: [...GROUNDS_KEY, client === ownerApi ? "owner" : "staff", "list"],
     queryFn: async () => {
-      const { data } = await api.get("/admin/grounds", { params: { limit: 100 } });
+      const { data } = await client.get("/admin/grounds", { params: { limit: 100 } });
       return (data.data.data as ApiGround[]).map(toGround);
     },
   });
 }
 
 export function useGround(id: string | undefined) {
+  const client = useGroundApi();
   return useQuery<Ground>({
-    queryKey: [...GROUNDS_KEY, id],
-    queryFn: async () => toGround((await api.get(`/admin/grounds/${id}`)).data.data),
+    queryKey: [...GROUNDS_KEY, client === ownerApi ? "owner" : "staff", id],
+    queryFn: async () => toGround((await client.get(`/admin/grounds/${id}`)).data.data),
     enabled: !!id,
     retry: false,
   });
@@ -62,19 +71,25 @@ function useGroundMutation<TVars, TResult extends Ground>(fn: (vars: TVars) => P
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: fn,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: GROUNDS_KEY }),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: GROUNDS_KEY }),
+      queryClient.invalidateQueries({ queryKey: ["slots"] }),
+      queryClient.invalidateQueries({ queryKey: ["owner", "dashboard"] }),
+    ]),
   });
 }
 
 export function useCreateGround() {
-  return useGroundMutation(async (body: GroundWriteInput) => toGround((await api.post("/admin/grounds", body)).data.data));
+  const client = useGroundApi();
+  return useGroundMutation(async (body: GroundWriteInput) => toGround((await client.post("/admin/grounds", body)).data.data));
 }
 
 /** `slotSync` is present when the change replaced future free slots (hours, length, prices, days, active). */
 export function useUpdateGround() {
+  const client = useGroundApi();
   return useGroundMutation(
     async ({ id, changes }: { id: string; changes: Partial<GroundWriteInput> }) => {
-      const data = (await api.patch(`/admin/grounds/${id}`, changes)).data.data as ApiGround & { slotSync?: SlotSync };
+      const data = (await client.patch(`/admin/grounds/${id}`, changes)).data.data as ApiGround & { slotSync?: SlotSync };
       return { ...toGround(data), slotSync: data.slotSync };
     },
   );
@@ -88,8 +103,9 @@ export function slotSyncMessage({ generated, kept }: SlotSync) {
 
 /** Deactivating hides a ground from the portal; there is no delete in v1. */
 export function useToggleGroundStatus() {
+  const client = useGroundApi();
   return useGroundMutation(
     async ({ id, isActive }: { id: string; isActive: boolean }) =>
-      toGround((await api.patch(`/admin/grounds/${id}`, { isActive })).data.data),
+      toGround((await client.patch(`/admin/grounds/${id}`, { isActive })).data.data),
   );
 }

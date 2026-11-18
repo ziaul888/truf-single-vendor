@@ -8,7 +8,7 @@ import type { VenueProfile } from "@/types/settings";
 import { fromVenueForm, toVenueForm, VenueSchema, type VenueForm } from "@/validations/venue";
 
 /** The General page's venue form: loads the profile, saves the editable fields, maps API errors onto inputs. */
-export function useVenueForm(venue: VenueProfile | undefined) {
+export function useVenueForm(venue: VenueProfile | undefined, onSaved?: () => void) {
   const save = useUpdateVenue();
   const form = useForm<VenueForm>({ resolver: zodResolver(VenueSchema) });
 
@@ -22,6 +22,7 @@ export function useVenueForm(venue: VenueProfile | undefined) {
       const saved = await save.mutateAsync(fromVenueForm(values));
       form.reset(toVenueForm(saved));
       toast.success("Venue details saved");
+      onSaved?.();
     } catch (err) {
       const failure = toApiFailure(err);
       if (!applyApiErrors(form, failure)) toast.error(failure.error);
