@@ -14,6 +14,7 @@ const SECTIONS: { prefix: string; title: string }[] = [
 
 /** Title for the admin section the pathname belongs to, shown in the phone header. */
 export function sectionTitle(pathname: string): string {
-  const match = SECTIONS.find((s) => pathname === s.prefix || pathname.startsWith(`${s.prefix}/`));
+  const dashboardPath = pathname.replace(/^\/admin(?=\/|$)/, "/dashboard");
+  const match = SECTIONS.find((s) => dashboardPath === s.prefix || dashboardPath.startsWith(`${s.prefix}/`));
   return match?.title ?? "Dashboard";
 }

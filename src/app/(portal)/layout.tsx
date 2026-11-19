@@ -11,7 +11,7 @@ import { AdminDashboardLink } from "@/components/portal/admin-dashboard-link";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
 import { PortalTabBar } from "@/components/portal/portal-tab-bar";
 import { PortalLink as Link, TurfPortalScope } from "@/components/portal/turf-portal-scope";
-import { getTurfPortalSlug } from "@/services/turf-portal-request";
+import { getTurfPortalHome, getTurfPortalSlug } from "@/services/turf-portal-request";
 import { turfPortalPath } from "@/lib/turf-portal-path";
 import { socialMetadata, venueDescription } from "@/lib/seo";
 
@@ -39,20 +39,18 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const slug = await getTurfPortalSlug();
   const { venue, social } = await getPublicWebsite(slug);
-  const bookHref = await bookingHref(slug);
-  const portal = (
-    // Below lg, room at the bottom for a page's fixed action bar (`data-mobile-cta`) so it doesn't cover the footer;
-    // while that bar is up, the phone tab bar (`data-portal-tabs`) steps aside for it.
-    <div className="flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))] has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden">
-      <PortalHeader venue={venue} bookHref={bookHref} />
-      <main className="flex-1">{children}</main>
-      <PortalFooter venue={venue} social={social} />
-      <PortalTabBar bookHref={bookHref} />
-    </div>
+  const [bookHref, homePath] = await Promise.all([bookingHref(slug), getTurfPortalHome(slug)]);
+  // A fixed mobile action bar takes the place of the portal tabs on small screens.
+  return (
+    <TurfPortalScope slug={slug} timezone={slug ? venue.locale.timezone : undefined} homePath={homePath}>
+      <div className="flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))] has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden">
+        <PortalHeader venue={venue} bookHref={bookHref} />
+        <main className="flex-1">{children}</main>
+        <PortalFooter venue={venue} social={social} />
+        <PortalTabBar bookHref={bookHref} />
+      </div>
+    </TurfPortalScope>
   );
-  return slug
-    ? <TurfPortalScope slug={slug} timezone={venue.locale.timezone}>{portal}</TurfPortalScope>
-    : portal;
 }
 
 function PortalHeader({ venue, bookHref }: { venue: PublicVenue; bookHref: string }) {

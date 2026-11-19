@@ -8,10 +8,17 @@ const display = Bricolage_Grotesque({
   variable: "--font-saas-display",
 });
 
+const title = "TurfOrg · Plans and pricing";
+const description = "Compare monthly and yearly plans for turf settings, grounds, slot generation and staff management.";
+const image = "/saas/booking-site-desktop.jpg";
+
 export const metadata: Metadata = {
-  title: { absolute: "Turf SaaS · Plans and pricing" },
-  description:
-    "Compare monthly and yearly plans for turf settings, grounds, slot generation and staff management.",
+  title: { absolute: title },
+  description,
+  openGraph: { title, description, siteName: "TurfOrg", images: [image] },
+  twitter: { card: "summary_large_image", title, description, images: [image] },
+  appleWebApp: null,
+  icons: null,
 };
 
 export default function SaasLayout({ children }: { children: React.ReactNode }) {

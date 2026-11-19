@@ -16,6 +16,7 @@ const nextConfig = {
   async headers() {
     const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
     return [
+      "/admin/:path*",
       "/dashboard/:path*",
       "/platform/:path*",
       "/login",
@@ -41,6 +42,13 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        {
+          source: "/",
+          destination: "/saas",
+          has: [{ type: "header", key: "x-turf-portal-home", value: "/turf" }],
+        },
+        { source: "/turf", destination: "/" },
+        { source: "/admin/:path*", destination: "/dashboard/:path*" },
         {
           source: "/turf/:slug/:path*",
           destination: "/:path*",

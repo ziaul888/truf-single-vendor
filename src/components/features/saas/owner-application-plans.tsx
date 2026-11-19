@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, RefreshCw } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatBdt, planCharge } from "@/lib/platform-billing";
 import { cn } from "@/lib/utils";
@@ -16,13 +17,14 @@ export function useOwnerApplicationPlans() {
   return usePublicPurchaseQuery<PlatformPlan[]>("plans");
 }
 
-export function useSubscriptionPaymentMethods() {
-  return usePublicPurchaseQuery<SubscriptionPaymentInstructions>("payment-methods");
+export function useSubscriptionPaymentMethods(enabled: boolean) {
+  return usePublicPurchaseQuery<SubscriptionPaymentInstructions>("payment-methods", enabled);
 }
 
-function usePublicPurchaseQuery<T>(resource: "plans" | "payment-methods") {
+function usePublicPurchaseQuery<T>(resource: "plans" | "payment-methods", enabled = true) {
   return useQuery({
     queryKey: ["owner-application", resource],
+    enabled,
     retry: false,
     queryFn: async ({ signal }) => {
       const response = await fetch(`/api/v1/owner-applications/${resource}`, {
@@ -98,33 +100,59 @@ export function OwnerApplicationPlans({
   onInterval: (value: BillingInterval) => void;
   onRetry: () => void;
 }) {
+  const [showAllPlans, setShowAllPlans] = useState(false);
+  const selectedPlan = plans?.find((plan) => plan.id === planId);
+  const visiblePlans = selectedPlan && !showAllPlans ? [selectedPlan] : (plans ?? []);
   return (
-    <section className="bg-card space-y-5 rounded-2xl border p-5 sm:p-7">
-      <div>
-        <h2 className="text-lg font-semibold">Choose your plan</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Choose a billing cycle. The full first payment is due before activation.
-        </p>
+    <section
+      className="bg-card min-w-0 space-y-4 rounded-2xl border p-5 shadow-xs sm:p-6"
+      aria-labelledby="application-plan"
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 id="application-plan" className="saas-title mr-auto">
+          Subscription plan
+        </h2>
+        {selectedPlan && plans && plans.length > 1 && (
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 shrink-0"
+            disabled={disabled}
+            onClick={() => setShowAllPlans((value) => !value)}
+            aria-expanded={showAllPlans}
+            aria-controls="application-plan-options"
+          >
+            {showAllPlans ? "Close plans" : "Change plan"}
+          </Button>
+        )}
+        <div className="w-full sm:w-auto">
+          <BillingCycleToggle interval={interval} onInterval={onInterval} disabled={disabled} />
+        </div>
       </div>
-      <BillingCycleToggle interval={interval} onInterval={onInterval} disabled={disabled} />
       {loading ? (
-        <div className="text-muted-foreground flex min-h-28 items-center justify-center gap-2 rounded-xl border border-dashed text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading plans…
+        <div
+          role="status"
+          className="text-muted-foreground flex min-h-24 items-center justify-center gap-2 rounded-xl border border-dashed text-sm"
+        >
+          <Loader2 aria-hidden className="size-4 motion-safe:animate-spin" /> Loading plans…
         </div>
       ) : loadError ? (
-        <div className="space-y-3 rounded-xl border border-dashed p-4 text-center">
+        <div role="alert" className="space-y-3 rounded-xl border border-dashed p-4">
           <p className="text-destructive text-sm">Could not load subscription plans.</p>
-          <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-            <RefreshCw /> Try again
+          <Button type="button" variant="outline" className="h-11" onClick={onRetry}>
+            <RefreshCw aria-hidden /> Try again
           </Button>
         </div>
       ) : !plans?.length ? (
-        <p className="text-muted-foreground rounded-xl border border-dashed p-5 text-center text-sm">
-          No plans are available right now. Please contact support.
+        <p className="text-muted-foreground rounded-xl border border-dashed p-4 text-sm">
+          No subscription plans are available right now.
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {plans.map((plan) => {
+        <div
+          id="application-plan-options"
+          className={cn("grid gap-3", visiblePlans.length > 1 && "sm:grid-cols-2")}
+        >
+          {visiblePlans.map((plan) => {
             const selected = plan.id === planId;
             const amount = planCharge(plan, interval);
             return (
@@ -133,33 +161,52 @@ export function OwnerApplicationPlans({
                 type="button"
                 aria-pressed={selected}
                 disabled={disabled}
-                onClick={() => onPlan(plan.id)}
+                onClick={() => {
+                  onPlan(plan.id);
+                  setShowAllPlans(false);
+                }}
                 className={cn(
-                  "focus-visible:ring-ring relative rounded-2xl border p-4 text-left transition outline-none focus-visible:ring-2",
-                  selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                  "focus-visible:ring-ring flex min-w-0 items-start rounded-xl border p-4 text-left transition-colors outline-none focus-visible:ring-2",
+                  selected
+                    ? "border-primary/70 bg-primary/5"
+                    : "bg-muted/25 hover:border-primary/50"
                 )}
               >
-                {selected && (
-                  <span className="bg-primary text-primary-foreground absolute top-3 right-3 rounded-full p-1">
-                    <Check className="h-3.5 w-3.5" />
+                <span className="flex w-full items-start gap-2.5">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
+                      selected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/50"
+                    )}
+                  >
+                    {selected && <Check className="size-3" />}
                   </span>
-                )}
-                <p className="pr-8 font-semibold">{plan.name}</p>
-                {plan.description && (
-                  <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
-                    {plan.description}
-                  </p>
-                )}
-                <p className="mt-4 text-xl font-bold">{formatBdt(amount)}</p>
-                <p className="text-muted-foreground text-xs">
-                  per {interval === "monthly" ? "month" : "year"}
-                </p>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold [overflow-wrap:anywhere]">
+                      {plan.name}
+                    </span>
+                    {plan.description && (
+                      <span className="text-muted-foreground mt-1 block text-sm leading-relaxed [overflow-wrap:anywhere]">
+                        {plan.description}
+                      </span>
+                    )}
+                    <span className="mt-2 flex flex-wrap items-baseline gap-x-1.5">
+                      <span className="saas-numeral text-lg">{formatBdt(amount)}</span>
+                      <span className="text-muted-foreground text-sm">
+                        / {interval === "monthly" ? "month" : "year"}
+                      </span>
+                    </span>
+                  </span>
+                </span>
               </button>
             );
           })}
         </div>
       )}
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {error && <p className="text-destructive text-sm">{error}</p>}
     </section>
   );
 }

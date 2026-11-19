@@ -1,256 +1,472 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  ArrowRight,
+  ArrowUpRight,
   BarChart3,
   CalendarDays,
   CalendarRange,
-  Clock,
+  Check,
+  ChevronDown,
+  CircleCheck,
+  ClipboardCheck,
   Layers3,
   MapPin,
+  MonitorSmartphone,
   ShieldCheck,
+  Smartphone,
   UsersRound,
+  WalletCards,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SaasPricing } from "./saas-pricing";
 
-const available = [
+const features = [
   {
-    title: "Turf settings",
-    description: "Set up your venue profile, booking rules and preferences.",
+    title: "Your venue, your rules",
+    description: "Make it yours. Set up your turf profile, booking rules and business preferences.",
     icon: ShieldCheck,
   },
   {
     title: "Grounds and pricing",
-    description: "Add grounds with operating hours, slot lengths and peak rates.",
+    description: "Keep every ground organised with operating hours, slot lengths and peak rates.",
     icon: MapPin,
   },
   {
-    title: "Slot generation",
-    description: "Generate time slots manually, set up automatic generation and manage closures.",
+    title: "A schedule that makes sense",
+    description: "Generate slots manually or automatically, and manage closures from one place.",
     icon: CalendarDays,
   },
   {
-    title: "Staff accounts",
-    description: "Give your own admins and managers access to your turf.",
+    title: "A home for your team",
+    description: "Give admins and managers their own sign-ins to help run your turf together.",
     icon: UsersRound,
   },
   {
-    title: "Bookings and customers",
-    description: "Manage the booking calendar, customer records, manual payments and refunds.",
+    title: "Bookings, without the juggling",
+    description:
+      "Bring your booking calendar, customer records, manual payments and refunds together.",
     icon: CalendarRange,
   },
   {
-    title: "Sales reports and exports",
-    description: "Review your turf’s sales, booking activity and ground performance.",
+    title: "See how business is going",
+    description:
+      "Review sales, booking activity and ground performance, with reports you can export.",
     icon: BarChart3,
   },
 ];
 
-const bookingWebsite = {
-  title: "Customer booking website",
-  description:
-    "Publish your turf website with live availability and cash, bKash or Nagad booking options.",
-};
-
-const upcoming = ["Online card payments and booking emails"];
-
-const steps = [
+const benefits = [
   {
-    title: "Choose a plan",
-    description: "See the full amount due for your chosen billing cycle.",
+    icon: MonitorSmartphone,
+    title: "Your own booking website",
+    detail: "Built for the way your customers book.",
   },
   {
-    title: "Pay and submit your reference",
-    description: "Use an available bKash, Nagad or bank transfer option.",
+    icon: UsersRound,
+    title: "One place for your team",
+    detail: "Your grounds, calendar and staff, together.",
   },
   {
-    title: "Log in after payment verification",
-    description: "The platform admin confirms your payment and activates your turf account.",
+    icon: WalletCards,
+    title: "A plan that fits your business",
+    detail: "Monthly or yearly. Priced in BDT.",
   },
 ];
 
-const textLink =
-  "focus-visible:ring-ring min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:outline-none";
+const steps = [
+  {
+    title: "Find your fit",
+    description: "Choose a monthly or yearly plan and see the full amount due before you apply.",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Submit your application",
+    description:
+      "Enter your business and owner details. You can arrange your first payment after applying.",
+    icon: WalletCards,
+  },
+  {
+    title: "Make it your turf",
+    description:
+      "Once the platform admin verifies payment, your account is activated and you can start setup.",
+    icon: CircleCheck,
+  },
+];
 
-export function SaasLanding() {
+const questions = [
+  {
+    question: "What does a subscription cover?",
+    answer:
+      "Each subscription covers one turf business, including its grounds, booking calendar, customer records, staff accounts, sales reports and customer booking website.",
+  },
+  {
+    question: "Can customers book from their phones?",
+    answer:
+      "Yes. Your customer booking website works on phones, tablets and desktops. Customers can check live availability and book using the payment options enabled for your turf.",
+  },
+  {
+    question: "How is my account activated?",
+    answer:
+      "Choose a plan and submit your application. You can pay afterward. The platform admin verifies the first payment before activating your turf account and starting your billing period.",
+  },
+  {
+    question: "Can I pay monthly or yearly?",
+    answer:
+      "Both billing cycles are available. Switch between monthly and yearly pricing below to see the full charge for each plan in BDT before applying.",
+  },
+  {
+    question: "Are card payments and booking emails available?",
+    answer:
+      "Online card payments and booking emails are not available for turf accounts yet. Your booking website supports cash, bKash and Nagad options when enabled. Payment and email preferences can be saved during setup.",
+  },
+];
+
+const navigation = [
+  { href: "#features", label: "Features" },
+  { href: "#how-it-works", label: "How it works" },
+  { href: "#plans", label: "Pricing" },
+  { href: "#faq", label: "FAQs" },
+];
+
+function Brand({ homeHref }: { homeHref: string }) {
+  return (
+    <Link href={homeHref} className="saas-brand" aria-label="TurfOrg home">
+      <span className="saas-brand-mark">
+        <Layers3 aria-hidden className="size-5" />
+      </span>
+      <span>
+        Turf<span className="text-primary">Org</span>
+        <span className="text-primary">.</span>
+      </span>
+    </Link>
+  );
+}
+
+export function SaasLanding({ homeHref }: { homeHref: string }) {
   return (
     <div className="saas-page">
-      <header className="border-border bg-background sticky top-0 z-40 border-b">
-        <nav
-          aria-label="Main navigation"
-          className="mx-auto flex min-h-16 max-w-[90rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-16"
-        >
-          <Link
-            href="/saas"
-            className="focus-visible:ring-ring flex min-h-11 shrink-0 items-center gap-2.5 rounded-md font-semibold focus-visible:ring-2 focus-visible:outline-none"
-          >
-            <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
-              <Layers3 aria-hidden className="size-5" />
-            </span>
-            Turf SaaS
-          </Link>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <a href="#features" className={`${textLink} hidden md:inline-flex`}>
-              Features
-            </a>
-            <a href="#plans" className={`${textLink} hidden sm:inline-flex`}>
-              Plans
-            </a>
-            <Button variant="outline" asChild className="h-11 px-3 sm:px-4">
-              <Link href="/login">Log in</Link>
-            </Button>
-            <Button asChild className="h-11 px-3 sm:px-4">
-              <Link href="/saas/apply">Apply now</Link>
+      <a href="#main-content" className="saas-skip-link">
+        Skip to content
+      </a>
+      <header className="saas-header">
+        <nav aria-label="Main navigation" className="saas-container saas-nav">
+          <Brand homeHref={homeHref} />
+          <div className="saas-nav-links">
+            {navigation.map(({ href, label }) => (
+              <a key={href} href={href}>
+                {label}
+              </a>
+            ))}
+          </div>
+          <div className="flex items-center gap-3 sm:gap-5">
+            <Link href="/admin" className="saas-login hidden sm:inline-flex">
+              Log in <ArrowUpRight aria-hidden className="size-4" />
+            </Link>
+            <Button asChild className="saas-button h-11 px-4 sm:px-5">
+              <Link href="/saas/apply">
+                Get started <ArrowRight aria-hidden />
+              </Link>
             </Button>
           </div>
         </nav>
       </header>
 
-      <main>
-        {/* Hero: Stage. Text on four tracks, the booking site on six, bleeding off the right edge on desktop. */}
-        <section className="overflow-x-clip">
-          <div className="mx-auto grid max-w-[90rem] items-center gap-12 px-4 py-12 sm:px-6 sm:py-16 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[minmax(0,4fr)_minmax(0,6fr)] lg:gap-16 lg:py-12 lg:pr-0 lg:pl-16">
-            <div className="max-w-xl">
-              <h1 className="saas-display">Run your turf from one admin panel.</h1>
-              <p className="saas-lead mt-6 max-w-[34ch]">
-                Venue, grounds, slots and staff sign-ins, on a monthly or yearly plan.
+      <main id="main-content" tabIndex={-1}>
+        <section className="saas-hero" aria-labelledby="hero-heading">
+          <div className="saas-container">
+            <div className="saas-hero-copy">
+              <p className="saas-hero-label">
+                <span aria-hidden /> Built for the business behind the game
               </p>
-              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Button asChild size="lg" className="h-12 px-6 text-base">
-                  <Link href="/saas/apply">Apply for owner access</Link>
+              <h1 id="hero-heading" className="saas-display">
+                Less admin.
+                <br />
+                <span className="text-primary">More game time.</span>
+              </h1>
+              <p className="saas-lead mx-auto mt-6 max-w-[48ch]">
+                Your booking website, grounds, customers and team. Everything you need to run your
+                turf, in one place.
+              </p>
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                <Button asChild size="lg" className="saas-button h-12 px-6 text-base">
+                  <Link href="/saas/apply">
+                    Get started with TurfOrg <ArrowRight aria-hidden />
+                  </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
-                  <a href="#plans">See plans and pricing</a>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="saas-button h-12 px-6 text-base"
+                >
+                  <a href="#plans">
+                    Explore the plans <ArrowUpRight aria-hidden />
+                  </a>
                 </Button>
               </div>
+              <p className="saas-hero-note">
+                <ShieldCheck aria-hidden className="size-4 shrink-0" /> One turf. Your own website.
+                Your own team.
+              </p>
             </div>
 
-            <figure className="min-w-0">
-              <div
-                className="saas-shot aspect-[2000/1083] lg:rounded-r-none"
-                data-slot="hero"
-                data-kind="product"
-                data-alt="The turf's customer booking website on desktop: header, hero search and venue facts"
-              >
-                <Image
-                  src="/saas/booking-site-desktop.jpg"
-                  alt="A turf's customer booking website on desktop, with a date, sport and format search"
-                  width={2000}
-                  height={1083}
-                  sizes="(min-width: 1024px) 60vw, 100vw"
-                  priority
-                />
+            <figure className="saas-product-preview">
+              <div className="saas-browser">
+                <div className="saas-browser-bar" aria-hidden>
+                  <span className="saas-browser-dots">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  <span className="saas-browser-address">
+                    <ShieldCheck className="size-3.5" /> Your turf’s booking website
+                  </span>
+                  <span className="saas-browser-device">
+                    <MonitorSmartphone className="size-4" />
+                  </span>
+                </div>
+                <div className="saas-shot aspect-[2000/1083]">
+                  <Image
+                    src="/saas/booking-site-desktop.jpg"
+                    alt="Example turf booking website showing a date, sport and format search, ground information and live availability."
+                    width={2000}
+                    height={1083}
+                    sizes="(min-width: 1280px) 1120px, (min-width: 640px) 90vw, 100vw"
+                    priority
+                  />
+                </div>
               </div>
-              <figcaption className="text-muted-foreground mt-3 text-sm">
-                The booking website your customers see.
+              <figcaption className="saas-preview-caption">
+                <span>
+                  <span className="saas-caption-line" aria-hidden /> Your business. Ready for the
+                  next booking.
+                </span>
+                <span className="hidden items-center gap-2 sm:inline-flex">
+                  <Smartphone aria-hidden className="size-4" /> Made for every screen
+                </span>
               </figcaption>
             </figure>
           </div>
         </section>
 
-        {/* What each plan includes: an index of rows, the head beside them. */}
-        <section id="features" className="scroll-mt-20 py-24 sm:py-32 lg:py-36">
-          <div className="mx-auto grid max-w-[90rem] gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-16">
-            <h2 className="saas-section lg:col-span-4">Included in each plan today</h2>
-            <ul className="border-border divide-border divide-y border-y lg:col-span-8">
-              {available.map(({ title, description, icon: Icon }) => (
-                <li
-                  key={title}
-                  className="grid gap-2 py-6 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-8 sm:py-7"
-                >
-                  <h3 className="saas-title flex items-center gap-3">
-                    <Icon aria-hidden className="text-primary size-5 shrink-0" />
-                    {title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed sm:pt-1">{description}</p>
-                </li>
-              ))}
-              <li className="grid gap-2 py-6 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-8 sm:py-7">
-                <h3 className="saas-title text-muted-foreground flex items-center gap-3">
-                  <Clock aria-hidden className="size-5 shrink-0" />
-                  Not available for turf accounts yet
-                </h3>
-                <div className="text-muted-foreground leading-relaxed sm:pt-1">
-                  <ul className="space-y-1">
-                    {upcoming.map((item) => (
-                      <li key={item} className="text-foreground">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-2 text-sm">
-                    Website, payment and email preferences can be saved during setup.
-                  </p>
+        <div className="saas-benefits">
+          <ul className="saas-container grid gap-6 md:grid-cols-3 md:gap-8">
+            {benefits.map(({ icon: Icon, title, detail }) => (
+              <li key={title} className="flex items-start gap-3.5">
+                <span className="saas-benefit-icon">
+                  <Icon aria-hidden className="size-5" />
+                </span>
+                <div>
+                  <p className="font-semibold tracking-tight">{title}</p>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{detail}</p>
                 </div>
               </li>
+            ))}
+          </ul>
+        </div>
+
+        <section id="features" className="saas-section-space" aria-labelledby="features-heading">
+          <div className="saas-container">
+            <div className="saas-section-heading">
+              <div>
+                <p className="saas-eyebrow">A little less chaos</p>
+                <h2 id="features-heading" className="saas-section mt-4">
+                  Your whole operation.
+                  <br />
+                  Working together.
+                </h2>
+              </div>
+              <p className="saas-lead max-w-[37ch]">
+                Give the everyday work a home, so you can focus on the people who come to play.
+              </p>
+            </div>
+            <ul className="saas-feature-grid">
+              {features.map(({ title, description, icon: Icon }, index) => (
+                <li key={title} className="saas-feature-card">
+                  <div className="flex items-center justify-between">
+                    <span className="saas-feature-icon">
+                      <Icon aria-hidden className="size-5" />
+                    </span>
+                    <span className="saas-feature-number" aria-hidden>
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <h3 className="saas-title mt-7">{title}</h3>
+                  <p className="text-muted-foreground mt-3 leading-relaxed">{description}</p>
+                </li>
+              ))}
             </ul>
           </div>
         </section>
 
-        {/* The booking website, shown on the phone most customers book from. */}
-        <section className="bg-muted py-24 sm:py-28">
-          <div className="mx-auto grid max-w-[90rem] items-center gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-16">
-            <div className="lg:col-span-5">
-              <h2 className="saas-section">{bookingWebsite.title}</h2>
-              <p className="saas-lead mt-6 max-w-[40ch]">{bookingWebsite.description}</p>
-            </div>
-            <figure className="flex justify-center lg:col-span-6 lg:col-start-7">
-              <div
-                className="saas-shot aspect-[780/1480] w-full max-w-[22rem] rounded-[28px]"
-                data-slot="phone"
-                data-kind="product"
-                data-alt="The turf's customer booking website on a phone, the search card in view"
-              >
-                <Image
-                  src="/saas/booking-site-phone.jpg"
-                  alt="The same booking website on a phone, with the find slots search"
-                  width={780}
-                  height={1480}
-                  sizes="22rem"
-                />
+        <section className="saas-booking-section" aria-labelledby="booking-heading">
+          <div className="saas-container">
+            <div className="saas-booking-panel">
+              <figure className="saas-phone-stage">
+                <div className="saas-pitch-lines" aria-hidden>
+                  <span />
+                </div>
+                <div className="saas-phone-frame">
+                  <div className="saas-shot aspect-[780/1480]">
+                    <Image
+                      src="/saas/booking-site-phone.jpg"
+                      alt="Mobile version of the customer booking website, with a simple search for available turf slots."
+                      width={780}
+                      height={1480}
+                      sizes="(min-width: 640px) 260px, 220px"
+                    />
+                  </div>
+                </div>
+                <figcaption className="saas-phone-caption">
+                  <CircleCheck aria-hidden className="size-4" /> Your turf. In their pocket.
+                </figcaption>
+              </figure>
+              <div className="saas-booking-copy">
+                <p className="saas-eyebrow">Open for your next booking</p>
+                <h2 id="booking-heading" className="saas-section mt-4">
+                  Give your customers
+                  <br />a home for their game.
+                </h2>
+                <p className="saas-lead mt-5">
+                  A booking website for your turf that makes it easy to find a ground, pick a slot
+                  and plan the next game.
+                </p>
+                <ul className="saas-check-list mt-7">
+                  {[
+                    "Live availability for your grounds",
+                    "A smooth booking experience on every screen",
+                    "Cash, bKash and Nagad options when enabled",
+                  ].map((item) => (
+                    <li key={item}>
+                      <Check aria-hidden />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <a href="#plans" className="saas-inline-link mt-8">
+                  Find the right plan <ArrowUpRight aria-hidden className="size-4" />
+                </a>
               </div>
-            </figure>
+            </div>
           </div>
         </section>
 
-        {/* The real process, on the ink band. */}
-        <section className="saas-band py-24 sm:py-32">
-          <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-16">
-            <h2 className="saas-section max-w-[16ch]">From application to setup</h2>
-            <ol className="mt-14 grid gap-12 md:grid-cols-3 md:gap-8">
-              {steps.map(({ title, description }, index) => (
-                <li key={title} className="border-t border-current/20 pt-6">
-                  <span aria-hidden className="saas-numeral block text-6xl leading-none">
-                    {index + 1}
-                  </span>
+        <section id="how-it-works" className="saas-section-space" aria-labelledby="steps-heading">
+          <div className="saas-container">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="saas-eyebrow">Three steps to your new workspace</p>
+              <h2 id="steps-heading" className="saas-section mt-4">
+                Getting started is straightforward.
+              </h2>
+              <p className="saas-lead mt-5">Choose a plan and apply for turf owner access.</p>
+            </div>
+            <ol className="saas-steps">
+              {steps.map(({ title, description, icon: Icon }, index) => (
+                <li key={title} className="saas-step">
+                  <div className="saas-step-top">
+                    <span className="saas-step-icon">
+                      <Icon aria-hidden className="size-6" />
+                    </span>
+                    <span className="saas-step-count">
+                      Step {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
                   <h3 className="saas-title mt-6">{title}</h3>
-                  <p className="saas-band-muted mt-3 max-w-[36ch] leading-relaxed">{description}</p>
+                  <p className="text-muted-foreground mt-3 max-w-[37ch] leading-relaxed">
+                    {description}
+                  </p>
                 </li>
               ))}
             </ol>
+            <p className="saas-activation-note">
+              <ShieldCheck aria-hidden className="size-4 shrink-0" /> Your first paid billing period
+              begins when your account is activated.
+            </p>
           </div>
         </section>
 
         <SaasPricing />
 
-        {/* The close: the hero's action again, with the one term that matters at activation. */}
-        <section className="border-border border-t py-20 sm:py-24">
-          <div className="mx-auto flex max-w-[90rem] flex-col gap-8 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-16">
+        <section id="faq" className="saas-section-space" aria-labelledby="faq-heading">
+          <div className="saas-container saas-faq-layout">
             <div>
-              <h2 className="saas-section">Ready to set up your turf?</h2>
-              <p className="saas-lead mt-4">Activation starts your first paid billing period.</p>
+              <p className="saas-eyebrow">Good questions. Clear answers.</p>
+              <h2 id="faq-heading" className="saas-section mt-4">
+                A few things
+                <br />
+                worth knowing.
+              </h2>
+              <p className="text-muted-foreground mt-5 max-w-[30ch] leading-relaxed">
+                The details, before you take the next step.
+              </p>
+              <Link href="/saas/apply" className="saas-inline-link mt-6">
+                Ready to get started? <ArrowUpRight aria-hidden className="size-4" />
+              </Link>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 px-6 text-base">
-                <Link href="/saas/apply">Apply now</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
-                <Link href="/login">Sign in to Turf Admin</Link>
-              </Button>
+            <div className="saas-faq-list">
+              {questions.map(({ question, answer }) => (
+                <details key={question} className="saas-faq">
+                  <summary>
+                    {question}
+                    <ChevronDown aria-hidden className="size-5 shrink-0" />
+                  </summary>
+                  <p>{answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="saas-close-section" aria-labelledby="close-heading">
+          <div className="saas-container">
+            <div className="saas-band saas-close">
+              <div className="saas-close-pitch" aria-hidden>
+                <span />
+              </div>
+              <div className="relative">
+                <p className="saas-eyebrow">Make room for the game</p>
+                <h2 id="close-heading" className="saas-section mt-5">
+                  Your turf deserves
+                  <br />a better way to run.
+                </h2>
+                <p className="saas-band-muted mt-5 max-w-[40ch] leading-relaxed">
+                  Bring your bookings, business and team together. Let’s get your turf set up.
+                </p>
+                <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
+                  <Button asChild size="lg" className="saas-button h-12 px-6 text-base">
+                    <Link href="/saas/apply">
+                      Get started with TurfOrg <ArrowRight aria-hidden />
+                    </Link>
+                  </Button>
+                  <Link href="/admin" className="saas-band-link">
+                    Already a member? Log in <ArrowUpRight aria-hidden className="size-4" />
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
       </main>
+
+      <footer className="saas-footer">
+        <div className="saas-container flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <Brand homeHref={homeHref} />
+            <p className="text-muted-foreground mt-3 text-sm">For the business behind the game.</p>
+          </div>
+          <nav
+            aria-label="Footer navigation"
+            className="flex flex-wrap items-center gap-x-6 gap-y-1"
+          >
+            <a href="#features">Features</a>
+            <a href="#plans">Pricing</a>
+            <Link href="/admin">
+              Owner login <ArrowUpRight aria-hidden className="size-3.5" />
+            </Link>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -21,15 +21,16 @@ const SETTINGS_PAGES = new Set([
 
 export function TenantDashboardContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const dashboardPath = pathname.replace(/^\/admin(?=\/|$)/, "/dashboard");
   const router = useRouter();
   const owner = useMe("owner");
   const tenant = owner.data?.tenant;
   const needsSetup = tenant && tenant.status !== "suspended" && !tenant.setupComplete;
-  const blockedBySetup = needsSetup && !SETTINGS_PAGES.has(pathname);
+  const blockedBySetup = needsSetup && !SETTINGS_PAGES.has(dashboardPath);
 
   useEffect(() => {
-    if (blockedBySetup) router.replace(GENERAL);
-  }, [blockedBySetup, router]);
+    if (blockedBySetup) router.replace(pathname === dashboardPath ? GENERAL : "/admin/settings/general");
+  }, [blockedBySetup, dashboardPath, pathname, router]);
 
   if (owner.isError)
     return <SettingsLoadError what="turf account" onRetry={() => owner.refetch()} />;

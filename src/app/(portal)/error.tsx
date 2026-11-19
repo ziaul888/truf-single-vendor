@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useTransition } from "react";
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { Loader2 } from "lucide-react";
 
 /** Shown inside the portal layout when a page fails to load, e.g. turf-api is unreachable. */

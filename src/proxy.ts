@@ -1,18 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isTurfPortalSlug, TURF_PORTAL_HEADER, turfPortalSlugForPath } from "@/lib/turf-portal-path";
+import {
+  CUSTOMER_PORTAL_HOME, CUSTOMER_PORTAL_HOME_HEADER, isLocalHost, isTurfPortalPage, isTurfPortalSlug,
+  TURF_PORTAL_HEADER, turfPortalPath, turfPortalSlugForPath,
+} from "@/lib/turf-portal-path";
 
 const ADMIN_PREFIX = "/dashboard";
+const OWNER_ENTRY = "/admin";
 const ADMIN_LOGIN = "/login";
-const ADMIN_HOSTS = new Set(["turfadmin-panel.vercel.app"]);
-const LOCAL_HOST = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i;
+const ADMIN_HOSTS = new Set(["admin-turforg.vercel.app", "turfadmin-panel.vercel.app"]);
+const PLATFORM_HOST = "platform-turforg.vercel.app";
+const TURF_NATION_HOST = "turfnation-turforg.vercel.app";
+const TURF_NATION_SLUG = "turfnation";
 
 function passToTurfPortal(req: NextRequest, slug: string) {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set(TURF_PORTAL_HEADER, slug);
+  requestHeaders.delete(CUSTOMER_PORTAL_HOME_HEADER);
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
-async function getLocalHomeTurf() {
+async function getDefaultTurf() {
   try {
     const api = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
     const response = await fetch(new URL("/api/v1/turfs/default", api), {
@@ -37,11 +44,25 @@ async function getLocalHomeTurf() {
  */
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const host = (req.headers.get("host") ?? "").toLowerCase();
   const turfSlug = turfPortalSlugForPath(pathname);
+  if (host === TURF_NATION_HOST) {
+    if (turfSlug === TURF_NATION_SLUG || isTurfPortalPage(pathname)) {
+      return passToTurfPortal(req, TURF_NATION_SLUG);
+    }
+    return new NextResponse(null, { status: 404 });
+  }
+
   if (turfSlug) return passToTurfPortal(req, turfSlug);
-  const host = req.headers.get("host") ?? "";
+  const local = isLocalHost(host);
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.delete(TURF_PORTAL_HEADER);
+  requestHeaders.delete(CUSTOMER_PORTAL_HOME_HEADER);
+  if (!local || pathname === CUSTOMER_PORTAL_HOME) {
+    requestHeaders.set(CUSTOMER_PORTAL_HOME_HEADER, CUSTOMER_PORTAL_HOME);
+  }
   const isAdminHost = host.startsWith("admin.") || ADMIN_HOSTS.has(host);
-  const platformRoot = host.startsWith("manage.") && pathname === "/";
+  const platformRoot = (host === PLATFORM_HOST || host.startsWith("manage.")) && pathname === "/";
   const platformPage = pathname === "/platform" || pathname.startsWith("/platform/");
   if (platformRoot || platformPage) {
     if (pathname === "/platform/login") return NextResponse.next();
@@ -53,29 +74,35 @@ export async function proxy(req: NextRequest) {
     }
     if (platformRoot) {
       url.pathname = "/platform";
-      return NextResponse.rewrite(url);
+      return host === PLATFORM_HOST ? NextResponse.redirect(url) : NextResponse.rewrite(url);
     }
     return NextResponse.next();
   }
 
   if (isAdminHost && pathname === "/") {
     const url = req.nextUrl.clone();
-    url.pathname = ADMIN_PREFIX;
-    return NextResponse.rewrite(url);
+    url.pathname = OWNER_ENTRY;
+    return NextResponse.redirect(url);
   }
 
-  if (pathname === "/" && LOCAL_HOST.test(host)) {
-    const slug = await getLocalHomeTurf();
+  if (pathname === "/" && local) {
+    const slug = await getDefaultTurf();
     if (slug) return passToTurfPortal(req, slug);
   }
 
-  if (!pathname.startsWith(ADMIN_PREFIX)) {
-    if (req.headers.has(TURF_PORTAL_HEADER)) {
-      const requestHeaders = new Headers(req.headers);
-      requestHeaders.delete(TURF_PORTAL_HEADER);
-      return NextResponse.next({ request: { headers: requestHeaders } });
+  if (pathname === CUSTOMER_PORTAL_HOME) {
+    const slug = await getDefaultTurf();
+    if (slug) {
+      const url = req.nextUrl.clone();
+      url.pathname = turfPortalPath(slug);
+      return NextResponse.redirect(url);
     }
-    return NextResponse.next();
+  }
+
+  const isOwnerEntry = pathname === OWNER_ENTRY || pathname.startsWith(`${OWNER_ENTRY}/`);
+  const isDashboard = pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`);
+  if (!isOwnerEntry && !isDashboard) {
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   const adminToken = req.cookies.get("admin_token")?.value;
@@ -89,12 +116,12 @@ export async function proxy(req: NextRequest) {
 
   // Presence check only: turf-api verifies the token on every request, and a 401
   // there sends the user back to /login. The frontend never holds JWT_SECRET.
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {
   matcher: [
-    "/", "/dashboard/:path*", "/platform/:path*", "/turf/:path*", "/grounds/:path*",
+    "/", "/admin/:path*", "/dashboard/:path*", "/platform/:path*", "/turf/:path*", "/grounds/:path*",
     "/checkout", "/confirmation/:path*", "/account", "/my-bookings", "/sign-in",
   ],
 };

@@ -37,11 +37,12 @@ function messageFor(err: unknown) {
 /** Phone → SMS code → signed in. Returns to ?from= (same-site paths only). */
 export function SignInForm() {
   const router = useRouter();
-  const slug = useTurfPortal()?.slug;
+  const portal = useTurfPortal();
+  const slug = portal?.slug;
   const target = safeRedirectPath(useSearchParams().get("from"), "/my-bookings");
-  const home = turfPortalPath(slug);
+  const home = portal?.homePath ?? "/";
   const sameTurf = target === home || target.startsWith(home + "/");
-  const from = turfPortalPath(slug, slug && target.startsWith("/turf/") && !sameTurf ? "/my-bookings" : target);
+  const from = target === "/" ? home : turfPortalPath(slug, slug && target.startsWith("/turf/") && !sameTurf ? "/my-bookings" : target);
   const queryClient = useQueryClient();
   const [phone, setPhone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

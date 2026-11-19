@@ -66,9 +66,9 @@ export function LoginForm() {
       await queryClient.cancelQueries();
       queryClient.clear();
       if (json.data?.audience === "owner" || json.data?.audience === "tenant-staff") {
-        window.location.assign(
-          json.data.tenant?.setupComplete ? "/dashboard" : "/dashboard/settings/general"
-        );
+        const from = searchParams.get("from");
+        const dashboard = from === "/admin" || from?.startsWith("/admin/") ? "/admin" : "/dashboard";
+        window.location.assign(json.data.tenant?.setupComplete ? dashboard : `${dashboard}/settings/general`);
         return;
       }
       router.push(safeRedirectPath(searchParams.get("from")));

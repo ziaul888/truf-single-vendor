@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,12 +17,75 @@ import type { PlatformInvoice } from "@/types/platform-billing";
 import { BillingError } from "./billing-parts";
 export const receiptMethods = { bkash: "bKash", nagad: "Nagad", bank_transfer: "Bank transfer" };
 type Method = keyof typeof receiptMethods;
-interface Values {
+export interface ReceiptDetails {
   method: Method;
   reference: string;
   receivedOn: string;
-  confirmed: boolean;
 }
+
+export function ReceiptDetailsFields({
+  details,
+  onChange,
+}: {
+  details: ReceiptDetails;
+  onChange: (details: ReceiptDetails) => void;
+}) {
+  const id = useId();
+  return (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor={`${id}-method`}>Payment method</Label>
+        <Select
+          value={details.method}
+          onValueChange={(method) => {
+            if (method === "bkash" || method === "nagad" || method === "bank_transfer") {
+              onChange({ ...details, method });
+            }
+          }}
+        >
+          <SelectTrigger id={`${id}-method`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(receiptMethods).map(([value, label]) => (
+              <SelectItem value={value} key={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor={`${id}-reference`}>Transaction / bank reference</Label>
+        <Input
+          id={`${id}-reference`}
+          required
+          minLength={3}
+          maxLength={100}
+          value={details.reference}
+          onChange={(e) => onChange({ ...details, reference: e.target.value })}
+        />
+        <p className="text-muted-foreground text-xs">
+          Use the reference shown in your receiving account.
+        </p>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor={`${id}-date`}>Payment received on</Label>
+        <Input
+          id={`${id}-date`}
+          type="date"
+          required
+          min="2000-01-01"
+          max={billingTodayInput()}
+          value={details.receivedOn}
+          onChange={(e) => onChange({ ...details, receivedOn: e.target.value })}
+        />
+      </div>
+    </>
+  );
+}
+
+type Values = ReceiptDetails & { confirmed: boolean };
 export function PlatformReceiptForm({
   userId,
   invoice,
@@ -66,53 +129,10 @@ export function PlatformReceiptForm({
         <p className="text-muted-foreground mt-1 text-xs break-all">{invoice.number}</p>
       </div>
       <fieldset disabled={command.isPending} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="receipt-method">Payment method</Label>
-          <Select
-            value={values.method}
-            onValueChange={(method) => {
-              if (method === "bkash" || method === "nagad" || method === "bank_transfer")
-                setValues({ ...values, method });
-            }}
-          >
-            <SelectTrigger id="receipt-method">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(receiptMethods).map(([value, label]) => (
-                <SelectItem value={value} key={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="receipt-reference">Transaction / bank reference</Label>
-          <Input
-            id="receipt-reference"
-            required
-            minLength={3}
-            maxLength={100}
-            value={values.reference}
-            onChange={(e) => setValues({ ...values, reference: e.target.value })}
-          />
-          <p className="text-muted-foreground text-xs">
-            Use the reference shown in your receiving account.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="receipt-date">Payment received on</Label>
-          <Input
-            id="receipt-date"
-            type="date"
-            required
-            min="2000-01-01"
-            max={billingTodayInput()}
-            value={values.receivedOn}
-            onChange={(e) => setValues({ ...values, receivedOn: e.target.value })}
-          />
-        </div>
+        <ReceiptDetailsFields
+          details={values}
+          onChange={(details) => setValues({ ...values, ...details })}
+        />
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm leading-relaxed">
           <input
             type="checkbox"

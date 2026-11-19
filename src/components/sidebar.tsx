@@ -29,7 +29,7 @@ export function Sidebar({
   onClose,
   audience = "staff",
 }: SidebarProps) {
-  const pathname = usePathname();
+  const pathname = usePathname().replace(/^\/admin(?=\/|$)/, "/dashboard");
 
   const { data: me } = useMe(audience);
   const nav = navForRole(me?.role);

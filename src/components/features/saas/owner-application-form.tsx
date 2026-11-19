@@ -4,19 +4,45 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Layers3,
+  Loader2,
+  ReceiptText,
+  ShieldCheck,
+} from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { planCharge } from "@/lib/platform-billing";
-import type { BillingInterval } from "@/types/platform-billing";
+import { formatBdt, planCharge } from "@/lib/platform-billing";
+import type { BillingInterval, PlatformPlan } from "@/types/platform-billing";
 import {
   OwnerApplicationPlans,
   useOwnerApplicationPlans,
   useSubscriptionPaymentMethods,
 } from "./owner-application-plans";
 import { OwnerApplicationPayment } from "./owner-application-payment";
+
+const paymentDetailsSchema = z.object({
+  paymentMethod: z.enum(["bkash", "nagad", "bank_transfer"], "Choose a payment method"),
+  paymentReference: z
+    .string()
+    .trim()
+    .max(100)
+    .refine(
+      (value) =>
+        /^[A-Z0-9][A-Z0-9._/-]{2,99}$/.test(
+          value.normalize("NFKC").replace(/\s+/g, "").toUpperCase()
+        ),
+      "Enter a valid transaction reference"
+    ),
+  paymentDate: z.iso.date("Enter the date you sent the payment"),
+});
 
 const schema = z
   .object({
@@ -33,19 +59,19 @@ const schema = z
     confirmPassword: z.string(),
     planId: z.string().uuid("Choose a subscription plan"),
     interval: z.enum(["monthly", "yearly"]),
-    paymentMethod: z.enum(["bkash", "nagad", "bank_transfer"], "Choose a payment method"),
-    paymentReference: z
-      .string()
-      .trim()
-      .max(100)
-      .refine(
-        (value) =>
-          /^[A-Z0-9][A-Z0-9._/-]{2,99}$/.test(
-            value.normalize("NFKC").replace(/\s+/g, "").toUpperCase()
-          ),
-        "Enter a valid transaction reference"
-      ),
-    paymentDate: z.iso.date("Enter the date you sent the payment"),
+    includePayment: z.boolean(),
+    paymentMethod: paymentDetailsSchema.shape.paymentMethod.optional(),
+    paymentReference: z.string().optional(),
+    paymentDate: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.includePayment) return;
+    const payment = paymentDetailsSchema.safeParse(value);
+    if (!payment.success) {
+      for (const { path, message } of payment.error.issues) {
+        ctx.addIssue({ code: "custom", path, message });
+      }
+    }
   })
   .refine((value) => value.password === value.confirmPassword, {
     path: ["confirmPassword"],
@@ -61,20 +87,93 @@ type Failure = {
 };
 
 function Field({
+  id,
   label,
   error,
   children,
 }: {
+  id: string;
   label: string;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
+    <div className="min-w-0 space-y-2">
+      <Label htmlFor={id}>{label}</Label>
       {children}
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {error && (
+        <p id={`${id}-error`} className="text-destructive text-sm">
+          {error}
+        </p>
+      )}
     </div>
+  );
+}
+
+function ApplicationHeader() {
+  return (
+    <header className="bg-card border-b">
+      <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href="/saas" className="saas-brand" aria-label="TurfOrg home">
+          <span className="saas-brand-mark">
+            <Layers3 aria-hidden className="size-5" />
+          </span>
+          <span>
+            Turf<span className="text-primary">Org.</span>
+          </span>
+        </Link>
+        <Button asChild variant="outline" className="saas-button h-11 shrink-0">
+          <Link href="/login">Owner login</Link>
+        </Button>
+      </div>
+    </header>
+  );
+}
+
+function ApplicationSummary({
+  plan,
+  interval,
+}: {
+  plan?: PlatformPlan;
+  interval: BillingInterval;
+}) {
+  return (
+    <aside
+      className="bg-card min-w-0 overflow-hidden rounded-2xl border shadow-xs lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+      aria-labelledby="order-summary"
+    >
+      <div className="p-5 sm:p-6">
+        <h2 id="order-summary" className="saas-title flex items-center gap-2.5">
+          <ReceiptText aria-hidden className="text-primary size-5 shrink-0" />
+          Order summary
+        </h2>
+        {plan ? (
+          <div aria-live="polite" className="mt-5">
+            <dl className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-4 text-sm">
+              <dt className="min-w-0 font-semibold [overflow-wrap:anywhere]">{plan.name}</dt>
+              <dd className="text-muted-foreground">
+                {interval === "yearly" ? "Yearly" : "Monthly"}
+              </dd>
+            </dl>
+            <p className="text-muted-foreground mt-4 text-sm">First subscription payment</p>
+            <p className="saas-numeral mt-1 text-4xl leading-tight tracking-tight [overflow-wrap:anywhere]">
+              {formatBdt(planCharge(plan, interval))}
+            </p>
+          </div>
+        ) : (
+          <p className="text-muted-foreground mt-3 text-sm">Choose a plan to see its price.</p>
+        )}
+      </div>
+      <div className="bg-muted/45 flex items-start gap-3 border-t p-5 sm:px-6">
+        <ShieldCheck aria-hidden className="text-primary mt-0.5 size-5 shrink-0" />
+        <div className="text-sm leading-relaxed">
+          <p className="font-semibold">Pay after applying</p>
+          <p className="text-muted-foreground mt-1">
+            The platform admin verifies your first payment before activating your account.
+          </p>
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -86,13 +185,13 @@ export function OwnerApplicationForm({
   initialInterval: BillingInterval;
 }) {
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<"application" | "payment" | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const attempt = useRef<{ requestId: string; payload: string } | null>(null);
   const plans = useOwnerApplicationPlans();
-  const methods = useSubscriptionPaymentMethods();
   const form = useForm<PurchaseValues>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: {
       name: "",
       slug: "",
@@ -102,12 +201,15 @@ export function OwnerApplicationForm({
       confirmPassword: "",
       planId: initialPlanId,
       interval: initialInterval,
+      includePayment: false,
       paymentReference: "",
       paymentDate: "",
     },
   });
   const planId = useWatch({ control: form.control, name: "planId" });
   const interval = useWatch({ control: form.control, name: "interval" });
+  const includePayment = useWatch({ control: form.control, name: "includePayment" });
+  const methods = useSubscriptionPaymentMethods(includePayment);
   const selectedPlan = plans.data?.find((plan) => plan.id === planId);
   const hasPaymentMethods = Object.values(methods.data ?? {}).some(Boolean);
   async function submit(values: PurchaseValues) {
@@ -116,7 +218,8 @@ export function OwnerApplicationForm({
       form.setError("planId", { message: "Choose an available subscription plan" });
       return;
     }
-    if (!methods.data?.[values.paymentMethod]) {
+    const payment = values.includePayment ? paymentDetailsSchema.parse(values) : undefined;
+    if (payment && !methods.data?.[payment.paymentMethod]) {
       form.setError("paymentMethod", { message: "Choose an available payment method" });
       return;
     }
@@ -128,9 +231,7 @@ export function OwnerApplicationForm({
       password: values.password,
       planId: values.planId,
       interval: values.interval,
-      paymentMethod: values.paymentMethod,
-      paymentReference: values.paymentReference,
-      paymentDate: values.paymentDate,
+      ...payment,
       timezone: "Asia/Dhaka",
       currency: "bdt",
       planVersion: selectedPlan.version,
@@ -159,200 +260,291 @@ export function OwnerApplicationForm({
       }
       attempt.current = null;
       form.reset();
-      setSuccess(true);
+      setSuccess(payment ? "payment" : "application");
     } catch {
       setError("Cannot reach the server. Please try again.");
     }
   }
   const name = form.register("name");
-  const busy = form.formState.isSubmitting;
-  if (success)
-    return (
-      <main className="mx-auto flex min-h-dvh max-w-2xl items-center px-4 py-12 sm:px-6">
-        <section className="bg-card w-full rounded-3xl border p-6 text-center shadow-lg sm:p-10">
-          <CheckCircle2 className="text-success mx-auto h-12 w-12" />
-          <h1 className="mt-5 text-2xl font-bold tracking-tight">
-            Payment submitted for verification
-          </h1>
-          <p className="text-muted-foreground mx-auto mt-3 max-w-md text-sm leading-6">
-            Keep your transaction reference until verification is complete. Once the platform admin
-            confirms the full payment, you can sign in with the email and password you chose.
-          </p>
-          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button asChild className="h-11">
-              <Link href="/login">Go to owner login</Link>
-            </Button>
-            <Button asChild variant="outline" className="h-11">
-              <Link href="/saas">Back to SaaS website</Link>
-            </Button>
-          </div>
-        </section>
-      </main>
-    );
+  const { errors, isSubmitting: busy } = form.formState;
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-14">
-      <Link
-        href="/saas"
-        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-medium outline-none focus-visible:ring-2"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        SaaS website
-      </Link>
-      <div className="mt-6">
-        <p className="text-primary text-xs font-semibold tracking-widest uppercase">
-          Turf owner access
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-          Apply for turf owner access
-        </h1>
-        <p className="text-muted-foreground mt-3 text-sm leading-6">
-          Choose a plan, set up your login details and submit the first payment for verification.{" "}
-          <Link href="/saas#access" className="text-primary underline">
-            See what your plan includes
-          </Link>
-          .
-        </p>
-      </div>
-      <form
-        className="mt-8 space-y-5"
-        onSubmit={(event) => void form.handleSubmit(submit)(event)}
-        noValidate
-      >
-        <OwnerApplicationPlans
-          plans={plans.data}
-          planId={planId}
-          interval={interval}
-          disabled={form.formState.isSubmitting}
-          error={form.formState.errors.planId?.message}
-          loading={plans.isLoading}
-          loadError={plans.isError}
-          onPlan={(value) => form.setValue("planId", value, { shouldValidate: true })}
-          onInterval={(value) => form.setValue("interval", value)}
-          onRetry={() => plans.refetch()}
-        />
-        <section className="bg-card space-y-5 rounded-2xl border p-5 sm:p-7">
-          <h2 className="text-lg font-semibold">Turf business</h2>
-          <Field label="Business name" error={form.formState.errors.name?.message}>
-            <Input
-              disabled={busy}
-              {...name}
-              onChange={(event) => {
-                name.onChange(event);
-                if (!form.formState.dirtyFields.slug)
-                  form.setValue(
-                    "slug",
-                    event.target.value
-                      .toLowerCase()
-                      .replace(/[^a-z0-9]+/g, "-")
-                      .replace(/^-|-$/g, "")
-                      .slice(0, 50)
-                  );
-              }}
-              aria-invalid={!!form.formState.errors.name}
-            />
-          </Field>
-          <Field label="Turf handle" error={form.formState.errors.slug?.message}>
-            <Input
-              placeholder="greenfield-arena"
-              disabled={busy}
-              {...form.register("slug")}
-              aria-invalid={!!form.formState.errors.slug}
-            />
-            <p className="text-muted-foreground text-xs">
-              A unique lowercase handle for your turf account.
+    <div className="saas-page min-h-dvh">
+      <ApplicationHeader />
+      {success ? (
+        <main className="mx-auto max-w-xl px-4 py-12 sm:px-6 sm:py-20">
+          <section
+            className="bg-card rounded-2xl border p-6 shadow-xs sm:p-8"
+            aria-labelledby="application-success"
+          >
+            <span className="bg-success/10 text-success inline-flex size-12 items-center justify-center rounded-xl">
+              <CheckCircle2 aria-hidden className="size-6" />
+            </span>
+            <h1 id="application-success" className="saas-section mt-5">
+              Application submitted
+            </h1>
+            <p className="text-muted-foreground mt-4 leading-relaxed">
+              {success === "payment"
+                ? "Keep your transaction reference while the platform admin verifies your payment."
+                : "Your application is awaiting review. Arrange your first payment with the platform admin before activation."}{" "}
+              Once your account is active, sign in with the email and password you chose.
             </p>
-          </Field>
-        </section>
-        <section className="bg-card space-y-5 rounded-2xl border p-5 sm:p-7">
-          <h2 className="text-lg font-semibold">Owner and login</h2>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Owner name" error={form.formState.errors.ownerName?.message}>
-              <Input
-                autoComplete="name"
-                disabled={busy}
-                {...form.register("ownerName")}
-                aria-invalid={!!form.formState.errors.ownerName}
-              />
-            </Field>
-            <Field label="Email address" error={form.formState.errors.ownerEmail?.message}>
-              <Input
-                type="email"
-                autoComplete="email"
-                disabled={busy}
-                {...form.register("ownerEmail")}
-                aria-invalid={!!form.formState.errors.ownerEmail}
-              />
-            </Field>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="saas-button h-11">
+                <Link href="/login">
+                  Go to owner login <ArrowRight aria-hidden />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="saas-button h-11">
+                <Link href="/saas">Back to TurfOrg</Link>
+              </Button>
+            </div>
+          </section>
+        </main>
+      ) : (
+        <main className="mx-auto max-w-6xl px-4 pt-4 pb-12 sm:px-6 sm:pt-6 sm:pb-16 lg:px-8">
+          <Link
+            href="/saas#plans"
+            className="text-muted-foreground hover:text-foreground inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-medium"
+          >
+            <ArrowLeft aria-hidden className="size-4" /> Back to plans
+          </Link>
+          <div className="mt-3 max-w-2xl sm:mt-4">
+            <h1 className="saas-section">Apply for turf owner access</h1>
+            <p className="text-muted-foreground mt-3 max-w-xl leading-relaxed">
+              Choose a plan and enter your business details to apply. You can pay after submitting.
+            </p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Password" error={form.formState.errors.password?.message}>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  className="pr-12"
-                  disabled={busy}
-                  {...form.register("password")}
-                  aria-invalid={!!form.formState.errors.password}
-                />
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex w-11 items-center justify-center"
-                  onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+          <form
+            className="mt-6 grid items-start gap-5 sm:mt-8 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,21rem)] lg:grid-rows-[auto_1fr]"
+            onSubmit={(event) => void form.handleSubmit(submit)(event)}
+            noValidate
+          >
+            <OwnerApplicationPlans
+              plans={plans.data}
+              planId={planId}
+              interval={interval}
+              disabled={busy}
+              error={errors.planId?.message}
+              loading={plans.isLoading}
+              loadError={plans.isError}
+              onPlan={(value) => form.setValue("planId", value, { shouldValidate: true })}
+              onInterval={(value) => form.setValue("interval", value)}
+              onRetry={() => plans.refetch()}
+            />
+            <ApplicationSummary plan={selectedPlan} interval={interval} />
+            <div className="min-w-0 space-y-5 sm:space-y-6 lg:col-start-1 lg:row-start-2">
+              <section
+                className="bg-card space-y-5 rounded-2xl border p-5 shadow-xs sm:p-6"
+                aria-labelledby="turf-details"
+              >
+                <h2 id="turf-details" className="saas-title">
+                  Turf business
+                </h2>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field id="business-name" label="Business name" error={errors.name?.message}>
+                    <Input
+                      id="business-name"
+                      placeholder="Greenfield Arena"
+                      autoComplete="organization"
+                      disabled={busy}
+                      {...name}
+                      onChange={(event) => {
+                        name.onChange(event);
+                        if (!form.getFieldState("slug").isDirty)
+                          form.setValue(
+                            "slug",
+                            event.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9]+/g, "-")
+                              .replace(/^-|-$/g, "")
+                              .slice(0, 50)
+                          );
+                      }}
+                      aria-invalid={!!errors.name}
+                      aria-describedby={errors.name ? "business-name-error" : undefined}
+                    />
+                  </Field>
+                  <Field id="turf-handle" label="Turf handle" error={errors.slug?.message}>
+                    <div className="relative">
+                      <span
+                        aria-hidden
+                        className="text-muted-foreground pointer-events-none absolute inset-y-0 left-4 flex items-center text-sm"
+                      >
+                        /turf/
+                      </span>
+                      <Input
+                        id="turf-handle"
+                        className="pl-16"
+                        placeholder="greenfield-arena"
+                        autoCapitalize="none"
+                        disabled={busy}
+                        {...form.register("slug")}
+                        aria-invalid={!!errors.slug}
+                        aria-describedby={
+                          errors.slug ? "turf-handle-hint turf-handle-error" : "turf-handle-hint"
+                        }
+                      />
+                    </div>
+                    <p id="turf-handle-hint" className="text-muted-foreground text-sm">
+                      Used in your booking website address.
+                    </p>
+                  </Field>
+                </div>
+              </section>
+              <section
+                className="bg-card space-y-5 rounded-2xl border p-5 shadow-xs sm:p-6"
+                aria-labelledby="owner-details"
+              >
+                <h2 id="owner-details" className="saas-title">
+                  Owner account
+                </h2>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field id="owner-name" label="Owner name" error={errors.ownerName?.message}>
+                    <Input
+                      id="owner-name"
+                      autoComplete="name"
+                      disabled={busy}
+                      {...form.register("ownerName")}
+                      aria-invalid={!!errors.ownerName}
+                      aria-describedby={errors.ownerName ? "owner-name-error" : undefined}
+                    />
+                  </Field>
+                  <Field id="owner-email" label="Email address" error={errors.ownerEmail?.message}>
+                    <Input
+                      id="owner-email"
+                      type="email"
+                      autoComplete="email"
+                      disabled={busy}
+                      {...form.register("ownerEmail")}
+                      aria-invalid={!!errors.ownerEmail}
+                      aria-describedby={errors.ownerEmail ? "owner-email-error" : undefined}
+                    />
+                  </Field>
+                  <Field id="owner-password" label="Password" error={errors.password?.message}>
+                    <div className="relative">
+                      <Input
+                        id="owner-password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        className="pr-12"
+                        disabled={busy}
+                        {...form.register("password")}
+                        aria-invalid={!!errors.password}
+                        aria-describedby={
+                          errors.password
+                            ? "owner-password-hint owner-password-error"
+                            : "owner-password-hint"
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-xl"
+                        disabled={busy}
+                        onClick={() => setShowPassword((value) => !value)}
+                        aria-label={showPassword ? "Hide passwords" : "Show passwords"}
+                        aria-controls="owner-password owner-password-confirmation"
+                      >
+                        {showPassword ? (
+                          <EyeOff aria-hidden className="size-4" />
+                        ) : (
+                          <Eye aria-hidden className="size-4" />
+                        )}
+                      </button>
+                    </div>
+                    <p id="owner-password-hint" className="text-muted-foreground text-sm">
+                      Use at least 12 characters.
+                    </p>
+                  </Field>
+                  <Field
+                    id="owner-password-confirmation"
+                    label="Confirm password"
+                    error={errors.confirmPassword?.message}
+                  >
+                    <Input
+                      id="owner-password-confirmation"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      disabled={busy}
+                      {...form.register("confirmPassword")}
+                      aria-invalid={!!errors.confirmPassword}
+                      aria-describedby={
+                        errors.confirmPassword ? "owner-password-confirmation-error" : undefined
+                      }
+                    />
+                  </Field>
+                </div>
+              </section>
+              <section
+                className="bg-card space-y-4 rounded-2xl border p-5 shadow-xs sm:p-6"
+                aria-labelledby="payment-heading"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 id="payment-heading" className="saas-title">
+                      Payment
+                    </h2>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      You can submit your application and pay later.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11"
+                    aria-expanded={includePayment}
+                    aria-controls="application-payment-fields"
+                    disabled={busy}
+                    onClick={() => {
+                      form.setValue("includePayment", !includePayment);
+                      if (includePayment)
+                        form.clearErrors(["paymentMethod", "paymentReference", "paymentDate"]);
+                    }}
+                  >
+                    {includePayment ? "Pay later" : "Add payment details"}
+                  </Button>
+                </div>
+                <div id="application-payment-fields" hidden={!includePayment}>
+                  {includePayment && (
+                    <OwnerApplicationPayment
+                      form={form}
+                      plan={selectedPlan}
+                      interval={interval}
+                      methods={methods}
+                    />
+                  )}
+                </div>
+              </section>
+              {error && (
+                <p
+                  role="alert"
+                  className="bg-destructive/10 text-destructive border-destructive/20 rounded-xl border p-4 text-sm"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                  {error}
+                </p>
+              )}
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  className="saas-button min-h-12 w-full px-6 sm:w-auto"
+                  disabled={
+                    busy ||
+                    plans.isError ||
+                    !selectedPlan ||
+                    (includePayment && (methods.isError || !hasPaymentMethods))
+                  }
+                >
+                  {busy ? (
+                    <Loader2 aria-hidden className="motion-safe:animate-spin" />
+                  ) : (
+                    <ArrowRight aria-hidden />
+                  )}
+                  {busy ? "Submitting…" : "Submit application"}
+                </Button>
               </div>
-            </Field>
-            <Field label="Confirm password" error={form.formState.errors.confirmPassword?.message}>
-              <Input
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                disabled={busy}
-                {...form.register("confirmPassword")}
-                aria-invalid={!!form.formState.errors.confirmPassword}
-              />
-            </Field>
-          </div>
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            Use at least 12 characters. Your password is stored securely and cannot be viewed by the
-            SaaS admin.
-          </p>
-        </section>
-        <OwnerApplicationPayment
-          form={form}
-          plan={selectedPlan}
-          interval={interval}
-          methods={methods}
-        />
-        {error && (
-          <p
-            role="alert"
-            className="bg-destructive/10 text-destructive border-destructive/20 rounded-xl border p-3 text-sm"
-          >
-            {error}
-          </p>
-        )}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-muted-foreground text-xs">
-            Already activated?{" "}
-            <Link className="text-primary font-medium hover:underline" href="/login">
-              Owner login
-            </Link>
-          </p>
-          <Button
-            type="submit"
-            className="h-12 px-6"
-            disabled={
-              busy || plans.isError || methods.isError || !selectedPlan || !hasPaymentMethods
-            }
-          >
-            {busy ? <Loader2 className="animate-spin" /> : <Send />}
-            {busy ? "Submitting…" : "Submit payment and application"}
-          </Button>
-        </div>
-      </form>
-    </main>
+            </div>
+          </form>
+        </main>
+      )}
+    </div>
   );
 }

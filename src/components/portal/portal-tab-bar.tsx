@@ -21,11 +21,12 @@ interface Tab {
  * Checkout has its own submit button, so the bar stays off there.
  */
 export function PortalTabBar({ bookHref }: { bookHref: string }) {
-  const slug = useTurfPortal()?.slug;
+  const portal = useTurfPortal();
+  const slug = portal?.slug;
   const fullPath = usePathname();
   const base = turfPortalPath(slug);
   const inTurf = slug && (fullPath === base || fullPath.startsWith(base + "/"));
-  const pathname = inTurf ? fullPath.slice(base.length) || "/" : fullPath;
+  const pathname = fullPath === portal?.homePath ? "/" : inTurf ? fullPath.slice(base.length) : fullPath;
   const tabs = useTabs(pathname, bookHref);
   if (pathname.startsWith("/checkout")) return null;
 

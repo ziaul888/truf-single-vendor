@@ -2,84 +2,136 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ArrowRight, Check, Layers3, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBdt, planCharge } from "@/lib/platform-billing";
 import type { BillingInterval } from "@/types/platform-billing";
 import { BillingCycleToggle, useOwnerApplicationPlans } from "./owner-application-plans";
 
+const included = [
+  "Your customer booking website",
+  "Grounds, slots and booking calendar",
+  "Your own admin and manager accounts",
+  "Customer records, reports and exports",
+];
+
 export function SaasPricing() {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const plans = useOwnerApplicationPlans();
+
   return (
-    <section id="plans" className="scroll-mt-20 py-24 sm:py-32 lg:py-40">
-      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-16">
-        <div className="grid gap-8 lg:grid-cols-12 lg:items-end lg:gap-8">
-          <div className="lg:col-span-7">
-            <h2 className="saas-section">Choose your subscription</h2>
+    <section id="plans" className="saas-pricing saas-section-space" aria-labelledby="plans-heading">
+      <div className="saas-container">
+        <div className="saas-section-heading">
+          <div>
+            <p className="saas-eyebrow">Your business. Your pace.</p>
+            <h2 id="plans-heading" className="saas-section mt-4">
+              A simple plan for
+              <br />
+              your next chapter.
+            </h2>
             <p className="saas-lead mt-5 max-w-[46ch]">
-              Each subscription covers one turf business. Pay for a month or a year in BDT.
+              One subscription for your turf business. Choose the billing cycle that works for you.
             </p>
           </div>
-          <div className="lg:col-span-4 lg:col-start-9 lg:flex lg:justify-end">
+          <div className="w-full max-w-xs lg:pb-1">
             <BillingCycleToggle interval={interval} onInterval={setInterval} />
+            <p className="text-muted-foreground mt-3 text-center text-xs" aria-live="polite">
+              {interval === "monthly" ? "Billed monthly" : "Billed yearly"}. All prices in BDT.
+            </p>
           </div>
         </div>
 
-        <div className="mt-14">
+        <div className="mt-10 lg:mt-12">
           {plans.isPending ? (
-            <p role="status" className="text-muted-foreground">
-              Loading subscription options…
-            </p>
+            <div role="status">
+              <span className="sr-only">Loading subscription options…</span>
+              <div className="saas-plan-grid" aria-hidden>
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="saas-plan-card saas-plan-loading">
+                    <div className="bg-muted h-4 w-20 rounded" />
+                    <div className="bg-muted mt-8 h-7 w-32 rounded" />
+                    <div className="bg-muted mt-3 h-4 w-4/5 rounded" />
+                    <div className="bg-muted mt-8 h-12 w-40 rounded" />
+                    <div className="bg-muted mt-auto h-11 w-full rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : plans.isError ? (
             <div
               role="alert"
-              className="border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border p-6"
+              className="bg-card flex flex-col items-start justify-between gap-5 rounded-2xl border p-6 sm:flex-row sm:items-center sm:p-8"
             >
-              <p>Couldn’t load subscription options.</p>
-              <Button variant="outline" className="h-11" onClick={() => void plans.refetch()}>
-                Try again
+              <div>
+                <h3 className="font-semibold">Plans couldn’t load right now.</h3>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Please try again to see the latest subscription options.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="saas-button h-11 shrink-0"
+                onClick={() => void plans.refetch()}
+              >
+                <RefreshCw aria-hidden /> Try again
               </Button>
             </div>
           ) : plans.data?.length ? (
             <>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))]">
+              <div className="saas-plan-grid">
                 {plans.data.map((plan) => (
-                  <article
-                    key={plan.id}
-                    className="border-border bg-card hover:border-foreground/30 flex min-w-0 flex-col rounded-lg border p-6 transition-colors sm:p-8"
-                  >
-                    <h3 className="saas-title">{plan.name}</h3>
-                    {plan.description && (
-                      <p className="text-muted-foreground mt-2 break-words">{plan.description}</p>
-                    )}
-                    <p className="mt-8 flex flex-wrap items-baseline gap-x-2">
-                      <span className="saas-numeral text-4xl tracking-tight">
-                        {formatBdt(planCharge(plan, interval))}
-                      </span>
-                      <span className="text-muted-foreground">
+                  <article key={plan.id} className="saas-plan-card">
+                    <div className="saas-plan-label">
+                      <Layers3 aria-hidden className="size-5" />
+                      <span>One turf business</span>
+                    </div>
+                    <h3 className="saas-title break-words">{plan.name}</h3>
+                    <p className="text-muted-foreground mt-3 min-h-12 text-sm leading-relaxed break-words">
+                      {plan.description}
+                    </p>
+                    <p className="saas-plan-price">
+                      <span className="saas-numeral">{formatBdt(planCharge(plan, interval))}</span>
+                      <span className="text-muted-foreground text-sm">
                         / {interval === "monthly" ? "month" : "year"}
                       </span>
                     </p>
+                    <ul className="saas-check-list saas-plan-features">
+                      {included.map((feature) => (
+                        <li key={feature}>
+                          <Check aria-hidden />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
                     <div className="mt-auto pt-8">
-                      <Button asChild className="h-11 w-full">
+                      <Button
+                        asChild
+                        className="saas-button h-auto min-h-12 w-full px-4 py-3 text-center whitespace-normal"
+                      >
                         <Link
                           href={`/saas/apply?plan=${encodeURIComponent(plan.id)}&interval=${interval}`}
                         >
                           Apply for {plan.name}
+                          <ArrowRight aria-hidden />
                         </Link>
                       </Button>
                     </div>
                   </article>
                 ))}
               </div>
-              <p className="text-muted-foreground mt-6 text-sm">
-                Full payment is required to submit your application.
+              <p className="saas-price-note">
+                <ShieldCheck aria-hidden className="size-4" /> Apply now and pay later. Account
+                activation follows payment verification.
               </p>
             </>
           ) : (
-            <p className="border-border text-muted-foreground rounded-lg border border-dashed p-6">
-              No plans are open for purchase yet.
-            </p>
+            <div className="bg-card rounded-2xl border border-dashed p-8 text-center">
+              <h3 className="font-semibold">Subscription plans are on their way.</h3>
+              <p className="text-muted-foreground mt-2 text-sm">
+                No plans are open for purchase yet. Please check back for available options.
+              </p>
+            </div>
           )}
         </div>
       </div>

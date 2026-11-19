@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { getPublicVenue, getPublicWebsite } from "@/services/website-settings";
-import { getTurfPortalSlug } from "@/services/turf-portal-request";
+import { getTurfPortalHome, getTurfPortalSlug } from "@/services/turf-portal-request";
 import { JsonLd } from "@/components/json-ld";
-import { turfPortalPath } from "@/lib/turf-portal-path";
 import { siteUrl } from "@/lib/site-url";
 import { socialMetadata, venueDescription } from "@/lib/seo";
 import { listPublicGrounds } from "@/services/portal-grounds";
@@ -22,12 +21,19 @@ export async function generateMetadata(): Promise<Metadata> {
   const venue = await getPublicVenue(slug);
   const title = `${venue.name} · Book turf slots online`;
   const description = venueDescription(venue.name, venue.address);
-  return { title: { absolute: title }, description, ...socialMetadata({ title, description, siteName: venue.name }) };
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: await getTurfPortalHome(slug) },
+    ...socialMetadata({ title, description, siteName: venue.name }),
+  };
 }
 
 export default async function LandingPage() {
   const slug = await getTurfPortalSlug();
-  const [{ hero, venue, sections }, grounds] = await Promise.all([getPublicWebsite(slug), listPublicGrounds({}, slug)]);
+  const [{ hero, venue, sections }, grounds, homePath] = await Promise.all([
+    getPublicWebsite(slug), listPublicGrounds({}, slug), getTurfPortalHome(slug),
+  ]);
   // Sport chips only help when there is more than one ground to tell apart.
   const multi = grounds.length > 1;
   const origin = siteUrl().origin;
@@ -39,7 +45,7 @@ export default async function LandingPage() {
           "@type": "SportsActivityLocation",
           name: venue.name,
           description: venue.tagline || undefined,
-          url: slug ? `${origin}${turfPortalPath(slug)}` : origin,
+          url: new URL(homePath, origin).href,
           image: `${origin}/app-icon?size=512`,
           telephone: venue.phone || undefined,
           email: venue.email || undefined,

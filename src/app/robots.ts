@@ -3,6 +3,7 @@ import { siteUrl } from "@/lib/site-url";
 
 /** Pages with no value in search (and, for the dashboard and confirmations, private). */
 const PRIVATE_PATHS = [
+  "/admin",
   "/dashboard",
   "/platform",
   "/login",
