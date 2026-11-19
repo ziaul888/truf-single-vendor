@@ -5,6 +5,7 @@ import { Info } from "lucide-react";
 import { useSlotSettings } from "@/hooks/useSlots";
 import { useSlotSettingsForm } from "@/hooks/useSlotSettingsForm";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { SettingsPageHeader } from "@/components/features/settings/settings-page-header";
 import { ReadOnlyNotice } from "@/components/features/settings/read-only-notice";
 import { SettingsLoadError, SettingsLoading } from "@/components/features/settings/settings-load-state";
@@ -23,8 +24,9 @@ const BOOKING_FIELDS = [
 
 export default function BookingSettingsPage() {
   const { data: settings, isLoading, isError, refetch } = useSlotSettings();
-  const { data: me } = useMe();
-  const canEdit = me?.role === "admin";
+  const audience = useDashboardAudience();
+  const { data: me } = useMe(audience);
+  const canEdit = me?.role === "admin" || me?.role === "owner";
   const { form, submit, discard, saving } = useSlotSettingsForm(settings, BOOKING_FIELDS);
 
   if (isLoading) return <SettingsLoading />;

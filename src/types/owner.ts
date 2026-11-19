@@ -14,3 +14,8 @@ export interface OwnerUser {
     setupComplete: boolean;
   };
 }
+
+export type TenantUser = OwnerUser | (Omit<OwnerUser, "role" | "audience"> & {
+  role: "admin" | "manager";
+  audience: "tenant-staff";
+});

@@ -1,7 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import { ownerApi } from "@/lib/owner-api";
-import { useDashboardAudience } from "@/components/dashboard-audience";
+import { useDashboardApi } from "./useDashboardApi";
 import type {
   BlockReason, BulkBlockInput, BulkBlockResult, BulkSlotsResult, Closure, CreateClosureInput,
   CreateClosureResult, GenerateResult, Slot, SlotCalendar, SlotEvent, SlotEventAction,
@@ -30,10 +28,9 @@ function cleanParams(filters: object) {
 }
 
 export function useSlots(filters: SlotFilters, { enabled = true } = {}) {
-  const audience = useDashboardAudience();
-  const client = audience === "owner" ? ownerApi : api;
+  const { client, scope } = useDashboardApi();
   return useQuery<SlotPage>({
-    queryKey: [...SLOTS_KEY, "list", audience, filters],
+    queryKey: [...scope, ...SLOTS_KEY, "list", filters],
     queryFn: async () => (await client.get("/admin/slots", { params: cleanParams(filters) })).data.data,
     placeholderData: keepPreviousData,
     enabled,
@@ -41,12 +38,13 @@ export function useSlots(filters: SlotFilters, { enabled = true } = {}) {
 }
 
 function useSlotMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) {
+  const { scope } = useDashboardApi();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: fn,
     onSuccess: () => {
       // Blocking a booked slot cancels its booking, so booking and dashboard numbers move too.
-      for (const key of [SLOTS_KEY, ["calendar"], ["bookings"], ["dashboard"], ["owner", "dashboard"]]) qc.invalidateQueries({ queryKey: key });
+      for (const key of [SLOTS_KEY, ["calendar"], ["bookings"], ["dashboard"]]) qc.invalidateQueries({ queryKey: [...scope, ...key] });
     },
   });
 }
@@ -56,40 +54,43 @@ function useSlotMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) 
  * refund first (`cancelledBooking` is then true). Held slots can't be blocked (409 SLOT_NOT_AVAILABLE).
  */
 export function useBlockSlot() {
+  const { client } = useDashboardApi();
   return useSlotMutation(
     async ({ id, reason, note, cancelBooking }: { id: string; reason: BlockReason; note?: string; cancelBooking?: boolean }) =>
-      (await api.post(`/admin/slots/${id}/block`, { reason, note, cancelBooking })).data.data as { slot: Slot; cancelledBooking: boolean },
+      (await client.post(`/admin/slots/${id}/block`, { reason, note, cancelBooking })).data.data as { slot: Slot; cancelledBooking: boolean },
   );
 }
 
 export function useUnblockSlot() {
-  return useSlotMutation(async (id: string) => (await api.post(`/admin/slots/${id}/unblock`)).data.data as Slot);
+  const { client } = useDashboardApi();
+  return useSlotMutation(async (id: string) => (await client.post(`/admin/slots/${id}/unblock`)).data.data as Slot);
 }
 
 /** Single slot by start hour, a full day, or a weekly repeat. */
 export function useBulkBlock() {
+  const { client } = useDashboardApi();
   return useSlotMutation(async (body: BulkBlockInput) =>
-    (await api.post("/admin/slots/block", body)).data.data as BulkBlockResult);
+    (await client.post("/admin/slots/block", body)).data.data as BulkBlockResult);
 }
 
 /** Unblocks every blocked slot on a date (optionally one ground). */
 export function useUnblockDay() {
+  const { client } = useDashboardApi();
   return useSlotMutation(async (body: { groundId?: string; date: string }) =>
-    (await api.post("/admin/slots/unblock", body)).data.data as { unblocked: number });
+    (await client.post("/admin/slots/unblock", body)).data.data as { unblocked: number });
 }
 
 export function useGenerateSlots() {
-  const client = useDashboardAudience() === "owner" ? ownerApi : api;
+  const { client } = useDashboardApi();
   return useSlotMutation(async (body: { groundId: string; fromDate: string; toDate: string }) =>
     (await client.post("/admin/slots/generate", body)).data.data as GenerateResult);
 }
 
 /** The generate form's preview: what would be created, without saving anything. */
 export function useGeneratePreview(body: { groundId: string; fromDate: string; toDate: string }, enabled: boolean) {
-  const audience = useDashboardAudience();
-  const client = audience === "owner" ? ownerApi : api;
+  const { client, scope } = useDashboardApi();
   return useQuery<GenerateResult>({
-    queryKey: [...SLOTS_KEY, "generate-preview", audience, body],
+    queryKey: [...scope, ...SLOTS_KEY, "generate-preview", body],
     queryFn: async ({ signal }) => (await client.post("/admin/slots/generate", { ...body, dryRun: true }, { signal })).data.data,
     enabled,
     retry: false,
@@ -98,9 +99,10 @@ export function useGeneratePreview(body: { groundId: string; fromDate: string; t
 }
 
 export function useSlotCalendar(params: { from: string; to: string; groundId?: string }) {
+  const { client, scope } = useDashboardApi();
   return useQuery<SlotCalendar>({
-    queryKey: ["calendar", params],
-    queryFn: async () => (await api.get("/admin/slots/calendar", { params: cleanParams(params) })).data.data,
+    queryKey: [...scope, "calendar", params],
+    queryFn: async () => (await client.get("/admin/slots/calendar", { params: cleanParams(params) })).data.data,
     placeholderData: keepPreviousData,
   });
 }
@@ -108,38 +110,43 @@ export function useSlotCalendar(params: { from: string; to: string; groundId?: s
 const SETTINGS_KEY = ["settings", "slots"] as const;
 
 export function useSlotSettings() {
+  const { client, scope } = useDashboardApi();
   return useQuery<SlotSettings>({
-    queryKey: SETTINGS_KEY,
-    queryFn: async () => (await api.get("/admin/settings/slots")).data.data,
+    queryKey: [...scope, ...SETTINGS_KEY],
+    queryFn: async () => (await client.get("/admin/settings/slots")).data.data,
   });
 }
 
 export function useUpdateSlotSettings() {
+  const { client, scope } = useDashboardApi();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: Partial<Omit<SlotSettings, "updatedAt" | "updatedBy">>) =>
-      (await api.put("/admin/settings/slots", body)).data.data as SlotSettings,
+      (await client.put("/admin/settings/slots", body)).data.data as SlotSettings,
     onSuccess: (data) => {
-      qc.setQueryData(SETTINGS_KEY, data);
+      qc.setQueryData([...scope, ...SETTINGS_KEY], data);
       // The portal method switches also show on the Payments page's status.
-      qc.invalidateQueries({ queryKey: ["settings", "payments-status"] });
+      qc.invalidateQueries({ queryKey: [...scope, "settings", "payments-status"] });
+      qc.invalidateQueries({ queryKey: [...scope, "settings", "notifications"] });
     },
   });
 }
 
 /** Blocks or unblocks the ticked slots in one request. Failed ids don't undo the others. */
 export function useBulkSlotAction() {
+  const { client } = useDashboardApi();
   return useSlotMutation(
     async (body: { ids: string[]; action: "block" | "unblock"; reason?: BlockReason; note?: string }) =>
-      (await api.post("/admin/slots/bulk", body)).data.data as BulkSlotsResult,
+      (await client.post("/admin/slots/bulk", body)).data.data as BulkSlotsResult,
   );
 }
 
 /** One slot's audit trail, newest first. */
 export function useSlotHistory(slotId: string | undefined) {
+  const { client, scope } = useDashboardApi();
   return useQuery<SlotEvent[]>({
-    queryKey: [...SLOTS_KEY, "history", slotId],
-    queryFn: async () => (await api.get(`/admin/slots/${slotId}/history`)).data.data,
+    queryKey: [...scope, ...SLOTS_KEY, "history", slotId],
+    queryFn: async () => (await client.get(`/admin/slots/${slotId}/history`)).data.data,
     enabled: !!slotId,
   });
 }
@@ -157,9 +164,10 @@ export interface SlotEventFilters {
 
 /** The venue-wide block / unblock / closure log. */
 export function useSlotEvents(filters: SlotEventFilters) {
+  const { client, scope } = useDashboardApi();
   return useQuery<{ data: SlotEventListItem[]; total: number; page: number; limit: number }>({
-    queryKey: [...SLOTS_KEY, "events", filters],
-    queryFn: async () => (await api.get("/admin/slot-events", { params: cleanParams(filters) })).data.data,
+    queryKey: [...scope, ...SLOTS_KEY, "events", filters],
+    queryFn: async () => (await client.get("/admin/slot-events", { params: cleanParams(filters) })).data.data,
     placeholderData: keepPreviousData,
   });
 }
@@ -167,31 +175,35 @@ export function useSlotEvents(filters: SlotEventFilters) {
 const CLOSURES_KEY = ["closures"] as const;
 
 export function useClosures(page: number, limit = 20) {
+  const { client, scope } = useDashboardApi();
   return useQuery<{ data: Closure[]; total: number; page: number; limit: number }>({
-    queryKey: [...CLOSURES_KEY, page, limit],
-    queryFn: async () => (await api.get("/admin/closures", { params: { page, limit } })).data.data,
+    queryKey: [...scope, ...CLOSURES_KEY, page, limit],
+    queryFn: async () => (await client.get("/admin/closures", { params: { page, limit } })).data.data,
     placeholderData: keepPreviousData,
   });
 }
 
 function useClosureMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) {
+  const { scope } = useDashboardApi();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: fn,
     onSuccess: () => {
-      for (const key of [CLOSURES_KEY, SLOTS_KEY, ["calendar"]]) qc.invalidateQueries({ queryKey: key });
+      for (const key of [CLOSURES_KEY, SLOTS_KEY, ["calendar"], ["dashboard"]]) qc.invalidateQueries({ queryKey: [...scope, ...key] });
     },
   });
 }
 
 /** Admin only. Blocks every free slot in range now, and slots generated there later. */
 export function useCreateClosure() {
+  const { client } = useDashboardApi();
   return useClosureMutation(async (body: CreateClosureInput) =>
-    (await api.post("/admin/closures", body)).data.data as CreateClosureResult);
+    (await client.post("/admin/closures", body)).data.data as CreateClosureResult);
 }
 
 /** Admin only. Frees just the slots this closure blocked; the closure stays in the list as lifted. */
 export function useLiftClosure() {
+  const { client } = useDashboardApi();
   return useClosureMutation(async (id: string) =>
-    (await api.delete(`/admin/closures/${id}`)).data.data as { unblocked: number });
+    (await client.delete(`/admin/closures/${id}`)).data.data as { unblocked: number });
 }

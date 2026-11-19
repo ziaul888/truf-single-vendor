@@ -12,6 +12,8 @@ import type { CalendarSlot, CalendarGround } from "@/types";
 import type { CalendarApiSlot } from "@/types/slot";
 import { useSlotCalendar } from "@/hooks/useSlots";
 import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
+import { useDashboardAudience } from "@/components/dashboard-audience";
+import { useMe } from "@/hooks/useMe";
 import { fromMinorUnits } from "@/lib/ground-format";
 import { addDays, slotEndTime, slotStartTime, venueToday } from "@/lib/slot-format";
 import {
@@ -25,9 +27,6 @@ type View = "month" | "week" | "day";
 const MONTH_NAMES = ["January","February","March","April","May","June",
   "July","August","September","October","November","December"];
 
-const today     = new Date();
-// Slot dates are venue-local, so "today" is the venue's date, not UTC.
-const todayStr  = venueToday();
 const GROUND_COLORS: CalendarGround["color"][] = ["emerald", "sky", "violet", "rose"];
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -72,6 +71,10 @@ function navigate(view: View, date: Date, dir: 1 | -1): Date {
 }
 
 export default function CalendarPage() {
+  const audience = useDashboardAudience();
+  const { data: me } = useMe(audience);
+  const todayStr = venueToday(0, me && "tenant" in me ? me.tenant.timezone : undefined);
+  const today = new Date(todayStr + "T00:00:00");
   const [view,         setView]         = useState<View>("month");
   const [currentDate,  setCurrentDate]  = useState(today);
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -92,7 +95,7 @@ export default function CalendarPage() {
   // The month plus a week either side, so the grid's spill-over days and week view are covered (API max 62 days).
   const monthStart = `${year}-${pad(month)}-01`;
   const monthEnd   = addDays(`${month === 12 ? year + 1 : year}-${pad(month === 12 ? 1 : month + 1)}-01`, -1);
-  const { data, isLoading } = useSlotCalendar({
+  const { data, isLoading, isError, refetch } = useSlotCalendar({
     from: addDays(monthStart, -7),
     to: addDays(monthEnd, 7),
     groundId: groundFilter === "all" ? undefined : groundFilter,
@@ -137,7 +140,9 @@ export default function CalendarPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Booking Calendar</h1>
-          <p className="text-sm text-muted-foreground">Visual overview of all ground bookings</p>
+          <p className="text-sm text-muted-foreground">
+            See bookings and slot availability for your grounds.
+          </p>
         </div>
         <Button variant="outline" size="sm" asChild>
           <Link href="/dashboard/bookings">
@@ -145,6 +150,13 @@ export default function CalendarPage() {
           </Link>
         </Button>
       </div>
+
+      {isError && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
+          <p>Couldn’t load the calendar.</p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>Try again</Button>
+        </div>
+      )}
 
       {/* Controls bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">

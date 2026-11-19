@@ -9,8 +9,8 @@ interface Stat { Icon: LucideIcon; value: string; label: string }
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** Four at-a-glance facts straight under the hero: the one ground's, or the whole venue's. */
-export async function StatsStrip() {
-  const grounds = await listPublicGrounds();
+export async function StatsStrip({ slug }: { slug?: string } = {}) {
+  const grounds = await listPublicGrounds({}, slug);
   if (grounds.length === 0) return null;
 
   const hours = `${pad(Math.min(...grounds.map((g) => g.openHour)))}–${pad(Math.max(...grounds.map((g) => g.closeHour)))}`;

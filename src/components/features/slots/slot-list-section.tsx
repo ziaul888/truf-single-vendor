@@ -28,7 +28,7 @@ const PAGE_SIZE = 10;
 export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
   const { data: me } = useMe(useDashboardAudience());
   const [groundId, setGroundId] = useState("all");
-  const [date,     setDate]     = useState(() => venueToday(0, me?.role === "owner" ? me.tenant.timezone : undefined));
+  const [date,     setDate]     = useState(() => venueToday(0, me && "tenant" in me ? me.tenant.timezone : undefined));
   const [status,   setStatus]   = useState<SlotStatus | "all">("all");
   const [page,     setPage]     = useState(1);
   // Ticked slot ids on this page; cleared whenever the filters or page change.

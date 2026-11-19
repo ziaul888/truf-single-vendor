@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { useDashboardApi } from "./useDashboardApi";
 import type { Customer, CustomerDetail, CustomerPage, CustomerSort, CustomerTag } from "@/types/booking";
 
 export type { Customer, CustomerDetail };
@@ -17,11 +17,12 @@ export interface CustomerFilters {
 const CUSTOMERS_KEY = ["customers"] as const;
 
 export function useCustomers(filters: CustomerFilters = {}, { enabled = true } = {}) {
+  const { client, scope } = useDashboardApi();
   return useQuery<CustomerPage>({
-    queryKey: [...CUSTOMERS_KEY, "list", filters],
+    queryKey: [...scope, ...CUSTOMERS_KEY, "list", filters],
     queryFn: async () => {
       const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== undefined && v !== ""));
-      return (await api.get("/admin/customers", { params })).data.data;
+      return (await client.get("/admin/customers", { params })).data.data;
     },
     placeholderData: keepPreviousData,
     enabled,
@@ -29,42 +30,50 @@ export function useCustomers(filters: CustomerFilters = {}, { enabled = true } =
 }
 
 export function useCustomerDetail(id: string | undefined) {
+  const { client, scope } = useDashboardApi();
   return useQuery<CustomerDetail>({
-    queryKey: [...CUSTOMERS_KEY, "detail", id],
-    queryFn: async () => (await api.get(`/admin/customers/${id}`)).data.data,
+    queryKey: [...scope, ...CUSTOMERS_KEY, "detail", id],
+    queryFn: async () => (await client.get(`/admin/customers/${id}`)).data.data,
     enabled: !!id,
     retry: false,
   });
 }
 
 /** Finds a customer by phone (any format) to fill the New Booking form; null when unknown. */
-export async function findCustomerByPhone(phone: string) {
-  const { data } = await api.get("/admin/customers/search", { params: { phone } });
-  return data.data as Pick<Customer, "id" | "name" | "phone" | "email"> | null;
+export function useFindCustomerByPhone() {
+  const { client } = useDashboardApi();
+  return async (phone: string) => {
+    const { data } = await client.get("/admin/customers/search", { params: { phone } });
+    return data.data as Pick<Customer, "id" | "name" | "phone" | "email"> | null;
+  };
 }
 
 function useCustomerMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) {
+  const { scope } = useDashboardApi();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: fn,
-    onSuccess: () => qc.invalidateQueries({ queryKey: CUSTOMERS_KEY }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [...scope, ...CUSTOMERS_KEY] }),
   });
 }
 
 export function useCreateCustomer() {
+  const { client } = useDashboardApi();
   return useCustomerMutation(async (body: { name: string; phone: string; email?: string; adminNote?: string }) =>
-    (await api.post("/admin/customers", body)).data.data as Customer);
+    (await client.post("/admin/customers", body)).data.data as Customer);
 }
 
 export function useUpdateCustomer() {
+  const { client } = useDashboardApi();
   return useCustomerMutation(
     async ({ id, ...body }: { id: string; name?: string; phone?: string; email?: string | null; adminNote?: string | null }) =>
-      (await api.patch(`/admin/customers/${id}`, body)).data.data as Customer,
+      (await client.patch(`/admin/customers/${id}`, body)).data.data as Customer,
   );
 }
 
 /** Admin only; soft delete. 409 CUSTOMER_HAS_UPCOMING_BOOKINGS. */
 export function useDeleteCustomer() {
+  const { client } = useDashboardApi();
   return useCustomerMutation(async (id: string) =>
-    (await api.delete(`/admin/customers/${id}`)).data.data as { deleted: true });
+    (await client.delete(`/admin/customers/${id}`)).data.data as { deleted: true });
 }

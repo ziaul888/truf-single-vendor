@@ -14,6 +14,7 @@ import { pageWindow } from "@/components/features/slots/slot-list-section";
 import { useSlotEvents } from "@/hooks/useSlots";
 import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useUsers } from "@/hooks/useUsers";
 import { toApiFailure } from "@/lib/api-error";
 import {
@@ -41,9 +42,9 @@ export default function SlotActivityPage() {
   const [page,     setPage]     = useState(1);
 
   const { data: grounds } = useGrounds();
-  const { data: me } = useMe();
+  const { data: me } = useMe(useDashboardAudience());
   // The staff list is admin-only, so managers don't get the "who" filter.
-  const staff = useUsers({ page: 1, limit: 100, search: "" }, { enabled: me?.role === "admin" });
+  const staff = useUsers({ page: 1, limit: 100, search: "" }, { enabled: me?.role === "admin" || me?.role === "owner" });
 
   // The API needs both dates or neither.
   const range = from && to ? { from, to } : {};

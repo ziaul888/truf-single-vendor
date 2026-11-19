@@ -44,6 +44,11 @@ export interface OwnerApplication {
   timezone: string;
   currency: string;
   billingInterval: "monthly" | "yearly" | null;
+  payment: {
+    method: "bkash" | "nagad" | "bank_transfer";
+    reference: string;
+    date: string;
+  } | null;
   plan: {
     id: string;
     versionId: string;

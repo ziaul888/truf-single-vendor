@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { useDashboardAudience } from "@/components/dashboard-audience";
+import { useDashboardApi } from "./useDashboardApi";
+import { useMe } from "./useMe";
 import { fromMinorUnits } from "@/lib/ground-format";
 import { slotEndHours, slotEndTime, slotStartTime, venueHourNow, venueToday } from "@/lib/slot-format";
 import type { Slot } from "@/types/slot";
@@ -15,14 +17,18 @@ export interface TimeSlot {
 
 /** A ground's open slots on a date, from turf-api, in the shape the booking form uses. */
 export function useAvailableSlots(groundId: string | undefined, date: string | undefined) {
+  const { client, scope } = useDashboardApi();
+  const { data: me } = useMe(useDashboardAudience());
+  const timezone = me && "tenant" in me ? me.tenant.timezone : undefined;
   return useQuery<TimeSlot[]>({
-    queryKey: ["slots", "booking-form", groundId, date],
+    queryKey: [...scope, "slots", "booking-form", groundId, date, timezone],
     queryFn: async () => {
-      const { data } = await api.get("/admin/slots", {
+      const { data } = await client.get("/admin/slots", {
         params: { groundId, date, status: "available", openDaysOnly: true, limit: 100 },
       });
       // A slot stays bookable after it starts, for walk-ins, until it ends.
-      const isOver = (s: Slot) => s.date === venueToday() && slotEndHours(s) <= venueHourNow();
+      const isOver = (s: Slot) =>
+        s.date === venueToday(0, timezone) && slotEndHours(s) <= venueHourNow(timezone);
       return (data.data.data as Slot[]).filter((s) => !isOver(s)).map((s) => ({
         id: s.id,
         startTime: slotStartTime(s),

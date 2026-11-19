@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { Check, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FORMATS } from "@/types/ground";

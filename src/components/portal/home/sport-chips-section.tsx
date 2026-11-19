@@ -1,11 +1,11 @@
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { listPublicGrounds } from "@/services/portal-grounds";
 import { SPORT_META, SPORTS } from "@/components/portal/sports";
 import type { WebsiteSections } from "@/validations/website-settings";
 import { HomeSection, SectionHeading } from "./home-section";
 
-export async function SportChipsSection({ content }: { content: WebsiteSections["sportChips"] }) {
-  const grounds = await listPublicGrounds();
+export async function SportChipsSection({ content, slug }: { content: WebsiteSections["sportChips"]; slug?: string }) {
+  const grounds = await listPublicGrounds({}, slug);
   // One ground means one chip: nothing to browse by sport.
   if (grounds.length === 1) return null;
   // All 7 sports with real counts; sports the venue doesn't offer yet are hidden once any ground exists.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { PortalLink as Link, useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { clearPaymentReturn, getPublicBooking, paidBeforeLeaving, PortalApiError } from "@/lib/portal-bookings";
 import type { PublicBooking } from "@/types/booking";
@@ -16,14 +16,15 @@ const NOT_FOUND_BODY = "Use the link in your email, or open it from My bookings.
 
 /** Loads the booking by its signed link and shows the view for its current state. */
 export function ConfirmationView({ id, token, venueName }: { id: string; token?: string; venueName: string }) {
+  const slug = useTurfPortal()?.slug;
   const queryClient = useQueryClient();
-  const queryKey = ["portal", "booking", id, token];
+  const queryKey = ["portal", "booking", slug ?? null, id, token];
   // Set when the customer just came back from Stripe (checkout or "Pay now"); read once.
   const [paidBefore] = useState(() => (typeof window === "undefined" ? null : paidBeforeLeaving(id)));
   // dataUpdatedAt is read so each poll re-renders; the poll count lives on the query state.
   const { data: booking, error, isPending, dataUpdatedAt, refetch } = useQuery({
     queryKey,
-    queryFn: () => getPublicBooking(id, token ?? ""),
+    queryFn: () => getPublicBooking(id, token ?? "", slug),
     enabled: !!token,
     // Right after Stripe redirects back the webhook may not have landed yet: poll ~20s.
     refetchInterval: (q) =>

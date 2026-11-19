@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlatformLoading, PlatformReadError } from "./platform-states";
 import { BillingEmpty, BillingPagination } from "./billing-parts";
+import { PlatformPaymentInstructions } from "./platform-payment-instructions";
 export function PlatformPlansView() {
   const me = usePlatformMe(),
     [search, setSearch] = useState(""),
@@ -36,6 +37,7 @@ export function PlatformPlansView() {
           </Link>
         </Button>
       </div>
+      <PlatformPaymentInstructions userId={me.data?.id} />
       <div className="bg-card rounded-2xl border p-4">
         <Label className="sr-only" htmlFor="plan-search">
           Search plans
@@ -84,7 +86,7 @@ export function PlatformPlansView() {
                     <p className="text-muted-foreground mt-1 text-xs break-all">{plan.code}</p>
                   </div>
                   <span className="bg-success/10 shrink-0 rounded-full px-2 py-1 text-xs">
-                    Available
+                    {plan.isActive ? "Available" : "Inactive"}
                   </span>
                 </div>
                 {plan.description && (
@@ -106,6 +108,12 @@ export function PlatformPlansView() {
                     </dd>
                   </div>
                 </dl>
+                <Link
+                  href="/saas#access"
+                  className="text-primary mt-5 inline-block text-sm underline underline-offset-4"
+                >
+                  View included features
+                </Link>
               </article>
             ))}
           </div>

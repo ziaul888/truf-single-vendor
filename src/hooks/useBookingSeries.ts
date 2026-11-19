@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { useDashboardApi } from "./useDashboardApi";
 import { useBookingMutation } from "@/hooks/useBookings";
 import type {
   BookingSeries, CreateSeriesInput, SeriesPatternInput, SeriesPaymentInput, SeriesPreview, StopSeriesInput,
@@ -15,9 +15,10 @@ const SERIES_KEY = ["booking-series"] as const;
  * changes; `input` null (pattern not complete yet) runs nothing.
  */
 export function useSeriesPreview(input: SeriesPatternInput | null) {
+  const { client, scope } = useDashboardApi();
   return useQuery<SeriesPreview>({
-    queryKey: [...SERIES_KEY, "preview", input],
-    queryFn: async () => (await api.post("/admin/booking-series/preview", input)).data.data,
+    queryKey: [...scope, ...SERIES_KEY, "preview", input],
+    queryFn: async () => (await client.post("/admin/booking-series/preview", input)).data.data,
     enabled: input !== null,
     placeholderData: keepPreviousData,
     retry: false,
@@ -25,9 +26,10 @@ export function useSeriesPreview(input: SeriesPatternInput | null) {
 }
 
 export function useBookingSeries(id: string | null | undefined) {
+  const { client, scope } = useDashboardApi();
   return useQuery<BookingSeries>({
-    queryKey: [...SERIES_KEY, "detail", id],
-    queryFn: async () => (await api.get(`/admin/booking-series/${id}`)).data.data,
+    queryKey: [...scope, ...SERIES_KEY, "detail", id],
+    queryFn: async () => (await client.get(`/admin/booking-series/${id}`)).data.data,
     enabled: !!id,
     retry: false,
   });
@@ -35,18 +37,21 @@ export function useBookingSeries(id: string | null | undefined) {
 
 /** Books every free date of the pattern. 409 NOTHING_TO_BOOK when none was free. */
 export function useCreateSeries() {
+  const { client } = useDashboardApi();
   return useBookingMutation(async (body: CreateSeriesInput) =>
-    (await api.post("/admin/booking-series", body)).data.data as BookingSeries);
+    (await client.post("/admin/booking-series", body)).data.data as BookingSeries);
 }
 
 /** Cash, bank transfer, bKash or Nagad against one month's due, or all of it. 400 AMOUNT_EXCEEDS_DUE. */
 export function useCollectSeriesPayment() {
+  const { client } = useDashboardApi();
   return useBookingMutation(async ({ id, ...body }: SeriesPaymentInput & { id: string }) =>
-    (await api.post(`/admin/booking-series/${id}/payments`, body)).data.data as BookingSeries);
+    (await client.post(`/admin/booking-series/${id}/payments`, body)).data.data as BookingSeries);
 }
 
 /** Cancels the series' bookings from a date on (optionally refunding them). 409 SERIES_STOPPED. */
 export function useStopSeries() {
+  const { client } = useDashboardApi();
   return useBookingMutation(async ({ id, ...body }: StopSeriesInput & { id: string }) =>
-    (await api.post(`/admin/booking-series/${id}/stop`, body)).data.data as BookingSeries);
+    (await client.post(`/admin/booking-series/${id}/stop`, body)).data.data as BookingSeries);
 }

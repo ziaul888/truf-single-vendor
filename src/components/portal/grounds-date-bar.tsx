@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
+import { turfPortalPath } from "@/lib/turf-portal-path";
 import { CalendarDays, X } from "lucide-react";
 import { venueToday } from "@/lib/slot-format";
 import { groundsHref, type GroundsQuery } from "./grounds-query";
@@ -7,10 +8,10 @@ import { groundsHref, type GroundsQuery } from "./grounds-query";
  * Pick a day to see every ground's free slots. A plain GET form, so it works without
  * JavaScript; the current filters ride along as hidden fields.
  */
-export function GroundsDateBar({ query, filters }: { query: GroundsQuery; filters?: React.ReactNode }) {
+export function GroundsDateBar({ query, filters, slug, timezone }: { query: GroundsQuery; filters?: React.ReactNode; slug?: string; timezone?: string }) {
   return (
     // Phones: label and filter icon on the first row, date and button on the second. From sm: one wrapping row.
-    <form action="/grounds" className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap">
+    <form action={turfPortalPath(slug, "/grounds")} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap">
       <div className="flex items-center gap-2">
         <CalendarDays className="h-4 w-4 text-primary" />
         <label htmlFor="grounds-date" className="text-sm font-medium">
@@ -24,8 +25,8 @@ export function GroundsDateBar({ query, filters }: { query: GroundsQuery; filter
           type="date"
           name="date"
           required
-          min={venueToday()}
-          defaultValue={query.date ?? venueToday()}
+          min={venueToday(0, timezone)}
+          defaultValue={query.date ?? venueToday(0, timezone)}
           className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-base pointer-coarse:min-h-11 sm:flex-none sm:text-sm"
         />
         {(["sport", "format", "surface"] as const).map((k) =>

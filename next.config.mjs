@@ -24,6 +24,11 @@ const nextConfig = {
       "/confirmation/:path*",
       "/my-bookings",
       "/account",
+      "/turf/:slug/sign-in",
+      "/turf/:slug/checkout",
+      "/turf/:slug/confirmation/:path*",
+      "/turf/:slug/my-bookings",
+      "/turf/:slug/account",
       "/api/:path*",
     ].map((source) => ({ source, headers: noindex }));
   },
@@ -34,12 +39,21 @@ const nextConfig = {
   // Staff and platform calls stay on this origin; Next forwards them to turf-api
   // so their separate httpOnly session cookies remain first-party.
   async rewrites() {
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: `${process.env.API_PROXY_TARGET ?? "http://localhost:4000"}/api/v1/:path*`,
-      },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: "/turf/:slug/:path*",
+          destination: "/:path*",
+          has: [{ type: "header", key: "x-turf-portal-slug" }],
+        },
+      ],
+      afterFiles: [
+        {
+          source: "/api/v1/:path*",
+          destination: `${process.env.API_PROXY_TARGET ?? "http://localhost:4000"}/api/v1/:path*`,
+        },
+      ],
+    };
   },
 };
 

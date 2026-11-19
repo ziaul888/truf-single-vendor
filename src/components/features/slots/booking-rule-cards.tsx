@@ -55,7 +55,7 @@ export function GenerationSettingsCard({ form }: { form: Form }) {
 }
 
 /** Cancellation cutoff, plus what blocking a slot does. */
-export function BookingBehaviourCard({ form }: { form: Form }) {
+export function BookingBehaviourCard({ form, showBlocking = true }: { form: Form; showBlocking?: boolean }) {
   return (
     <RuleCard title="Booking behaviour" icon={Shield}>
       <NumberSetting
@@ -67,11 +67,11 @@ export function BookingBehaviourCard({ form }: { form: Form }) {
         error={form.formState.errors.cancellationCutoffHours?.message}
         registration={form.register("cancellationCutoffHours")}
       />
-      <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-700 dark:text-amber-400 space-y-1">
+      {showBlocking && <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-700 dark:text-amber-400 space-y-1">
         <p>· Blocking a booked slot cancels its booking with a full refund.</p>
         <p>· Unblocking a slot makes it bookable again straight away.</p>
         <p>· Slots that have already started can&apos;t be blocked or unblocked.</p>
-      </div>
+      </div>}
     </RuleCard>
   );
 }

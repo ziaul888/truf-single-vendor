@@ -1,7 +1,7 @@
 "use client";
 
 import type { InputHTMLAttributes } from "react";
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { Banknote, CreditCard, Smartphone } from "lucide-react";
 import type { CheckoutMethod, CheckoutOptions } from "@/types/booking";
 

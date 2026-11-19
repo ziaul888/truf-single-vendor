@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useGround } from "@/hooks/useGrounds";
 import { useResendConfirmation } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
@@ -101,6 +102,7 @@ export function BookingDetailSidebar({
   booking, onCancelClick, onCollectClick, onNoShowClick, onUndoNoShowClick,
 }: BookingDetailSidebarProps) {
   const resend = useResendConfirmation();
+  const canSendEmail = useDashboardAudience() === "staff";
   // Not while a bKash / Nagad payment is waiting to be verified: verify or reject it first.
   const canCollect = canCollectPayment(booking);
 
@@ -132,7 +134,7 @@ export function BookingDetailSidebar({
             </Button>
           )}
           {/* No email on the booking: nothing to resend to (the API says 409 NO_EMAIL). */}
-          {booking.status === "confirmed" && booking.contact.email && (
+          {canSendEmail && booking.status === "confirmed" && booking.contact.email && (
             <Button variant="outline" className="w-full justify-start gap-2" onClick={handleResend} disabled={resend.isPending}>
               <Mail className="h-4 w-4" />{resend.isPending ? "Sending…" : "Resend Confirmation Email"}
             </Button>

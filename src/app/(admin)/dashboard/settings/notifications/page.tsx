@@ -7,6 +7,7 @@ import { Loader2, Save, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useNotificationSettings, useUpdateNotifications } from "@/hooks/useSettings";
 import { applyApiErrors, toApiFailure } from "@/lib/api-error";
 import { SettingsPageHeader } from "@/components/features/settings/settings-page-header";
@@ -27,8 +28,9 @@ const DESCRIPTION = "Who gets which emails, and how they're sent";
 export default function NotificationsSettingsPage() {
   const { data: settings, isLoading, isError, refetch } = useNotificationSettings();
   const save = useUpdateNotifications();
-  const { data: me } = useMe();
-  const canEdit = me?.role === "admin";
+  const audience = useDashboardAudience();
+  const { data: me } = useMe(audience);
+  const canEdit = me?.role === "admin" || me?.role === "owner";
 
   const form = useForm<NotificationsForm>({
     resolver: zodResolver(NotificationsSchema) as Resolver<NotificationsForm>,
@@ -91,6 +93,7 @@ export default function NotificationsSettingsPage() {
         </SettingsPageHeader>
 
         {me && !canEdit && <ReadOnlyNotice />}
+        {audience === "owner" && <p className="text-muted-foreground text-sm">Save your email preferences for when turf notifications are available.</p>}
 
         <fieldset disabled={!canEdit} className="space-y-5">
           <EmailSenderSection form={form} email={settings.email} />
@@ -106,8 +109,7 @@ export default function NotificationsSettingsPage() {
         )}
       </form>
 
-      <TestEmailBox />
-      <EmailLogTable />
+      {audience === "staff" && <><TestEmailBox /><EmailLogTable /></>}
     </div>
   );
 }

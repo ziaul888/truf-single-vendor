@@ -148,7 +148,7 @@ function GroundRow({
 export function TodayGrounds() {
   const { data, isLoading, isError, isFetching, refetch } = useDashboardToday();
   const { data: me } = useMe(useDashboardAudience());
-  const timeZone = me?.role === "owner" ? me.tenant.timezone : undefined;
+  const timeZone = me && "tenant" in me ? me.tenant.timezone : undefined;
   const [collecting, setCollecting] = useState<string | null>(null);
 
   return (

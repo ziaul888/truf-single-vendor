@@ -1,9 +1,11 @@
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
+import { turfPortalPath } from "@/lib/turf-portal-path";
 import { FallbackImage } from "@/components/fallback-image";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getPublicSlots, listPublicGrounds } from "@/services/portal-grounds";
 import { getPublicVenue } from "@/services/website-settings";
+import { getTurfPortalSlug } from "@/services/turf-portal-request";
 import { socialMetadata } from "@/lib/seo";
 import {
   parseGroundsQuery,
@@ -18,7 +20,8 @@ import { GroundFreeSlots } from "@/components/portal/ground-free-slots";
 import type { PublicSlot } from "@/types/slot";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { name } = await getPublicVenue();
+  const slug = await getTurfPortalSlug();
+  const { name } = await getPublicVenue(slug);
   const description = `Browse the grounds at ${name} and book an hourly slot.`;
   return { title: "Our grounds", description, ...socialMetadata({ title: `Our grounds · ${name}`, description, siteName: name }) };
 }
@@ -26,18 +29,20 @@ export async function generateMetadata(): Promise<Metadata> {
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function GroundsPage({ searchParams }: { searchParams: SearchParams }) {
+  const slug = await getTurfPortalSlug();
   const query = parseGroundsQuery(await searchParams);
   // A venue with one ground has nothing to choose from: go straight to its slots (keeping the date).
-  const all = await listPublicGrounds();
-  if (all.length === 1) redirect(`/grounds/${all[0].id}${query.date ? `?date=${query.date}` : ""}`);
+  const all = await listPublicGrounds({}, slug);
+  if (all.length === 1) redirect(turfPortalPath(slug, `/grounds/${all[0].id}${query.date ? `?date=${query.date}` : ""}`));
   const { sport, format, surface } = query;
-  const [list, venue] = await Promise.all([listPublicGrounds({ sport, format, surface }), getPublicVenue()]);
+  const [list, venue] = await Promise.all([listPublicGrounds({ sport, format, surface }, slug), getPublicVenue(slug)]);
   const sorted = sortGrounds(list, query.sort);
   const filtered = Boolean(sport || format || surface);
   const slotsByGround = query.date
     ? await slotsFor(
         sorted.map((g) => g.id),
-        query.date
+        query.date,
+        slug
       )
     : null;
   // With a date, grounds that still have free slots come first (keeping the chosen sort within each group).
@@ -51,7 +56,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
       {/* Phones get the filter icon inside the date bar; from md the panel sits in its own column. */}
       <GroundsFilterSidebar query={query} layout="panel" />
       <div>
-        <GroundsDateBar query={query} filters={<GroundsFilterSidebar query={query} layout="menu" />} />
+        <GroundsDateBar query={query} slug={slug} timezone={slug ? venue.locale.timezone : undefined} filters={<GroundsFilterSidebar query={query} layout="menu" />} />
         <div className="mt-4">
           <ResultsHeader count={grounds.length} query={query} venueName={venue.name} />
         </div>
@@ -142,7 +147,7 @@ function ResultsHeader({ count, query, venueName }: { count: number; query: Grou
 }
 
 /** Each ground's slots on one day, fetched in parallel. */
-async function slotsFor(groundIds: string[], date: string): Promise<Map<string, PublicSlot[]>> {
-  const lists = await Promise.all(groundIds.map((id) => getPublicSlots(id, date)));
+async function slotsFor(groundIds: string[], date: string, slug?: string): Promise<Map<string, PublicSlot[]>> {
+  const lists = await Promise.all(groundIds.map((id) => getPublicSlots(id, date, slug)));
   return new Map(groundIds.map((id, i) => [id, lists[i]]));
 }

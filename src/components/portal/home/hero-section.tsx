@@ -2,6 +2,7 @@ import { FallbackImage } from "@/components/fallback-image";
 import { Calendar, CircleDot, Grid3x3, Search } from "lucide-react";
 import { listPublicGrounds } from "@/services/portal-grounds";
 import { addDays, venueHourNow, venueToday } from "@/lib/slot-format";
+import { turfPortalPath } from "@/lib/turf-portal-path";
 import { SPORT_META, SPORTS, SURFACE_LABEL } from "@/components/portal/sports";
 import { HeroMedia } from "./hero-media";
 import { SearchForm } from "./search-form";
@@ -12,8 +13,10 @@ import type { WebsiteSettings } from "@/validations/website-settings";
  * The website's hero photo with a booking card floating at its bottom. With one ground,
  * the card shows that ground's details and the search asks only for a date.
  */
-export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["hero"]; venueName: string }) {
-  const grounds = await listPublicGrounds();
+export async function HeroSection({ hero, venueName, slug, timezone }: {
+  hero: WebsiteSettings["hero"]; venueName: string; slug?: string; timezone?: string;
+}) {
+  const grounds = await listPublicGrounds({}, slug);
   const single = grounds.length === 1 ? grounds[0] : null;
 
   return (
@@ -30,10 +33,10 @@ export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["
         <HeroMedia videoUrl={hero.videoUrl} posterUrl={hero.imageUrl} />
         {/* Light at the top so the photo shows, darker at the bottom behind the card */}
         <div className="absolute inset-0 bg-linear-to-b from-transparent via-sidebar/10 to-sidebar/70" />
-        <OpenNow grounds={grounds} />
+        <OpenNow grounds={grounds} timezone={timezone} />
 
         <div className="relative w-full px-4 pb-4 sm:px-6 sm:pb-10 lg:px-8">
-          <BookingCard grounds={grounds} single={single} venueName={venueName} />
+          <BookingCard grounds={grounds} single={single} venueName={venueName} slug={slug} timezone={timezone} />
         </div>
       </div>
     </section>
@@ -43,11 +46,11 @@ export async function HeroSection({ hero, venueName }: { hero: WebsiteSettings["
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** A glass pill on the photo: is the venue taking bookings right now (venue time), and until when. */
-function OpenNow({ grounds }: { grounds: Ground[] }) {
+function OpenNow({ grounds, timezone }: { grounds: Ground[]; timezone?: string }) {
   if (grounds.length === 0) return null;
   const opens = Math.min(...grounds.map((g) => g.openHour));
   const closes = Math.max(...grounds.map((g) => g.closeHour));
-  const now = venueHourNow();
+  const now = venueHourNow(timezone);
   const open = now >= opens && now < closes;
   return (
     <span className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-card/80 px-3 py-1.5 text-xs font-semibold backdrop-blur-md sm:left-6 sm:top-6 lg:left-8">
@@ -77,12 +80,14 @@ function cardSummary(grounds: Ground[], single: Ground | null, venueName: string
  * Opens /grounds with every matching ground's free slots for that day. With one ground, sport and
  * size would filter nothing, so it asks only for the date. Dates stop at the 7 days the slot picker shows.
  */
-function BookingCard({ grounds, single, venueName }: { grounds: Ground[]; single: Ground | null; venueName: string }) {
-  const today = venueToday();
+function BookingCard({ grounds, single, venueName, slug, timezone }: {
+  grounds: Ground[]; single: Ground | null; venueName: string; slug?: string; timezone?: string;
+}) {
+  const today = venueToday(0, timezone);
   const { title, subtitle, price, from } = cardSummary(grounds, single, venueName);
   return (
     <SearchForm
-      action={single ? `/grounds/${single.id}` : "/grounds"}
+      action={turfPortalPath(slug, single ? `/grounds/${single.id}` : "/grounds")}
       className="mx-auto max-w-3xl rounded-3xl border border-sidebar-foreground/20 bg-card/85 p-4 shadow-2xl backdrop-blur-xl sm:p-5"
     >
       <div className="mb-3 flex items-end justify-between gap-3">

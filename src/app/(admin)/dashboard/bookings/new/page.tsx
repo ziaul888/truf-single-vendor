@@ -20,7 +20,7 @@ import { takaLabel } from "@/components/features/bookings/booking-status-helpers
 import { useGrounds } from "@/hooks/useGrounds";
 import { useAvailableSlots } from "@/hooks/useAddBooking";
 import { useCreateBooking } from "@/hooks/useBookings";
-import { useCheckoutOptions } from "@/hooks/useCheckoutOptions";
+import { useStaffBookingOptions } from "@/hooks/useCheckoutOptions";
 import { bookingSlotLimit } from "@/lib/booking-limits";
 import { useCreateSeries, useSeriesPreview } from "@/hooks/useBookingSeries";
 import { applyApiErrors, toApiFailure, type ApiFailure } from "@/lib/api-error";
@@ -79,7 +79,7 @@ export default function AddBookingPage() {
   const router = useRouter();
   const { data: grounds, isLoading: groundsLoading } = useGrounds();
   const createBooking = useCreateBooking();
-  const checkoutOptions = useCheckoutOptions();
+  const checkoutOptions = useStaffBookingOptions();
   const maxSlots = bookingSlotLimit(checkoutOptions.data);
   const [knownCustomer, setKnownCustomer] = useState<KnownCustomer | null>(null);
 

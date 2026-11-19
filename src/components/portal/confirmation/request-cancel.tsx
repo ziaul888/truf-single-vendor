@@ -1,5 +1,6 @@
 "use client";
 
+import { useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -19,8 +20,9 @@ export function RequestCancel({
   const [confirming, setConfirming] = useState(false);
   // No email on the booking: the answer shows here (and under My bookings) instead.
   const tellBy = booking.emailed === false ? "on this page" : "by email";
+  const slug = useTurfPortal()?.slug;
   const request = useMutation({
-    mutationFn: () => requestCancellation(booking.id, token),
+    mutationFn: () => requestCancellation(booking.id, token, slug),
     onSuccess: (updated) => { setConfirming(false); onRequested(updated); },
   });
 

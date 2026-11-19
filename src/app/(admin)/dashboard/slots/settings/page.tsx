@@ -8,6 +8,8 @@ import { ChevronLeft, Save, Bell, Loader2 } from "lucide-react";
 import { useSlotSettings } from "@/hooks/useSlots";
 import { useSlotSettingsForm } from "@/hooks/useSlotSettingsForm";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
+import { SettingsLoadError } from "@/components/features/settings/settings-load-state";
 import { SettingsSaveBar } from "@/components/features/settings/settings-save-actions";
 import { SettingToggle } from "@/components/features/slots/setting-fields";
 import { MultiSlotSettings } from "@/components/features/slots/multi-slot-settings";
@@ -18,9 +20,10 @@ import {
 
 // Venue-wide settings. Hours, slot length and prices are per ground (edit them on the ground).
 export default function SlotSettingsPage() {
-  const { data: settings, isLoading } = useSlotSettings();
-  const { data: me } = useMe();
-  const canEdit = me?.role === "admin";
+  const { data: settings, isLoading, isError, refetch } = useSlotSettings();
+  const audience = useDashboardAudience();
+  const { data: me } = useMe(audience);
+  const canEdit = me?.role === "admin" || me?.role === "owner";
   const { form, submit, saving } = useSlotSettingsForm(settings);
   const { isDirty } = form.formState;
 
@@ -31,6 +34,8 @@ export default function SlotSettingsPage() {
       </div>
     );
   }
+
+  if (isError || !settings) return <SettingsLoadError what="slot settings" onRetry={() => refetch()} />;
 
   return (
     <form onSubmit={submit} className="space-y-5">

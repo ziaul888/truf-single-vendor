@@ -1,3 +1,18 @@
+import type {
+  BillingInterval,
+  PlatformPlan,
+  SubscriptionPaymentMethod,
+} from "@/types/platform-billing";
+
+export const subscriptionMethodLabels: Record<SubscriptionPaymentMethod, string> = {
+  bkash: "bKash",
+  nagad: "Nagad",
+  bank_transfer: "Bank transfer",
+};
+
+export const planCharge = (plan: PlatformPlan, interval: BillingInterval) =>
+  interval === "yearly" ? plan.yearlyAmount : plan.monthlyAmount;
+
 /** BDT has 100 poisha; parse text without floating-point multiplication of fractions. */
 export function bdtMinorUnits(value: string) {
   const input = value.trim();

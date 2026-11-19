@@ -14,7 +14,6 @@ export default function SlotsPage() {
   const [blockOpen,    setBlockOpen]    = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const audience = useDashboardAudience();
-  const tenant = audience === "owner";
   const { data: me } = useMe(audience);
   // Managers can block and unblock; only admins generate slots.
   const canGenerate = me?.role === "admin" || me?.role === "owner";
@@ -26,13 +25,13 @@ export default function SlotsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Slot management</h1>
           <p className="text-muted-foreground text-sm">
-            {tenant ? "View and generate slots for your grounds" : "View, generate and block slots per ground"}
+            View, generate and block slots per ground
           </p>
         </div>
         <div className="flex gap-2">
-          {!tenant && <Button variant="outline" onClick={() => setBlockOpen(true)}>
+          <Button variant="outline" onClick={() => setBlockOpen(true)}>
             <Ban className="mr-1.5 h-4 w-4" /> Block slot
-          </Button>}
+          </Button>
           {canGenerate && (
             <Button onClick={() => setGenerateOpen(true)}>
               <Zap className="mr-1.5 h-4 w-4" /> Generate slots
@@ -41,10 +40,10 @@ export default function SlotsPage() {
         </div>
       </div>
 
-      <SlotListSection readOnly={tenant} />
+      <SlotListSection />
 
       {/* Block slot drawer */}
-      {!tenant && <Sheet open={blockOpen} onOpenChange={setBlockOpen}>
+      <Sheet open={blockOpen} onOpenChange={setBlockOpen}>
         <SheetContent className="w-full max-w-md">
           <SheetHeader>
             <SheetTitle>Block a slot</SheetTitle>
@@ -53,7 +52,7 @@ export default function SlotsPage() {
             <BlockSlotForm onSuccess={() => setBlockOpen(false)} compact />
           </SheetBody>
         </SheetContent>
-      </Sheet>}
+      </Sheet>
 
       {/* Generate slots drawer */}
       <Sheet open={generateOpen} onOpenChange={setGenerateOpen}>

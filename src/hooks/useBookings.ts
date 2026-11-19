@@ -1,7 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { useDashboardApi } from "./useDashboardApi";
 import { staffSlotRequest } from "@/lib/booking-requests";
-import { useDashboardAudience } from "@/components/dashboard-audience";
 import type {
   Booking,
   BookingDetail,
@@ -45,19 +44,21 @@ const cleanParams = (filters: object) =>
 
 /** Admin bookings list. `counts` ignore the status filter (stat cards). */
 export function useBookings(filters: BookingFilters = {}, { enabled = true } = {}) {
+  const { client, scope } = useDashboardApi();
   return useQuery<BookingPage>({
-    queryKey: [...BOOKINGS_KEY, "list", filters],
+    queryKey: [...scope, ...BOOKINGS_KEY, "list", filters],
     queryFn: async () =>
-      (await api.get("/admin/bookings", { params: cleanParams(filters) })).data.data,
+      (await client.get("/admin/bookings", { params: cleanParams(filters) })).data.data,
     placeholderData: keepPreviousData,
     enabled,
   });
 }
 
 export function useBookingDetail(id: string | undefined) {
+  const { client, scope } = useDashboardApi();
   return useQuery<BookingDetail>({
-    queryKey: [...BOOKINGS_KEY, "detail", id],
-    queryFn: async () => (await api.get(`/admin/bookings/${id}`)).data.data,
+    queryKey: [...scope, ...BOOKINGS_KEY, "detail", id],
+    queryFn: async () => (await client.get(`/admin/bookings/${id}`)).data.data,
     enabled: !!id,
     retry: false,
   });
@@ -65,13 +66,10 @@ export function useBookingDetail(id: string | undefined) {
 
 /** The next pending or confirmed bookings (dashboard home). */
 export function useUpcomingBookings(limit = 5) {
-  const audience = useDashboardAudience();
+  const { client, scope } = useDashboardApi();
   return useQuery<Booking[]>({
-    queryKey: [audience, ...BOOKINGS_KEY, "upcoming", limit],
-    queryFn: async () =>
-      audience === "owner"
-        ? []
-        : (await api.get("/admin/bookings/upcoming", { params: { limit } })).data.data,
+    queryKey: [...scope, ...BOOKINGS_KEY, "upcoming", limit],
+    queryFn: async () => (await client.get("/admin/bookings/upcoming", { params: { limit } })).data.data,
   });
 }
 
@@ -80,6 +78,7 @@ export function useUpcomingBookings(limit = 5) {
  * so refresh them all.
  */
 export function useBookingMutation<TVars, TResult>(fn: (vars: TVars) => Promise<TResult>) {
+  const { scope } = useDashboardApi();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: fn,
@@ -91,8 +90,9 @@ export function useBookingMutation<TVars, TResult>(fn: (vars: TVars) => Promise<
         ["customers"],
         ["dashboard"],
         ["booking-series"],
+        ["reports"],
       ]) {
-        qc.invalidateQueries({ queryKey: key });
+        qc.invalidateQueries({ queryKey: [...scope, ...key] });
       }
     },
   });
@@ -100,9 +100,10 @@ export function useBookingMutation<TVars, TResult>(fn: (vars: TVars) => Promise<
 
 /** Staff booking: walk-in or phone. Price is the slot's price, no service fee. */
 export function useCreateBooking() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async ({ slotIds, ...body }: CreateBookingInput) =>
-      (await api.post("/admin/bookings", { ...body, ...staffSlotRequest(slotIds) })).data
+      (await client.post("/admin/bookings", { ...body, ...staffSlotRequest(slotIds) })).data
         .data as Booking
   );
 }
@@ -112,6 +113,7 @@ export function useCreateBooking() {
  * bookings (marks their pending payment received). Portal card bookings confirm by payment.
  */
 export function useConfirmBooking() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async ({
       id,
@@ -122,7 +124,7 @@ export function useConfirmBooking() {
       method?: OfflineMethod;
       reference?: string;
       notifyCustomer?: boolean;
-    }) => (await api.post(`/admin/bookings/${id}/confirm`, body)).data.data as Booking
+    }) => (await client.post(`/admin/bookings/${id}/confirm`, body)).data.data as Booking
   );
 }
 
@@ -131,6 +133,7 @@ export function useConfirmBooking() {
  * becomes failed). Card payments are refunded through Stripe; cash, bank, bKash and Nagad are marked refunded.
  */
 export function useCancelBooking() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async ({
       id,
@@ -141,7 +144,7 @@ export function useCancelBooking() {
       reason?: string;
       notifyCustomer?: boolean;
       rejectWalletPayment?: boolean;
-    }) => (await api.post(`/admin/bookings/${id}/cancel`, body)).data.data as Booking
+    }) => (await client.post(`/admin/bookings/${id}/cancel`, body)).data.data as Booking
   );
 }
 
@@ -150,17 +153,19 @@ export function useCancelBooking() {
  * the due is written off. The shared refresh already covers the dashboard's attention cards.
  */
 export function useMarkNoShow() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async ({ id, ...body }: { id: string; reason?: string }) =>
-      (await api.post(`/admin/bookings/${id}/no-show`, body)).data.data as Booking
+      (await client.post(`/admin/bookings/${id}/no-show`, body)).data.data as Booking
   );
 }
 
 /** Back to completed (slot ended) or confirmed; the due comes back. */
 export function useUndoNoShow() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async (id: string) =>
-      (await api.post(`/admin/bookings/${id}/undo-no-show`)).data.data as Booking
+      (await client.post(`/admin/bookings/${id}/undo-no-show`)).data.data as Booking
   );
 }
 
@@ -169,14 +174,16 @@ export function useUndoNoShow() {
  * The shared refresh also covers the dashboard's attention cards.
  */
 export function useMarkRefundSent() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async ({ id, ...body }: { id: string; note?: string }) =>
-      (await api.post(`/admin/bookings/${id}/refund-sent`, body)).data.data as Booking
+      (await client.post(`/admin/bookings/${id}/refund-sent`, body)).data.data as Booking
   );
 }
 
 /** Records cash, a bank transfer, bKash or Nagad against a booking (collecting a due amount). */
 export function useRecordPayment() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async ({
       id,
@@ -187,12 +194,13 @@ export function useRecordPayment() {
       method: OfflineMethod;
       reference?: string;
       note?: string;
-    }) => (await api.post(`/admin/bookings/${id}/payments`, body)).data.data as Booking
+    }) => (await client.post(`/admin/bookings/${id}/payments`, body)).data.data as Booking
   );
 }
 
 /** Notes and due date; `null` clears a field. */
 export function useUpdateBooking() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async ({
       id,
@@ -202,14 +210,15 @@ export function useUpdateBooking() {
       notes?: string | null;
       dueDate?: string | null;
       dueNote?: string | null;
-    }) => (await api.patch(`/admin/bookings/${id}`, body)).data.data as Booking
+    }) => (await client.patch(`/admin/bookings/${id}`, body)).data.data as Booking
   );
 }
 
 /** `sent: false` when email isn't configured on the server. */
 export function useResendConfirmation() {
+  const { client } = useDashboardApi();
   return useBookingMutation(
     async (id: string) =>
-      (await api.post(`/admin/bookings/${id}/resend-confirmation`)).data.data as { sent: boolean }
+      (await client.post(`/admin/bookings/${id}/resend-confirmation`)).data.data as { sent: boolean }
   );
 }

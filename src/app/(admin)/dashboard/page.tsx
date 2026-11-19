@@ -10,14 +10,12 @@ import {
   ChevronDown,
   Clock,
   MapPin,
-  MapPinPlus,
   TrendingUp,
   Users,
   Wallet,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useDashboardAudience } from "@/components/dashboard-audience";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDashboardStats, useUpcomingBookings } from "@/hooks/useDashboard";
 import { slotPriceLabel } from "@/lib/slot-format";
@@ -36,7 +34,6 @@ import { UpcomingList } from "@/components/features/dashboard/upcoming-list";
 import { CollectPaymentDialog } from "@/components/features/bookings/collect-payment-dialog";
 
 export default function DashboardPage() {
-  const tenant = useDashboardAudience() === "owner";
   const stats = useDashboardStats();
   const upcoming = useUpcomingBookings(5);
   const [collecting, setCollecting] = useState<Booking | null>(null);
@@ -49,20 +46,20 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {tenant ? "Manage your grounds and slot availability." : "Your bookings and priorities for today."}
+            Your bookings and priorities for today.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
           <Button asChild className="min-h-11">
-            <Link href={tenant ? "/dashboard/grounds/new" : "/dashboard/bookings/new"}>
-              {tenant ? <MapPinPlus /> : <CalendarPlus />}
-              {tenant ? "Add ground" : "New booking"}
+            <Link href="/dashboard/bookings/new">
+              <CalendarPlus />
+              New booking
             </Link>
           </Button>
           <Button variant="outline" asChild className="min-h-11">
-            <Link href={tenant ? "/dashboard/slots" : "/dashboard/bookings/calendar"}>
+            <Link href="/dashboard/bookings/calendar">
               <CalendarDays />
-              {tenant ? "Manage slots" : "Calendar"}
+              Calendar
             </Link>
           </Button>
         </div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { findCustomerByPhone } from "@/hooks/useCustomers";
+import { useFindCustomerByPhone } from "@/hooks/useCustomers";
 import { toApiFailure } from "@/lib/api-error";
 import type { AddBookingFormData } from "@/schemas";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ interface CustomerSectionProps {
 }
 
 export function CustomerSection({ form, onCustomerFound }: CustomerSectionProps) {
+  const findCustomerByPhone = useFindCustomerByPhone();
   const { register, setValue, clearErrors, formState: { errors } } = form;
   const [phoneSearch, setPhoneSearch] = useState("");
   const [searching, setSearching] = useState(false);

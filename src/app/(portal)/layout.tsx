@@ -1,5 +1,5 @@
-import type { Viewport } from "next";
-import Link from "next/link";
+import type { Metadata, Viewport } from "next";
+import AdminLink from "next/link";
 import { Facebook, Instagram, MessageCircle, Phone } from "lucide-react";
 import { getPublicWebsite } from "@/services/website-settings";
 import { bookingHref } from "@/services/portal-grounds";
@@ -10,17 +10,37 @@ import { MobileMenu } from "@/components/portal/mobile-menu";
 import { AdminDashboardLink } from "@/components/portal/admin-dashboard-link";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
 import { PortalTabBar } from "@/components/portal/portal-tab-bar";
+import { PortalLink as Link, TurfPortalScope } from "@/components/portal/turf-portal-scope";
+import { getTurfPortalSlug } from "@/services/turf-portal-request";
+import { turfPortalPath } from "@/lib/turf-portal-path";
+import { socialMetadata, venueDescription } from "@/lib/seo";
 
 /** The browser / status bar takes the header colour (the sidebar token is dark in every theme). */
 export const viewport: Viewport = { themeColor: "#110d0c" };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const slug = await getTurfPortalSlug();
+  if (!slug) return {};
+  const { venue } = await getPublicWebsite(slug);
+  const description = venueDescription(venue.name, venue.address);
+  return {
+    title: { default: venue.name, template: `%s · ${venue.name}` },
+    description,
+    alternates: { canonical: turfPortalPath(slug) },
+    ...socialMetadata({ title: venue.name, description, siteName: venue.name }),
+    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: venue.name },
+  };
+}
 
 /**
  * The portal follows the same theme as the admin (light / dark / pitch, from the theme toggle),
  * so every Tailwind token below resolves to the active theme in globals.css.
  */
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const [{ venue, social }, bookHref] = await Promise.all([getPublicWebsite(), bookingHref()]);
-  return (
+  const slug = await getTurfPortalSlug();
+  const { venue, social } = await getPublicWebsite(slug);
+  const bookHref = await bookingHref(slug);
+  const portal = (
     // Below lg, room at the bottom for a page's fixed action bar (`data-mobile-cta`) so it doesn't cover the footer;
     // while that bar is up, the phone tab bar (`data-portal-tabs`) steps aside for it.
     <div className="flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))] has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden">
@@ -30,6 +50,9 @@ export default async function PortalLayout({ children }: { children: React.React
       <PortalTabBar bookHref={bookHref} />
     </div>
   );
+  return slug
+    ? <TurfPortalScope slug={slug} timezone={venue.locale.timezone}>{portal}</TurfPortalScope>
+    : portal;
 }
 
 function PortalHeader({ venue, bookHref }: { venue: PublicVenue; bookHref: string }) {
@@ -117,12 +140,12 @@ function PortalFooter({
           )}
           {venue.email && <a href={`mailto:${venue.email}`} className="hover:text-accent">{venue.email}</a>}
           {process.env.NODE_ENV !== "production" && (
-            <Link
+            <AdminLink
               href="/login"
               className="rounded border border-accent/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-accent hover:bg-accent hover:text-accent-foreground"
             >
               dev · admin
-            </Link>
+            </AdminLink>
           )}
         </div>
         <span className="opacity-40">© {new Date().getFullYear()} {venue.name}</span>

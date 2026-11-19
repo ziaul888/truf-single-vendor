@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { getPublicVenue, getPublicWebsite } from "@/services/website-settings";
+import { getTurfPortalSlug } from "@/services/turf-portal-request";
 import { JsonLd } from "@/components/json-ld";
+import { turfPortalPath } from "@/lib/turf-portal-path";
 import { siteUrl } from "@/lib/site-url";
 import { socialMetadata, venueDescription } from "@/lib/seo";
 import { listPublicGrounds } from "@/services/portal-grounds";
@@ -12,20 +14,20 @@ import { AmenitiesSection } from "@/components/portal/home/amenities-section";
 import { HowItWorksSection } from "@/components/portal/home/how-it-works-section";
 import { VisitUsSection } from "@/components/portal/home/visit-us-section";
 
-// Rendered once a minute and served from the CDN in between. No `force-dynamic` (it would make every
-// fetch no-store) and no cookies on the page or layout, or it would render on every visit. An admin's
-// edit shows up within a minute.
+// Legacy venue content is cached. Published turf content is checked on each request.
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const venue = await getPublicVenue();
+  const slug = await getTurfPortalSlug();
+  const venue = await getPublicVenue(slug);
   const title = `${venue.name} · Book turf slots online`;
   const description = venueDescription(venue.name, venue.address);
   return { title: { absolute: title }, description, ...socialMetadata({ title, description, siteName: venue.name }) };
 }
 
 export default async function LandingPage() {
-  const [{ hero, venue, sections }, grounds] = await Promise.all([getPublicWebsite(), listPublicGrounds()]);
+  const slug = await getTurfPortalSlug();
+  const [{ hero, venue, sections }, grounds] = await Promise.all([getPublicWebsite(slug), listPublicGrounds({}, slug)]);
   // Sport chips only help when there is more than one ground to tell apart.
   const multi = grounds.length > 1;
   const origin = siteUrl().origin;
@@ -37,7 +39,7 @@ export default async function LandingPage() {
           "@type": "SportsActivityLocation",
           name: venue.name,
           description: venue.tagline || undefined,
-          url: origin,
+          url: slug ? `${origin}${turfPortalPath(slug)}` : origin,
           image: `${origin}/app-icon?size=512`,
           telephone: venue.phone || undefined,
           email: venue.email || undefined,
@@ -45,12 +47,12 @@ export default async function LandingPage() {
           hasMap: venue.mapUrl || undefined,
         }}
       />
-      <HeroSection hero={hero} venueName={venue.name} />
-      <StatsStrip />
-      {multi && sections.sportChips.enabled && <SportChipsSection content={sections.sportChips} />}
-      {sections.featuredGrounds.enabled && <FeaturedGroundsSection content={sections.featuredGrounds} />}
+      <HeroSection hero={hero} venueName={venue.name} slug={slug} timezone={slug ? venue.locale.timezone : undefined} />
+      <StatsStrip slug={slug} />
+      {multi && sections.sportChips.enabled && <SportChipsSection content={sections.sportChips} slug={slug} />}
+      {sections.featuredGrounds.enabled && <FeaturedGroundsSection content={sections.featuredGrounds} slug={slug} />}
       {sections.amenities.enabled && <AmenitiesSection content={sections.amenities} />}
-      {sections.howItWorks.enabled && <HowItWorksSection content={sections.howItWorks} />}
+      {sections.howItWorks.enabled && <HowItWorksSection content={sections.howItWorks} slug={slug} />}
       {sections.visitUs.enabled && <VisitUsSection content={sections.visitUs} venue={venue} />}
     </>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import { turfPortalPath } from "@/lib/turf-portal-path";
+import { useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -9,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Smartphone } from "lucide-react";
 import { PortalApiError, sendSignInCode, verifySignInCode } from "@/lib/portal-bookings";
 import { safeRedirectPath } from "@/lib/safe-redirect";
-import { CUSTOMER_SESSION_KEY } from "./use-customer-session";
+import { customerSessionKey } from "./use-customer-session";
 import { ProfileStep } from "./profile-step";
 
 const RESEND_AFTER_S = 60;
@@ -35,7 +37,11 @@ function messageFor(err: unknown) {
 /** Phone → SMS code → signed in. Returns to ?from= (same-site paths only). */
 export function SignInForm() {
   const router = useRouter();
-  const from = safeRedirectPath(useSearchParams().get("from"), "/my-bookings");
+  const slug = useTurfPortal()?.slug;
+  const target = safeRedirectPath(useSearchParams().get("from"), "/my-bookings");
+  const home = turfPortalPath(slug);
+  const sameTurf = target === home || target.startsWith(home + "/");
+  const from = turfPortalPath(slug, slug && target.startsWith("/turf/") && !sameTurf ? "/my-bookings" : target);
   const queryClient = useQueryClient();
   const [phone, setPhone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +60,7 @@ export function SignInForm() {
   async function send(number: string) {
     setError(null);
     try {
-      await sendSignInCode(number);
+      await sendSignInCode(number, slug);
       setPhone(number);
       setWait(RESEND_AFTER_S);
       codeForm.reset({ code: "" });
@@ -67,8 +73,8 @@ export function SignInForm() {
     if (!phone) return;
     setError(null);
     try {
-      const session = await verifySignInCode(phone, code);
-      queryClient.setQueryData(CUSTOMER_SESSION_KEY, session);
+      const session = await verifySignInCode(phone, code, slug);
+      queryClient.setQueryData(customerSessionKey(slug), session);
       if (session.needsProfile) setNeedsProfile(true);
       else finish();
     } catch (err) {

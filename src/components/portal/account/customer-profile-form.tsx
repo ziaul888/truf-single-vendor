@@ -1,5 +1,6 @@
 "use client";
 
+import { useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +10,7 @@ import { Loader2 } from "lucide-react";
 import { PortalApiError, saveCustomerProfile } from "@/lib/portal-bookings";
 import type { CustomerSession } from "@/types/booking";
 import { OptionalEmailSchema } from "@/validations/customer";
-import { CUSTOMER_SESSION_KEY } from "./use-customer-session";
+import { customerSessionKey } from "./use-customer-session";
 
 const ProfileSchema = z.object({
   name: z.string().trim().min(2, "Enter your name").max(100),
@@ -32,6 +33,7 @@ interface CustomerProfileFormProps {
 
 /** Name and email for the signed-in customer. Saving creates the customer record for a new number. */
 export function CustomerProfileForm({ initial, submitLabel, onSaved, children }: CustomerProfileFormProps) {
+  const slug = useTurfPortal()?.slug;
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const form = useForm<ProfileValues>({
@@ -43,8 +45,8 @@ export function CustomerProfileForm({ initial, submitLabel, onSaved, children }:
   async function save(values: ProfileValues) {
     setError(null);
     try {
-      const session = await saveCustomerProfile(values);
-      queryClient.setQueryData(CUSTOMER_SESSION_KEY, session);
+      const session = await saveCustomerProfile(values, slug);
+      queryClient.setQueryData(customerSessionKey(slug), session);
       // The saved details: a blank email keeps the one on file, so show that.
       form.reset({ name: session.name ?? values.name, email: session.email ?? "" });
       onSaved(session);

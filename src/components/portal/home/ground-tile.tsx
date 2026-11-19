@@ -1,5 +1,5 @@
 import { FallbackImage } from "@/components/fallback-image";
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormatBadge } from "@/components/portal/format-badge";

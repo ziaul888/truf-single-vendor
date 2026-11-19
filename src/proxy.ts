@@ -1,8 +1,32 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isTurfPortalSlug, TURF_PORTAL_HEADER, turfPortalSlugForPath } from "@/lib/turf-portal-path";
 
 const ADMIN_PREFIX = "/dashboard";
 const ADMIN_LOGIN = "/login";
 const ADMIN_HOSTS = new Set(["turfadmin-panel.vercel.app"]);
+const LOCAL_HOST = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i;
+
+function passToTurfPortal(req: NextRequest, slug: string) {
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set(TURF_PORTAL_HEADER, slug);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
+async function getLocalHomeTurf() {
+  try {
+    const api = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
+    const response = await fetch(new URL("/api/v1/turfs/default", api), {
+      cache: "no-store",
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!response.ok) return undefined;
+    const { data, success } = await response.json();
+    const slug = data?.slug;
+    return success && typeof slug === "string" && isTurfPortalSlug(slug) ? slug : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Route-group-aware auth gate.
@@ -11,8 +35,10 @@ const ADMIN_HOSTS = new Set(["turfadmin-panel.vercel.app"]);
  * Admin pages under (admin)/dashboard — require an admin JWT cookie.
  * /login — admin sign-in, always public.
  */
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const turfSlug = turfPortalSlugForPath(pathname);
+  if (turfSlug) return passToTurfPortal(req, turfSlug);
   const host = req.headers.get("host") ?? "";
   const isAdminHost = host.startsWith("admin.") || ADMIN_HOSTS.has(host);
   const platformRoot = host.startsWith("manage.") && pathname === "/";
@@ -38,7 +64,17 @@ export function proxy(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  if (pathname === "/" && LOCAL_HOST.test(host)) {
+    const slug = await getLocalHomeTurf();
+    if (slug) return passToTurfPortal(req, slug);
+  }
+
   if (!pathname.startsWith(ADMIN_PREFIX)) {
+    if (req.headers.has(TURF_PORTAL_HEADER)) {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.delete(TURF_PORTAL_HEADER);
+      return NextResponse.next({ request: { headers: requestHeaders } });
+    }
     return NextResponse.next();
   }
 
@@ -57,5 +93,8 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/platform/:path*"],
+  matcher: [
+    "/", "/dashboard/:path*", "/platform/:path*", "/turf/:path*", "/grounds/:path*",
+    "/checkout", "/confirmation/:path*", "/account", "/my-bookings", "/sign-in",
+  ],
 };

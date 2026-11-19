@@ -1,0 +1,31 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "full",
+  "scope": "page",
+  "shape": "Workbench",
+  "theme": "brand",
+  "axes": "light/grotesk-heavy/warm",
+  "hero": "Stage",
+  "nav": "edge-aligned",
+  "footer": "none",
+  "imagery": "screenshots 2 (capture.mjs)",
+  "photos": [],
+  "entry": "/saas",
+  "sections": [
+   "hero",
+   "rows",
+   "split",
+   "steps",
+   "switcher",
+   "band"
+  ],
+  "signature": "the turf booking site captured on desktop and phone",
+  "waived": [
+   "44c",
+   "77"
+  ],
+  "prompt": "turf owners apply for a SaaS subscription to run their turf",
+  "date": "2026-11-19"
+ }
+]

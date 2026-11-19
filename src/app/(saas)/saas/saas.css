@@ -1,0 +1,157 @@
+/* Hallmark · shape: Workbench · genre: modern-minimal · theme: brand · redesign: full · job: sign up
+ * paper: oklch(0.985 0.004 35) · accent: oklch(0.55 0.22 28) · display: Bricolage Grotesque · body: Inter · hero: Stage · nav: edge-aligned, wordmark with two links and two actions · footer: none, the close band ends the page · signature: the turf's own booking site, captured on desktop and phone
+ * axes: light/grotesk-heavy/warm · posture: red on actions only, gold on the step numerals · contrast: pass · fold: pass · imagery: screenshots 2 (capture.mjs) · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V4 · weakest: P, the page argues setup and honesty over hype; kept the "not available yet" row as a full row instead of a footnote */
+/* Hallmark · waive 44c · Stage visual bleeding off the outer edge · the booking site capture runs off the right edge so the turf's own site reads at full size */
+/* Hallmark · waive 77 · a band of one line and an action, once a page · the close repeats Apply now with the activation term, nothing else */
+/* Hallmark · dropped "Priced in BDT, Monthly or yearly, One turf per subscription" · 69 names it, the pricing line already says all three */
+/* Hallmark · reworded "Set up your venue, manage ground availability and give staff their own sign-ins. Start with a monthly or yearly subscription." to "Venue, grounds, slots and staff sign-ins, on a monthly or yearly plan." · 58 names the hero sentence */
+
+/* Brand tokens: Hallmark roles mapped onto the project's own names in globals.css. */
+.saas-page {
+  --color-paper: var(--background);
+  --color-paper-2: var(--muted);
+  --color-ink: var(--foreground);
+  --color-ink-2: var(--muted-foreground);
+  --color-rule: var(--border);
+  --color-accent: var(--primary);
+  --color-accent-ink: var(--primary-foreground);
+  --color-gold: var(--accent);
+  --color-focus: var(--ring);
+  --font-display: var(--font-saas-display), ui-sans-serif, system-ui, sans-serif;
+
+  --text-display: clamp(2.5rem, 1.15rem + 4.1vw, 5rem);
+  --text-section: clamp(2rem, 1.25rem + 2.4vw, 3.25rem);
+  --text-title: clamp(1.25rem, 1.1rem + 0.45vw, 1.5625rem);
+  --text-lead: clamp(1.125rem, 1.05rem + 0.3vw, 1.3125rem);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 120ms;
+
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+html:has(.saas-page),
+html:has(.saas-page) body {
+  overflow-x: clip;
+}
+
+.saas-display,
+.saas-section,
+.saas-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: inherit;
+  overflow-wrap: break-word;
+  min-width: 0;
+  text-wrap: balance;
+}
+
+.saas-display {
+  font-size: var(--text-display);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+.saas-section {
+  font-size: var(--text-section);
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+}
+
+.saas-title {
+  font-size: var(--text-title);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.saas-lead {
+  font-size: var(--text-lead);
+  line-height: 1.5;
+  color: var(--color-ink-2);
+  text-wrap: pretty;
+}
+
+.saas-numeral {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The dark band: ink paper, paper text, gold numerals. */
+.saas-band {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.saas-band .saas-numeral {
+  color: var(--color-gold);
+}
+
+.dark .saas-band .saas-numeral {
+  color: var(--color-accent);
+}
+
+.saas-band .saas-band-muted {
+  color: color-mix(in oklch, var(--color-paper) 72%, var(--color-ink));
+}
+
+/* Product captures: the theme's radius and an inset outline, no drawn chrome. */
+.saas-shot {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--color-paper-2);
+  box-shadow: 0 24px 48px -24px color-mix(in oklch, var(--color-ink) 35%, transparent);
+}
+
+.saas-shot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-ink) 12%, transparent);
+  pointer-events: none;
+}
+
+.saas-shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+
+/* States every control carries, on top of the Button component's own. */
+.saas-page :is(a, button):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  /* One ring: the outline replaces the Button component's box-shadow ring on this page. */
+  box-shadow: none;
+  transition: none;
+}
+
+.saas-page :is(a, button) {
+  transition-property: color, background-color, border-color, transform;
+  transition-duration: var(--dur-micro);
+  transition-timing-function: var(--ease-out);
+}
+
+.saas-page :is(a, button):active {
+  transform: translateY(1px);
+}
+
+.saas-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saas-page :is(a, button) {
+    transition: none;
+  }
+
+  .saas-page :is(a, button):active {
+    transform: none;
+  }
+}

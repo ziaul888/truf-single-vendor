@@ -6,12 +6,18 @@ import {
   SettingsLoadError,
   SettingsLoading,
 } from "@/components/features/settings/settings-load-state";
-import { sectionTitle } from "@/components/section-title";
 import { useMe } from "@/hooks/useMe";
 
 const GENERAL = "/dashboard/settings/general";
-const GROUND_PAGES = /^\/dashboard\/grounds(?:\/[^/]+(?:\/edit)?)?$/;
-const LIVE_PAGES = new Set(["/dashboard", "/dashboard/slots", GENERAL]);
+const SETTINGS_PAGES = new Set([
+  GENERAL,
+  "/dashboard/settings/booking",
+  "/dashboard/settings/payments",
+  "/dashboard/settings/website",
+  "/dashboard/settings/notifications",
+  "/dashboard/settings/access",
+  "/dashboard/settings/system",
+]);
 
 export function TenantDashboardContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -19,14 +25,15 @@ export function TenantDashboardContent({ children }: { children: ReactNode }) {
   const owner = useMe("owner");
   const tenant = owner.data?.tenant;
   const needsSetup = tenant && tenant.status !== "suspended" && !tenant.setupComplete;
+  const blockedBySetup = needsSetup && !SETTINGS_PAGES.has(pathname);
 
   useEffect(() => {
-    if (needsSetup && pathname !== GENERAL) router.replace(GENERAL);
-  }, [needsSetup, pathname, router]);
+    if (blockedBySetup) router.replace(GENERAL);
+  }, [blockedBySetup, router]);
 
   if (owner.isError)
     return <SettingsLoadError what="turf account" onRetry={() => owner.refetch()} />;
-  if (!tenant || (needsSetup && pathname !== GENERAL)) return <SettingsLoading />;
+  if (!tenant || blockedBySetup) return <SettingsLoading />;
   if (tenant.status === "suspended") {
     return (
       <ModuleNotice
@@ -35,13 +42,7 @@ export function TenantDashboardContent({ children }: { children: ReactNode }) {
       />
     );
   }
-  if (LIVE_PAGES.has(pathname) || GROUND_PAGES.test(pathname)) return children;
-  return (
-    <ModuleNotice
-      title={sectionTitle(pathname)}
-      message="This section is not available for tenant accounts yet."
-    />
-  );
+  return children;
 }
 
 function ModuleNotice({ title, message }: { title: string; message: string }) {

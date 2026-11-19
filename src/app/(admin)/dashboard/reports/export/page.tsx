@@ -10,6 +10,7 @@ import { Banknote, CalendarDays, Download, FileSpreadsheet, FileText, Loader2, U
 import { cn } from "@/lib/utils";
 import { venueToday } from "@/lib/slot-format";
 import { downloadReport, type ExportFormat } from "@/lib/report-export";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import type { ExportType } from "@/types/report";
 
 type Grouping = "day" | "week";
@@ -47,6 +48,7 @@ function OptionCard({ selected, onClick, children }: { selected: boolean; onClic
 }
 
 export default function ExportPage() {
+  const tenant = useDashboardAudience() === "owner";
   const [type, setType] = useState<ExportType>("revenue");
   const [format, setFormat] = useState<ExportFormat>("csv");
   const [grouping, setGrouping] = useState<Grouping>("day");
@@ -64,7 +66,7 @@ export default function ExportPage() {
   async function handleExport() {
     setBusy(true);
     try {
-      await downloadReport({ type, format, from: from || undefined, to: to || undefined, groupBy: type === "revenue" ? grouping : undefined });
+      await downloadReport({ type, format, from: from || undefined, to: to || undefined, groupBy: type === "revenue" ? grouping : undefined }, tenant);
       toast.success("Download started");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "The export failed. Please try again.");

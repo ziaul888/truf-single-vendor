@@ -43,12 +43,12 @@ function csvToWorkbook(csv: string, sheetName: string) {
  * Downloads a report from turf-api (streamed CSV, no row limit). Excel is made in the
  * browser from that CSV. Errors come back as JSON, so they're thrown with the API's message.
  */
-export async function downloadReport({ type, format, from, to, groupBy }: ExportRequest) {
+export async function downloadReport({ type, format, from, to, groupBy }: ExportRequest, tenant = false) {
   const params = new URLSearchParams({ type });
   if (from && to) { params.set("from", from); params.set("to", to); }
   if (groupBy) params.set("groupBy", groupBy);
 
-  const res = await fetch(`/api/v1/admin/reports/export?${params}`);
+  const res = await fetch(`/api/v1${tenant ? "/owner" : ""}/admin/reports/export?${params}`);
   if (res.status === 401) redirectToLogin();
   if (!res.ok) {
     const json = await res.json().catch(() => null);

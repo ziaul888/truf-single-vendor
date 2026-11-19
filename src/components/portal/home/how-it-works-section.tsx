@@ -1,10 +1,10 @@
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { ArrowRight } from "lucide-react";
 import type { WebsiteSections } from "@/validations/website-settings";
 import { bookingHref } from "@/services/portal-grounds";
 import { HomeSection } from "./home-section";
 
-export async function HowItWorksSection({ content }: { content: WebsiteSections["howItWorks"] }) {
+export async function HowItWorksSection({ content, slug }: { content: WebsiteSections["howItWorks"]; slug?: string }) {
   return (
     <HomeSection id="how">
       {/* A dark rounded panel inside the page, not a full-width band */}
@@ -27,7 +27,7 @@ export async function HowItWorksSection({ content }: { content: WebsiteSections[
           ))}
         </ol>
         <Link
-          href={await bookingHref()}
+          href={await bookingHref(slug)}
           className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 text-sm font-bold text-accent-foreground hover:opacity-90 sm:mt-8 sm:w-auto"
         >
           {content.buttonLabel} <ArrowRight className="h-4 w-4" />

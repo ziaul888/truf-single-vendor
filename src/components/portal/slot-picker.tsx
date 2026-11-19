@@ -1,5 +1,7 @@
 "use client";
 
+import { turfPortalPath, turfPortalApiPrefix } from "@/lib/turf-portal-path";
+import { useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -20,11 +22,11 @@ import { bookingSlotLimit } from "@/lib/booking-limits";
 const DAYS_SHOWN = 7;
 
 /** Real availability and prices from turf-api for the picker's whole date strip. */
-function usePublicSlots(groundId: string, from: string, to: string) {
+function usePublicSlots(groundId: string, from: string, to: string, slug?: string) {
   return useQuery<PublicSlot[]>({
-    queryKey: ["public-slots", groundId, from, to],
+    queryKey: ["public-slots", slug ?? null, groundId, from, to],
     queryFn: async () => {
-      const res = await fetch(`/api/v1/grounds/${groundId}/slots?from=${from}&to=${to}`);
+      const res = await fetch(`/api/v1${turfPortalApiPrefix(slug)}/grounds/${groundId}/slots?from=${from}&to=${to}`);
       const json = await res.json();
       if (!json.success) throw new Error(json.error ?? "Could not load slots");
       return json.data;
@@ -34,11 +36,11 @@ function usePublicSlots(groundId: string, from: string, to: string) {
 }
 
 /** Venue closures overlapping the picker's dates, so a closed day can say why ("Closed for Eid"). */
-function usePublicClosures(from: string, to: string) {
+function usePublicClosures(groundId: string, from: string, to: string, slug?: string) {
   return useQuery<PublicClosure[]>({
-    queryKey: ["public-closures", from, to],
+    queryKey: ["public-closures", slug ?? null, groundId, from, to],
     queryFn: async () => {
-      const res = await fetch(`/api/v1/closures?from=${from}&to=${to}`);
+      const res = await fetch(`/api/v1${turfPortalApiPrefix(slug)}${slug ? `/grounds/${groundId}` : ""}/closures?from=${from}&to=${to}`);
       const json = await res.json();
       return json.success ? json.data : [];
     },
@@ -52,17 +54,18 @@ const closureFor = (closures: PublicClosure[], groundId: string, date: string) =
 
 /** `initialDate` ("YYYY-MM-DD", e.g. from the home search) is preselected when it is in the strip. */
 export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDate?: string }) {
+  const portal = useTurfPortal();
   const router = useRouter();
-  const dates = useMemo(() => buildDates(DAYS_SHOWN), []);
+  const dates = useMemo(() => buildDates(DAYS_SHOWN, portal?.timezone), [portal?.timezone]);
   const [activeDate, setActiveDate] = useState(
     dates.find((d) => d.iso === initialDate)?.iso ?? dates[0].iso,
   );
   /** The picked slots' starts, "16:30" (90-minute slots start on half hours): one date, up to the limit. */
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
-  const { data: allSlots, isLoading, isError } = usePublicSlots(ground.id, dates[0].iso, dates[dates.length - 1].iso);
+  const { data: allSlots, isLoading, isError } = usePublicSlots(ground.id, dates[0].iso, dates[dates.length - 1].iso, portal?.slug);
   const daySlots = (allSlots ?? []).filter((s) => s.date === activeDate);
-  const { data: closures } = usePublicClosures(dates[0].iso, dates[dates.length - 1].iso);
+  const { data: closures } = usePublicClosures(ground.id, dates[0].iso, dates[dates.length - 1].iso, portal?.slug);
   const closure = closureFor(closures ?? [], ground.id, activeDate);
   const { data: options } = useCheckoutOptions();
   const maxSlots = bookingSlotLimit(options);
@@ -90,7 +93,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
       date: activeDate,
       slots: formatSlotsParam(selected.map(slotStartTime), maxSlots),
     });
-    router.push(`/checkout?${params.toString()}`);
+    router.push(turfPortalPath(portal?.slug, `/checkout?${params.toString()}`));
   }
 
   return (
@@ -284,10 +287,10 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
 }
 
 /** The next `count` venue-local dates (slot dates are Asia/Dhaka, not the browser's timezone). */
-function buildDates(count: number) {
+function buildDates(count: number, timezone?: string) {
   const dows = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
   const mons = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const first = venueToday();
+  const first = venueToday(0, timezone);
   return Array.from({ length: count }, (_, i) => {
     const iso = addDays(first, i);
     const d = new Date(`${iso}T00:00:00Z`);

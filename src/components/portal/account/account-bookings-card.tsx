@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { customerBookingsKey } from "./use-customer-session";
+import { PortalLink as Link, useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, ChevronRight } from "lucide-react";
 import { listMyBookings, toAppPath } from "@/lib/portal-bookings";
@@ -11,8 +12,9 @@ import { isUnderReview } from "@/components/portal/confirmation/confirmation-sta
 
 /** Next booking plus upcoming / past totals, linking to My bookings. */
 export function AccountBookingsCard() {
-  const upcoming = useQuery({ queryKey: ["customer", "bookings", "summary", "upcoming"], queryFn: () => listMyBookings("upcoming", 1, 1) });
-  const past = useQuery({ queryKey: ["customer", "bookings", "summary", "past"], queryFn: () => listMyBookings("past", 1, 1) });
+  const slug = useTurfPortal()?.slug;
+  const upcoming = useQuery({ queryKey: [...customerBookingsKey(slug), "summary", "upcoming"], queryFn: () => listMyBookings("upcoming", 1, 1, slug) });
+  const past = useQuery({ queryKey: [...customerBookingsKey(slug), "summary", "past"], queryFn: () => listMyBookings("past", 1, 1, slug) });
   const next = upcoming.data?.data[0];
 
   return (

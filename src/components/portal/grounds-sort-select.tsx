@@ -1,5 +1,7 @@
 "use client";
 
+import { useTurfPortal } from "@/components/portal/turf-portal-scope";
+import { turfPortalPath } from "@/lib/turf-portal-path";
 import { useRouter } from "next/navigation";
 import { groundsHref, type GroundSort, type GroundsQuery } from "./grounds-query";
 
@@ -11,12 +13,13 @@ const OPTIONS: { value: GroundSort; label: string }[] = [
 ];
 
 export function GroundsSortSelect({ query }: { query: GroundsQuery }) {
+  const slug = useTurfPortal()?.slug;
   const router = useRouter();
   return (
     <select
       aria-label="Sort grounds"
       value={query.sort}
-      onChange={(e) => router.push(groundsHref(query, { sort: e.target.value as GroundSort }))}
+      onChange={(e) => router.push(turfPortalPath(slug, groundsHref(query, { sort: e.target.value as GroundSort })))}
       className="rounded-lg border bg-card px-3 py-2 text-sm"
     >
       {OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

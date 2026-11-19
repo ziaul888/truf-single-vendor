@@ -1,5 +1,7 @@
 "use client";
 
+import { turfPortalPath } from "@/lib/turf-portal-path";
+import { useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useRouter } from "next/navigation";
 import { Loader2, LogOut, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
@@ -12,6 +14,7 @@ import { AccountSkeleton } from "@/components/portal/loading/account-skeletons";
 /** The signed-in customer's profile: verified phone, name and email, bookings, sign out. */
 export function AccountView() {
   const router = useRouter();
+  const slug = useTurfPortal()?.slug;
   const session = useCustomerSession();
   const signOut = useCustomerSignOut();
 
@@ -68,7 +71,7 @@ export function AccountView() {
             <h2 className="font-bold">Sign out</h2>
             <p className="mt-1 text-sm text-muted-foreground">Signs you out on every device.</p>
             <button type="button" disabled={signOut.isPending}
-              onClick={() => signOut.mutate(undefined, { onSuccess: () => { router.push("/"); router.refresh(); } })}
+              onClick={() => signOut.mutate(undefined, { onSuccess: () => { router.push(turfPortalPath(slug)); router.refresh(); } })}
               className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold hover:bg-muted disabled:opacity-60">
               {signOut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
               Sign out

@@ -15,6 +15,7 @@ import {
   type WebsiteImageSlot, type WebsiteSettings,
 } from "@/validations/website-settings";
 import { useUploadWebsiteImage } from "@/hooks/useSettings";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { toApiFailure } from "@/lib/api-error";
 import { FormField } from "./form-primitives";
 
@@ -35,6 +36,7 @@ export function ImageUploadField({
 }: {
   form: Form; name: ImageFieldName; slot: WebsiteImageSlot; label: string; hint: string; defaultUrl: string;
 }) {
+  const tenant = useDashboardAudience() === "owner";
   const inputRef = useRef<HTMLInputElement>(null);
   const [preparing, setPreparing] = useState(false);
   const upload = useUploadWebsiteImage();
@@ -67,7 +69,7 @@ export function ImageUploadField({
 
   return (
     <FormField id={inputId} label={label} hint={hint} error={error}>
-      <input
+      {!tenant && <><input
         ref={inputRef}
         id={inputId}
         type="file"
@@ -82,7 +84,7 @@ export function ImageUploadField({
         onFile={handleFile}
         onPick={() => inputRef.current?.click()}
         onReset={() => setImage(defaultUrl)}
-      />
+      /></>}
       <ImageLinkInput form={form} name={name} />
     </FormField>
   );

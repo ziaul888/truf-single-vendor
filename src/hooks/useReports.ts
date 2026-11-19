@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { useDashboardApi } from "./useDashboardApi";
 import { venueToday } from "@/lib/slot-format";
 import type {
   BookingPoint,
@@ -9,7 +9,6 @@ import type {
   RevenuePoint,
   Series,
 } from "@/types/report";
-import { useDashboardAudience } from "@/components/dashboard-audience";
 
 export type DateRange = "7d" | "30d" | "90d" | "1y";
 
@@ -26,65 +25,35 @@ export const periodFor = (range: DateRange): ReportPeriod => ({
   to: venueToday(),
 });
 
-const get = async <T>(path: string, params: object) =>
-  (await api.get(`/admin/reports/${path}`, { params })).data.data as T;
-
 export function useReportSummary(period: ReportPeriod) {
-  const audience = useDashboardAudience();
+  const { client, scope } = useDashboardApi();
   return useQuery<ReportSummary>({
-    queryKey: [audience, "reports", "summary", period],
-    queryFn: () =>
-      audience === "owner"
-        ? Promise.resolve({
-            period,
-            previous: period,
-            revenue: 0,
-            revenueTrend: null,
-            received: 0,
-            refunds: 0,
-            revenueByMethod: {},
-            bookings: 0,
-            bookingsTrend: null,
-            avgBookingValue: 0,
-            avgBookingValueTrend: null,
-            completionRate: null,
-            completionRateTrend: null,
-            cancellationRate: 0,
-            statusCounts: {
-              pending: 0,
-              confirmed: 0,
-              cancelled: 0,
-              completed: 0,
-              no_show: 0,
-            },
-            noShows: 0,
-          })
-        : get("summary", period),
+    queryKey: [...scope, "reports", "summary", period],
+    queryFn: async () => (await client.get("/admin/reports/summary", { params: period })).data.data,
   });
 }
 
-/** groupBy left out: the API picks day / week / month from the range length. */
+/** With no groupBy, the API picks day, week or month based on the range. */
 export function useRevenueSeries(period: ReportPeriod, groupBy?: GroupBy) {
-  const audience = useDashboardAudience();
+  const { client, scope } = useDashboardApi();
   return useQuery<Series<RevenuePoint>>({
-    queryKey: [audience, "reports", "revenue", period, groupBy],
-    queryFn: () =>
-      audience === "owner"
-        ? Promise.resolve({ groupBy: groupBy ?? "day", points: [] })
-        : get("revenue", { ...period, groupBy }),
+    queryKey: [...scope, "reports", "revenue", period, groupBy],
+    queryFn: async () => (await client.get("/admin/reports/revenue", { params: { ...period, groupBy } })).data.data,
   });
 }
 
 export function useBookingSeries(period: ReportPeriod, groupBy?: GroupBy) {
+  const { client, scope } = useDashboardApi();
   return useQuery<Series<BookingPoint>>({
-    queryKey: ["reports", "bookings", period, groupBy],
-    queryFn: () => get("bookings", { ...period, groupBy }),
+    queryKey: [...scope, "reports", "bookings", period, groupBy],
+    queryFn: async () => (await client.get("/admin/reports/bookings", { params: { ...period, groupBy } })).data.data,
   });
 }
 
 export function useGroundReport(period: ReportPeriod) {
+  const { client, scope } = useDashboardApi();
   return useQuery<GroundReport[]>({
-    queryKey: ["reports", "grounds", period],
-    queryFn: () => get("grounds", period),
+    queryKey: [...scope, "reports", "grounds", period],
+    queryFn: async () => (await client.get("/admin/reports/grounds", { params: period })).data.data,
   });
 }

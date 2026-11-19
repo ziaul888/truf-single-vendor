@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
+import { turfPortalPath } from "@/lib/turf-portal-path";
 import { FallbackImage } from "@/components/fallback-image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -9,6 +10,7 @@ import { FormatBadge } from "@/components/portal/format-badge";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround, listPublicGrounds } from "@/services/portal-grounds";
 import { getPublicVenue } from "@/services/website-settings";
+import { getTurfPortalSlug } from "@/services/turf-portal-request";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { socialMetadata } from "@/lib/seo";
@@ -23,12 +25,16 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
-  const [ground, venue] = await Promise.all([getPublicGround(id).catch(() => null), getPublicVenue()]);
+  const [{ id }, slug] = await Promise.all([params, getTurfPortalSlug()]);
+  const [ground, venue] = await Promise.all([getPublicGround(id, slug).catch(() => null), getPublicVenue(slug)]);
   if (!ground) return { title: "Ground" };
   const title = ground.format ? `${ground.name} · ${FORMAT_LABEL[ground.format]}` : ground.name;
   const description = ground.description?.trim() || `Book ${ground.name} at ${venue.name} by the hour. See live availability and reserve in a few taps.`;
-  return { title, description, ...socialMetadata({ title: `${title} · ${venue.name}`, description, siteName: venue.name }) };
+  return {
+    title, description,
+    ...(slug && { alternates: { canonical: turfPortalPath(slug, `/grounds/${id}`) } }),
+    ...socialMetadata({ title: `${title} · ${venue.name}`, description, siteName: venue.name }),
+  };
 }
 
 export default async function GroundDetailPage({
@@ -38,8 +44,8 @@ export default async function GroundDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ date?: string | string[] }>;
 }) {
-  const [{ id }, { date }] = await Promise.all([params, searchParams]);
-  const [ground, venue, grounds] = await Promise.all([getPublicGround(id), getPublicVenue(), listPublicGrounds()]);
+  const [{ id }, { date }, slug] = await Promise.all([params, searchParams, getTurfPortalSlug()]);
+  const [ground, venue, grounds] = await Promise.all([getPublicGround(id, slug), getPublicVenue(slug), listPublicGrounds({}, slug)]);
   if (!ground) notFound();
   // The ground's own address (set in the dashboard), else the venue's.
   const location = ground.address?.trim() || venue.address.trim();
@@ -52,7 +58,7 @@ export default async function GroundDetailPage({
           "@type": "SportsActivityLocation",
           name: ground.name,
           description: ground.description?.trim() || undefined,
-          url: `${siteUrl().origin}/grounds/${ground.id}`,
+          url: `${siteUrl().origin}${turfPortalPath(slug, `/grounds/${ground.id}`)}`,
           image: `${siteUrl().origin}/app-icon?size=512`,
           telephone: venue.phone || undefined,
           address: location ? { "@type": "PostalAddress", streetAddress: location } : undefined,

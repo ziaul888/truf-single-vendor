@@ -3,6 +3,7 @@
 import { usePaymentStatus } from "@/hooks/useSettings";
 import { useSlotSettings } from "@/hooks/useSlots";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { SettingsPageHeader } from "@/components/features/settings/settings-page-header";
 import { ReadOnlyNotice } from "@/components/features/settings/read-only-notice";
 import { SettingsLoadError, SettingsLoading } from "@/components/features/settings/settings-load-state";
@@ -16,18 +17,21 @@ export default function PaymentsSettingsPage() {
   const { data: status, isLoading, isError, refetch } = usePaymentStatus();
   // The switches are slot settings; their cache updates as soon as one saves.
   const { data: slotSettings } = useSlotSettings();
-  const { data: me } = useMe();
-  const canEdit = me?.role === "admin";
+  const audience = useDashboardAudience();
+  const { data: me } = useMe(audience);
+  const tenant = audience === "owner";
+  const canEdit = me?.role === "admin" || me?.role === "owner";
 
   if (isLoading) return <SettingsLoading />;
   if (isError || !status) return <SettingsLoadError what="payment status" onRetry={() => refetch()} />;
 
   return (
     <div className="space-y-5">
-      <SettingsPageHeader title="Payments" description="Stripe status and the ways customers can pay" />
+      <SettingsPageHeader title="Payments" description={tenant ? "Save payment preferences for your turf" : "Stripe status and the ways customers can pay"} />
+      {tenant && <p className="text-muted-foreground text-sm">These preferences will apply when your turf’s checkout is available.</p>}
       {!canEdit && <ReadOnlyNotice />}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <StripeStatusCard stripe={status.stripe} />
+        {!tenant && <StripeStatusCard stripe={status.stripe} />}
         <PaymentMethodsCard
           status={status}
           switches={{
@@ -37,6 +41,7 @@ export default function PaymentsSettingsPage() {
             portalNagadEnabled: slotSettings?.portalNagadEnabled ?? true,
           }}
           canEdit={canEdit}
+          tenant={tenant}
           onSaved={() => refetch()}
         />
       </div>

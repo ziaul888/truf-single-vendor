@@ -49,7 +49,7 @@ export default function GroundDetailPage() {
   const todayBookings = stats ? stats.bookingsTodayByGround.find((b) => b.groundId === id)?.bookings ?? 0 : undefined;
 
   // Today's real slots at the venue; booked and blocked both count as taken here.
-  const today = venueToday(0, me?.role === "owner" ? me.tenant.timezone : undefined);
+  const today = venueToday(0, me && "tenant" in me ? me.tenant.timezone : undefined);
   const daySlots = useSlots({ groundId: id, date: today, limit: 100 }, { enabled: !!id });
   const slots = {
     ...daySlots,

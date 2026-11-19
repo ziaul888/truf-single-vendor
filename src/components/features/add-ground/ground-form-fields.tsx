@@ -216,7 +216,7 @@ export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove,
               label: "Show on portal",
               desc: "Listed on the customer booking portal",
             },
-          ].filter(({ name }) => !tenant || name !== "showOnPortal").map(({ name, label, desc }) => (
+          ].map(({ name, label, desc }) => (
             <div key={name} className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium">{label}</p>

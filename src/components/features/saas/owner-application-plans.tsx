@@ -3,23 +3,76 @@
 import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatBdt } from "@/lib/platform-billing";
+import { formatBdt, planCharge } from "@/lib/platform-billing";
 import { cn } from "@/lib/utils";
 import type { ApiSuccess } from "@/types/api";
-import type { BillingInterval, PlatformPlan } from "@/types/platform-billing";
+import type {
+  BillingInterval,
+  PlatformPlan,
+  SubscriptionPaymentInstructions,
+} from "@/types/platform-billing";
 
 export function useOwnerApplicationPlans() {
+  return usePublicPurchaseQuery<PlatformPlan[]>("plans");
+}
+
+export function useSubscriptionPaymentMethods() {
+  return usePublicPurchaseQuery<SubscriptionPaymentInstructions>("payment-methods");
+}
+
+function usePublicPurchaseQuery<T>(resource: "plans" | "payment-methods") {
   return useQuery({
-    queryKey: ["owner-application-plans"],
+    queryKey: ["owner-application", resource],
     retry: false,
     queryFn: async ({ signal }) => {
-      const response = await fetch("/api/v1/owner-applications/plans", { signal });
-      const body = (await response.json()) as ApiSuccess<PlatformPlan[]> | { error?: string };
+      const response = await fetch(`/api/v1/owner-applications/${resource}`, {
+        signal,
+        cache: "no-store",
+      });
+      const body = (await response.json()) as ApiSuccess<T> | { error?: string };
       if (!response.ok || !("success" in body) || !body.success)
-        throw new Error("error" in body && body.error ? body.error : "Could not load plans");
+        throw new Error(
+          "error" in body && body.error ? body.error : "Could not load purchase options"
+        );
       return body.data;
     },
   });
+}
+
+export function BillingCycleToggle({
+  interval,
+  onInterval,
+  disabled,
+}: {
+  interval: BillingInterval;
+  onInterval: (interval: BillingInterval) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className="bg-muted grid w-full max-w-xs grid-cols-2 gap-1 rounded-xl p-1"
+      role="group"
+      aria-label="Billing cycle"
+    >
+      {(["monthly", "yearly"] as const).map((value) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={interval === value}
+          disabled={disabled}
+          className={cn(
+            "focus-visible:ring-ring min-h-11 rounded-lg px-3 text-sm font-medium capitalize focus-visible:ring-2 focus-visible:outline-none",
+            interval === value
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => onInterval(value)}
+        >
+          {value}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function OwnerApplicationPlans({
@@ -50,29 +103,10 @@ export function OwnerApplicationPlans({
       <div>
         <h2 className="text-lg font-semibold">Choose your plan</h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          A plan is required before you can apply. Payment is confirmed manually after approval.
+          Choose a billing cycle. The full first payment is due before activation.
         </p>
       </div>
-      <div className="bg-muted grid grid-cols-2 gap-1 rounded-xl p-1" role="radiogroup">
-        {(["monthly", "yearly"] as const).map((value) => (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={interval === value}
-            disabled={disabled}
-            className={cn(
-              "focus-visible:ring-ring min-h-10 rounded-lg px-3 text-sm font-medium capitalize outline-none focus-visible:ring-2",
-              interval === value
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-            onClick={() => onInterval(value)}
-          >
-            {value}
-          </button>
-        ))}
-      </div>
+      <BillingCycleToggle interval={interval} onInterval={onInterval} disabled={disabled} />
       {loading ? (
         <div className="text-muted-foreground flex min-h-28 items-center justify-center gap-2 rounded-xl border border-dashed text-sm">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading plans…
@@ -92,13 +126,12 @@ export function OwnerApplicationPlans({
         <div className="grid gap-3 sm:grid-cols-2">
           {plans.map((plan) => {
             const selected = plan.id === planId;
-            const amount = interval === "monthly" ? plan.monthlyAmount : plan.yearlyAmount;
+            const amount = planCharge(plan, interval);
             return (
               <button
                 key={plan.id}
                 type="button"
-                role="radio"
-                aria-checked={selected}
+                aria-pressed={selected}
                 disabled={disabled}
                 onClick={() => onPlan(plan.id)}
                 className={cn(

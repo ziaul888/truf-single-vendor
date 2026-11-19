@@ -5,10 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChangePasswordForm } from "@/components/features/users/change-password-form";
 import { ROLE_META } from "@/components/features/users/role-meta";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
-  const { data: me, isLoading } = useMe();
+  const { data: me, isLoading } = useMe(useDashboardAudience());
 
   if (isLoading || !me) {
     return (
@@ -18,7 +19,9 @@ export default function ProfilePage() {
     );
   }
 
-  const role = ROLE_META[me.role];
+  const role = me.role === "owner"
+    ? { ...ROLE_META.admin, label: "Owner", summary: "Manage your turf, staff and bookings." }
+    : ROLE_META[me.role];
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">

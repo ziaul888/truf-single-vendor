@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Check, ClipboardList, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogClose,
@@ -25,7 +27,7 @@ import { usePlatformApplications, usePlatformMe } from "@/hooks/usePlatform";
 import { usePlatformCommand } from "@/hooks/usePlatformBilling";
 import { toApiFailure } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
-import { formatBdt } from "@/lib/platform-billing";
+import { displayBillingDate, formatBdt, subscriptionMethodLabels } from "@/lib/platform-billing";
 import type { OwnerApplication, OwnerApplicationStatus, PlatformTenant } from "@/types/platform";
 import { BillingError, BillingPagination } from "./billing-parts";
 import { PlatformLoading, PlatformReadError } from "./platform-states";
@@ -61,40 +63,65 @@ function ReviewDialog({
   userId,
   onClose,
 }: {
-  review: Review | null;
+  review: Review;
   userId?: string;
   onClose: () => void;
 }) {
-  const action = review?.action ?? "activate";
-  const command = usePlatformCommand<Record<string, never>, PlatformTenant | OwnerApplication>(
+  const { action, application } = review;
+  const command = usePlatformCommand<{ confirmed?: true }, PlatformTenant | OwnerApplication>(
     userId,
-    review ? `/applications/${review.application.id}/${action}` : "/applications/unused"
+    `/applications/${application.id}/${action}`
   );
   const [error, setError] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
   async function confirm() {
-    if (!review) return;
+    if (action === "activate" && (!confirmed || !application.plan || !application.payment)) return;
     setError("");
     try {
-      await command.mutateAsync({});
-      toast.success(action === "activate" ? "Owner account activated" : "Application rejected");
+      await command.mutateAsync(action === "activate" ? { confirmed: true } : {});
+      toast.success(
+        action === "activate" ? "Payment recorded and owner activated" : "Application rejected"
+      );
       onClose();
     } catch (err) {
       setError(toApiFailure(err).error);
     }
   }
   return (
-    <Dialog open={!!review} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {action === "activate" ? "Activate owner account?" : "Reject application?"}
+            {action === "activate" ? "Verify payment and activate owner" : "Reject application?"}
           </DialogTitle>
           <DialogDescription className="leading-relaxed">
             {action === "activate"
-              ? `${review?.application.ownerName ?? "The owner"} will be able to sign in at /login. The selected plan and first unpaid invoice will be created. The turf will remain Setting up.`
+              ? "Match the transaction reference, date and full amount in your receiving account. Activation records the paid invoice and unlocks the owner’s login."
               : "The application will be closed and its saved password hash removed. This cannot be undone from this screen."}
           </DialogDescription>
         </DialogHeader>
+        {action === "activate" && application.payment && application.plan && (
+          <>
+            <div className="bg-muted space-y-1 rounded-xl p-4 text-sm">
+              <p className="text-lg font-semibold">{formatBdt(application.plan.selectedAmount)}</p>
+              <p>
+                {subscriptionMethodLabels[application.payment.method]} ·{" "}
+                {displayBillingDate(application.payment.date)}
+              </p>
+              <p className="font-mono break-all">{application.payment.reference}</p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <Checkbox
+                id="verify-application-payment"
+                checked={confirmed}
+                onCheckedChange={(value) => setConfirmed(value === true)}
+              />
+              <Label htmlFor="verify-application-payment" className="leading-snug">
+                I received the full amount and verified this payment reference.
+              </Label>
+            </div>
+          </>
+        )}
         <BillingError message={error} />
         <DialogFooter>
           <DialogClose asChild>
@@ -105,7 +132,10 @@ function ReviewDialog({
           <Button
             className="h-11"
             variant={action === "reject" ? "destructive" : "default"}
-            disabled={command.isPending || (action === "activate" && !review?.application.plan)}
+            disabled={
+              command.isPending ||
+              (action === "activate" && (!confirmed || !application.plan || !application.payment))
+            }
             onClick={confirm}
           >
             {command.isPending ? (
@@ -118,7 +148,7 @@ function ReviewDialog({
             {command.isPending
               ? "Saving…"
               : action === "activate"
-                ? "Activate owner"
+                ? "Record payment and activate"
                 : "Reject application"}
           </Button>
         </DialogFooter>
@@ -146,8 +176,7 @@ export function PlatformApplications() {
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight">Applications</h1>
           <p className="text-muted-foreground mt-3 max-w-2xl text-sm leading-relaxed">
-            Review applications from the SaaS website. Activation creates the owner account while
-            the turf remains in setup.
+            Match each purchase with a payment in your receiving account before activating the turf.
           </p>
         </div>
         <Button asChild variant="outline" className="h-11">
@@ -238,16 +267,32 @@ export function PlatformApplications() {
                       )}
                     </dd>
                   </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-muted-foreground text-xs">Payment submitted</dt>
+                    <dd className="mt-1">
+                      {application.payment ? (
+                        <>
+                          {subscriptionMethodLabels[application.payment.method]} ·{" "}
+                          {displayBillingDate(application.payment.date)}
+                          <span className="mt-1 block font-mono break-all">
+                            {application.payment.reference}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">Missing payment proof</span>
+                      )}
+                    </dd>
+                  </div>
                 </dl>
                 {application.status === "pending" && (
                   <div className="mt-5 flex flex-col gap-2 border-t pt-5 sm:flex-row">
                     <Button
                       className="h-11 flex-1"
-                      disabled={!application.plan}
+                      disabled={!application.plan || !application.payment}
                       onClick={() => setReview({ application, action: "activate" })}
                     >
                       <Check />
-                      Activate owner
+                      Review payment
                     </Button>
                     <Button
                       variant="outline"
@@ -277,7 +322,14 @@ export function PlatformApplications() {
           />
         </>
       )}
-      <ReviewDialog review={review} userId={me.data?.id} onClose={() => setReview(null)} />
+      {review && (
+        <ReviewDialog
+          key={`${review.application.id}-${review.action}`}
+          review={review}
+          userId={me.data?.id}
+          onClose={() => setReview(null)}
+        />
+      )}
     </div>
   );
 }

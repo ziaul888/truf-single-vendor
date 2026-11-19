@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, UserRound } from "lucide-react";
 import { useCustomerSession, useCustomerSignOut } from "./use-customer-session";

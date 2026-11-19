@@ -9,6 +9,7 @@ import type {
   TenantBilling,
   PlatformActivity,
   BillingFilters,
+  SubscriptionPaymentInstructions,
 } from "@/types/platform-billing";
 function useBillingQuery<T>(userId: string | undefined, path: string, params?: BillingFilters) {
   return useQuery({
@@ -25,6 +26,8 @@ export const usePlatformPlans = (
   userId?: string,
   filters: BillingFilters = { page: 1, limit: 100 }
 ) => useBillingQuery<Paginated<PlatformPlan>>(userId, "/plans", filters);
+export const usePlatformPaymentMethods = (userId?: string) =>
+  useBillingQuery<SubscriptionPaymentInstructions>(userId, "/payment-methods");
 export const usePlatformSubscriptions = (userId: string | undefined, filters: BillingFilters) =>
   useBillingQuery<Paginated<PlatformSubscription>>(userId, "/subscriptions", filters);
 export const usePlatformInvoices = (userId: string | undefined, filters: BillingFilters) =>

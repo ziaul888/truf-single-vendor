@@ -65,7 +65,7 @@ export function LoginForm() {
       if (!json.success) return showFailure(json);
       await queryClient.cancelQueries();
       queryClient.clear();
-      if (json.data?.audience === "owner") {
+      if (json.data?.audience === "owner" || json.data?.audience === "tenant-staff") {
         window.location.assign(
           json.data.tenant?.setupComplete ? "/dashboard" : "/dashboard/settings/general"
         );

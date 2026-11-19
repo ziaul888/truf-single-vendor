@@ -14,6 +14,7 @@ import { pageWindow } from "@/components/features/slots/slot-list-section";
 import { useClosures, useLiftClosure } from "@/hooks/useSlots";
 import { useGrounds } from "@/hooks/useGrounds";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { toApiFailure } from "@/lib/api-error";
 import { BLOCK_REASON_LABEL, formatSlotDate, venueToday } from "@/lib/slot-format";
 import type { Closure } from "@/types/slot";
@@ -43,9 +44,9 @@ export default function ClosuresPage() {
   const today = venueToday();
   const { data, isLoading } = useClosures(page, PAGE_SIZE);
   const { data: grounds } = useGrounds();
-  const { data: me } = useMe();
+  const { data: me } = useMe(useDashboardAudience());
   const lift = useLiftClosure();
-  const isAdmin = me?.role === "admin";
+  const isAdmin = me?.role === "admin" || me?.role === "owner";
 
   const rows = data?.data ?? [];
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / PAGE_SIZE));

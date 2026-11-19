@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PortalLink as Link, useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { AlertCircle, Check, Clock, Loader2, X } from "lucide-react";
 import type { PublicBooking } from "@/types/booking";
 import { fromMinorUnits } from "@/lib/ground-format";
@@ -8,6 +8,7 @@ const ICON_WRAP = "mx-auto flex h-20 w-20 items-center justify-center rounded-fu
 
 /** Big icon + headline at the top of the confirmation page, per booking state. */
 export function ConfirmationHero({ state, booking }: { state: ConfirmationState; booking: PublicBooking }) {
+  const portal = useTurfPortal();
   const taka = (minor: number) => `৳${fromMinorUnits(minor).toLocaleString()}`;
   const total = taka(booking.total);
   const ref = <strong>#{booking.bookingNumber}</strong>;
@@ -36,7 +37,7 @@ export function ConfirmationHero({ state, booking }: { state: ConfirmationState;
     },
     verifying: {
       icon: <Clock className="h-10 w-10 text-accent-foreground" />,
-      title: "Payment received: waiting for verification",
+      title: "Payment submitted for verification",
       body: (
         <>
           Booking {ref}. We&apos;ve got your {wallet ? WALLET_NAME[wallet.method] : ""} payment
@@ -65,7 +66,9 @@ export function ConfirmationHero({ state, booking }: { state: ConfirmationState;
       icon: <X className="h-10 w-10 text-accent-foreground" />,
       title: "Booking cancelled",
       body:
-        booking.paymentStatus === "refunded" ? (
+        portal && booking.paymentStatus === "refunded" ? (
+          <>Booking {ref} was cancelled. Contact the venue for the status of your refund.</>
+        ) : booking.paymentStatus === "refunded" ? (
           <>Booking {ref} was cancelled. A full refund of {total} has been issued to your original payment method.</>
         ) : (
           <>Booking {ref} was cancelled.</>

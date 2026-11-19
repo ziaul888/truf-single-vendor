@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import AdminLink from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { useRouter } from "next/navigation";
 import { HelpCircle, LayoutDashboard, LogOut, MapPin, Menu, Phone } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -37,10 +38,10 @@ export function MobileMenu({ phone, bookHref }: { phone: string; bookHref: strin
             </Link>
           ))}
           {isAdmin && (
-            <Link href="/dashboard" onClick={close}
+            <AdminLink href="/dashboard" onClick={close}
               className="flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium hover:bg-white/5 hover:text-accent">
               <LayoutDashboard className="h-5 w-5 text-accent" />Dashboard
-            </Link>
+            </AdminLink>
           )}
           <SignOutItem onDone={close} />
         </nav>

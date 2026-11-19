@@ -1,7 +1,8 @@
-import { unstable_rethrow } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import type { WebsiteSettings } from "@/validations/website-settings";
 import type { PublicVenue } from "@/types/settings";
 import { DEFAULT_WEBSITE_SETTINGS, FALLBACK_VENUE } from "@/lib/website-defaults";
+import { turfPortalApiPrefix } from "@/lib/turf-portal-path";
 
 // Server-side read of the portal's website content and venue profile from turf-api.
 // Server code can't use the relative /api/v1 proxy path, so it calls turf-api directly.
@@ -18,7 +19,14 @@ export interface PublicWebsite extends WebsiteSettings {
  * GET /website: the content plus the public venue profile, in one request. Cached here for 60 s
  * (turf-api caches it for 60 s too), so an admin's edit can take up to a minute to show on the portal.
  */
-export async function getPublicWebsite(): Promise<PublicWebsite> {
+export async function getPublicWebsite(slug?: string): Promise<PublicWebsite> {
+  if (slug) {
+    const res = await fetch(`${API_TARGET}/api/v1${turfPortalApiPrefix(slug)}/website`, { cache: "no-store" });
+    if (res.status === 404) notFound();
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error("Couldn’t load this turf website.");
+    return json.data;
+  }
   try {
     const res = await fetch(`${API_TARGET}/api/v1/website`, { next: CACHE });
     const json = await res.json();
@@ -33,7 +41,8 @@ export async function getPublicWebsite(): Promise<PublicWebsite> {
 }
 
 /** GET /venue: just the public venue profile, for pages that don't need the website content. */
-export async function getPublicVenue(): Promise<PublicVenue> {
+export async function getPublicVenue(slug?: string): Promise<PublicVenue> {
+  if (slug) return (await getPublicWebsite(slug)).venue;
   try {
     const res = await fetch(`${API_TARGET}/api/v1/venue`, { next: CACHE });
     const json = await res.json();

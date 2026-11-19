@@ -8,6 +8,7 @@ import { CalendarDays, CornerDownLeft, MapPin, Search, Users } from "lucide-reac
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { navForRole, type NavGroup } from "@/components/sidebar-nav-data";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useBookings } from "@/hooks/useBookings";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useGrounds } from "@/hooks/useGrounds";
@@ -92,8 +93,9 @@ export function GlobalSearch() {
 const RESULT_LIMIT = 8;
 
 function SearchPalette({ onSelect }: { onSelect: () => void }) {
-  const { data: me } = useMe();
-  const pages = useMemo(() => flatPages(navForRole(me?.role)), [me?.role]);
+  const { data: me } = useMe(useDashboardAudience());
+  const role = me?.role === "owner" ? "admin" : me?.role;
+  const pages = useMemo(() => flatPages(navForRole(role)), [role]);
   const router = useRouter();
   const [query, setQuery] = useState("");
   const term = useDebouncedValue(query.trim(), 300);

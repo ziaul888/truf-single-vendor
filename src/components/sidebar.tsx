@@ -32,7 +32,7 @@ export function Sidebar({
   const pathname = usePathname();
 
   const { data: me } = useMe(audience);
-  const nav = navForRole(audience === "owner" ? "owner" : me?.role);
+  const nav = navForRole(me?.role);
 
   const allItems = nav.flatMap((g) => g.items.map((i) => ({ ...i, group: g.label })));
   const activeItem =
@@ -71,7 +71,7 @@ export function Sidebar({
         <div className="border-sidebar-border/70 bg-sidebar-accent/20 relative flex w-18 shrink-0 flex-col items-center border-r py-3 backdrop-blur-sm">
           {/* Brand */}
           <div className="relative">
-            <SidebarBrand ownerName={audience === "owner" ? null : undefined} />
+            <SidebarBrand ownerName={audience === "owner" ? (me && "tenant" in me ? me.tenant.name : null) : undefined} />
             <span aria-hidden className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
               <span className="bg-success absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" />
               <span className="bg-success ring-sidebar relative inline-flex h-2.5 w-2.5 rounded-full shadow-[0_0_8px_var(--color-success)] ring-2" />

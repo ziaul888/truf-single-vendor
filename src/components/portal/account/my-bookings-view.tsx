@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { PortalLink as Link, useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { CalendarDays, ChevronRight, Mail } from "lucide-react";
 import { BookingRowsSkeleton, MyBookingsSkeleton } from "@/components/portal/loading/account-skeletons";
@@ -12,7 +12,7 @@ import { formatSlotDate, slotCountLabel } from "@/lib/slot-format";
 import { listMyBookings, toAppPath } from "@/lib/portal-bookings";
 import type { CustomerBooking } from "@/types/booking";
 import { isUnderReview } from "@/components/portal/confirmation/confirmation-state";
-import { useCustomerSession, useCustomerSignOut } from "./use-customer-session";
+import { customerBookingsKey, useCustomerSession, useCustomerSignOut } from "./use-customer-session";
 
 type Scope = "upcoming" | "past";
 const PAGE_SIZE = 10;
@@ -68,9 +68,10 @@ export function MyBookingsView() {
 }
 
 function BookingList({ scope }: { scope: Scope }) {
+  const slug = useTurfPortal()?.slug;
   const q = useInfiniteQuery({
-    queryKey: ["customer", "bookings", scope],
-    queryFn: ({ pageParam }) => listMyBookings(scope, pageParam, PAGE_SIZE),
+    queryKey: [...customerBookingsKey(slug), scope],
+    queryFn: ({ pageParam }) => listMyBookings(scope, pageParam, PAGE_SIZE, slug),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.page * last.limit < last.total ? last.page + 1 : undefined),
   });

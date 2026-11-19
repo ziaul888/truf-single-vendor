@@ -33,13 +33,13 @@ export function Topbar({
 
       {/* Phones: the search trigger shrinks to an icon button; it opens the same palette. */}
       <div className="flex justify-center sm:flex-1 max-sm:[&>button]:w-9 max-sm:[&>button]:justify-center max-sm:[&>button]:px-0 max-sm:pointer-coarse:[&>button]:w-10 max-sm:[&>button>span]:hidden">
-        {audience === "staff" ? <GlobalSearch /> : <span />}
+        <GlobalSearch />
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
         <ThemeToggle />
         <Link
-          href={audience === "owner" ? "/dashboard" : "/dashboard/profile"}
+          href="/dashboard/profile"
           aria-label="Profile"
           title={me ? `${me.name} (${me.role})` : undefined}
           className="bg-primary text-primary-foreground focus-visible:ring-ring ml-1 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-coarse:h-10 pointer-coarse:w-10"

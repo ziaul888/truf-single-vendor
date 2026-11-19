@@ -14,6 +14,8 @@ export interface PlatformPlan {
 export type SubscriptionStatus = "pending" | "scheduled" | "active" | "past_due" | "cancelled";
 export type InvoiceStatus = "issued" | "overdue" | "paid" | "void";
 export type BillingInterval = "monthly" | "yearly";
+export type SubscriptionPaymentMethod = "bkash" | "nagad" | "bank_transfer";
+export type SubscriptionPaymentInstructions = Record<SubscriptionPaymentMethod, string>;
 export interface PlatformSubscription {
   id: string;
   tenantId: string;

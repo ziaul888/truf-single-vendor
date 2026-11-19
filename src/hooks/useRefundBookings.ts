@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { useDashboardApi } from "./useDashboardApi";
 import type { PaymentMethod } from "@/types/booking";
 import type { RefundBookingPage, RefundStatus } from "@/types/refund-booking";
 
@@ -14,9 +14,10 @@ interface RefundBookingFilters {
 
 /** Shares booking invalidation so recording a refund refreshes this list. */
 export function useRefundBookings(filters: RefundBookingFilters) {
+  const { client, scope } = useDashboardApi();
   return useQuery<RefundBookingPage>({
-    queryKey: ["bookings", "refunds", filters],
-    queryFn: async () => (await api.get("/admin/bookings/refunds", { params: filters })).data.data,
+    queryKey: [...scope, "bookings", "refunds", filters],
+    queryFn: async () => (await client.get("/admin/bookings/refunds", { params: filters })).data.data,
     placeholderData: keepPreviousData,
   });
 }

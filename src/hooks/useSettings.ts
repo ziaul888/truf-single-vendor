@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import api from "@/lib/api";
 import { ownerApi } from "@/lib/owner-api";
 import { useDashboardAudience } from "@/components/dashboard-audience";
+import { useDashboardApi } from "./useDashboardApi";
 import type { WebsiteSettings, WebsiteImageSlot } from "@/validations/website-settings";
 import type {
   Audited, EmailLogPage, NotificationSettings, NotificationsInput, PaymentStatus, Permissions, PublicVenue,
@@ -71,13 +72,20 @@ export const useRemoveLogo = () =>
 
 export type WebsiteSection = WebsiteSettings & Audited;
 
-export const useWebsiteSettings = () =>
-  useQuery<WebsiteSection>({ queryKey: KEY.website, queryFn: () => get("/admin/settings/website") });
+export function useWebsiteSettings() {
+  const { client, scope } = useDashboardApi();
+  return useQuery<WebsiteSection>({
+    queryKey: [...scope, ...KEY.website],
+    queryFn: async () => (await client.get("/admin/settings/website")).data.data,
+  });
+}
 
 /** hero and social replace those parts whole; sections replaces only the sections sent. */
-export const useUpdateWebsite = () =>
-  useSectionMutation(KEY.website, async (body: Partial<WebsiteSettings>) =>
-    (await api.put("/admin/settings/website", body)).data.data as WebsiteSection);
+export function useUpdateWebsite() {
+  const { client, scope } = useDashboardApi();
+  return useSectionMutation([...scope, ...KEY.website], async (body: Partial<WebsiteSettings>) =>
+    (await client.put("/admin/settings/website", body)).data.data as WebsiteSection);
+}
 
 /** Uploads and publishes straight away: turf-api sets the image and deletes the old upload. */
 export const useUploadWebsiteImage = () =>
@@ -90,23 +98,34 @@ export const useUploadWebsiteImage = () =>
 
 // ── Payments (read-only) ──
 
-export const usePaymentStatus = () =>
-  useQuery<PaymentStatus>({ queryKey: KEY.payments, queryFn: () => get("/admin/settings/payments/status") });
+export function usePaymentStatus() {
+  const { client, scope } = useDashboardApi();
+  return useQuery<PaymentStatus>({
+    queryKey: [...scope, ...KEY.payments],
+    queryFn: async () => (await client.get("/admin/settings/payments/status")).data.data,
+  });
+}
 
 // ── Notifications ──
 
-export const useNotificationSettings = () =>
-  useQuery<NotificationSettings>({ queryKey: KEY.notifications, queryFn: () => get("/admin/settings/notifications") });
+export function useNotificationSettings() {
+  const { client, scope } = useDashboardApi();
+  return useQuery<NotificationSettings>({
+    queryKey: [...scope, ...KEY.notifications],
+    queryFn: async () => (await client.get("/admin/settings/notifications")).data.data,
+  });
+}
 
 export function useUpdateNotifications() {
   const qc = useQueryClient();
+  const { client, scope } = useDashboardApi();
   return useMutation({
     mutationFn: async (body: NotificationsInput) =>
-      (await api.put("/admin/settings/notifications", body)).data.data as NotificationSettings,
+      (await client.put("/admin/settings/notifications", body)).data.data as NotificationSettings,
     onSuccess: (data) => {
-      qc.setQueryData(KEY.notifications, data);
+      qc.setQueryData([...scope, ...KEY.notifications], data);
       // slotBlocked and newBooking are the same settings as the two notify switches in slot settings.
-      qc.invalidateQueries({ queryKey: ["settings", "slots"] });
+      qc.invalidateQueries({ queryKey: [...scope, "settings", "slots"] });
     },
   });
 }
@@ -129,8 +148,13 @@ export const useEmailLog = (page: number, limit = 10) =>
 
 // ── Access ──
 
-export const usePermissions = () =>
-  useQuery<Permissions>({ queryKey: KEY.permissions, queryFn: () => get("/admin/auth/permissions") });
+export function usePermissions() {
+  const { client, scope } = useDashboardApi();
+  return useQuery<Permissions>({
+    queryKey: [...scope, ...KEY.permissions],
+    queryFn: async () => (await client.get("/admin/auth/permissions")).data.data,
+  });
+}
 
 // ── System (admin only) ──
 
@@ -140,11 +164,12 @@ export const useSystemStatus = ({ enabled = true } = {}) =>
 /** Puts the chosen sections (all three when left out) back to their defaults. */
 export function useResetSettings() {
   const qc = useQueryClient();
+  const { client, scope } = useDashboardApi();
   return useMutation({
     mutationFn: async (sections?: ResettableSection[]) =>
-      (await api.post("/admin/settings/reset", sections ? { sections } : {})).data.data,
+      (await client.post("/admin/settings/reset", sections ? { sections } : {})).data.data,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["settings"] }); // slots, notifications, website
+      qc.invalidateQueries({ queryKey: [...scope, "settings"] }); // slots, notifications, website
     },
   });
 }

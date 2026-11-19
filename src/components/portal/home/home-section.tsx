@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { cn } from "@/lib/utils";
 
 /** The page rhythm shared by every home section: one centred column, tight on phones. */

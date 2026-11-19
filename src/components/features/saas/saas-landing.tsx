@@ -1,198 +1,256 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
   BarChart3,
-  CalendarCheck2,
-  CheckCircle2,
+  CalendarDays,
+  CalendarRange,
+  Clock,
   Layers3,
+  MapPin,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SaasPricing } from "./saas-pricing";
 
-const features = [
+const available = [
   {
-    icon: CalendarCheck2,
-    title: "Bookings and slots",
-    text: "Keep availability, bookings, payments, and refunds together in one daily workflow.",
+    title: "Turf settings",
+    description: "Set up your venue profile, booking rules and preferences.",
+    icon: ShieldCheck,
   },
   {
+    title: "Grounds and pricing",
+    description: "Add grounds with operating hours, slot lengths and peak rates.",
+    icon: MapPin,
+  },
+  {
+    title: "Slot generation",
+    description: "Generate time slots manually, set up automatic generation and manage closures.",
+    icon: CalendarDays,
+  },
+  {
+    title: "Staff accounts",
+    description: "Give your own admins and managers access to your turf.",
     icon: UsersRound,
-    title: "Staff operations",
-    text: "Give your team a focused dashboard for the venue work they handle every day.",
   },
   {
+    title: "Bookings and customers",
+    description: "Manage the booking calendar, customer records, manual payments and refunds.",
+    icon: CalendarRange,
+  },
+  {
+    title: "Sales reports and exports",
+    description: "Review your turf’s sales, booking activity and ground performance.",
     icon: BarChart3,
-    title: "Clear business view",
-    text: "Review revenue, booking activity, customer records, and operational attention items.",
   },
 ];
 
-function Header() {
-  return (
-    <header className="border-border/70 bg-background/90 sticky top-0 z-40 border-b backdrop-blur">
-      <div className="mx-auto flex min-h-18 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link
-          href="/saas"
-          className="focus-visible:ring-ring flex items-center gap-3 rounded-lg outline-none focus-visible:ring-2"
-        >
-          <span className="bg-primary text-primary-foreground flex h-10 w-10 items-center justify-center rounded-xl">
-            <Layers3 className="h-5 w-5" />
-          </span>
-          <span className="font-semibold tracking-tight">Turf SaaS</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" className="h-11">
-            <Link href="/login">Owner login</Link>
-          </Button>
-          <Button asChild className="hidden h-11 sm:inline-flex">
-            <Link href="/saas/apply">Apply now</Link>
-          </Button>
-        </div>
-      </div>
-    </header>
-  );
-}
+const bookingWebsite = {
+  title: "Customer booking website",
+  description:
+    "Publish your turf website with live availability and cash, bKash or Nagad booking options.",
+};
+
+const upcoming = ["Online card payments and booking emails"];
+
+const steps = [
+  {
+    title: "Choose a plan",
+    description: "See the full amount due for your chosen billing cycle.",
+  },
+  {
+    title: "Pay and submit your reference",
+    description: "Use an available bKash, Nagad or bank transfer option.",
+  },
+  {
+    title: "Log in after payment verification",
+    description: "The platform admin confirms your payment and activates your turf account.",
+  },
+];
+
+const textLink =
+  "focus-visible:ring-ring min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:outline-none";
 
 export function SaasLanding() {
   return (
-    <>
-      <Header />
+    <div className="saas-page">
+      <header className="border-border bg-background sticky top-0 z-40 border-b">
+        <nav
+          aria-label="Main navigation"
+          className="mx-auto flex min-h-16 max-w-[90rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-16"
+        >
+          <Link
+            href="/saas"
+            className="focus-visible:ring-ring flex min-h-11 shrink-0 items-center gap-2.5 rounded-md font-semibold focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
+              <Layers3 aria-hidden className="size-5" />
+            </span>
+            Turf SaaS
+          </Link>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <a href="#features" className={`${textLink} hidden md:inline-flex`}>
+              Features
+            </a>
+            <a href="#plans" className={`${textLink} hidden sm:inline-flex`}>
+              Plans
+            </a>
+            <Button variant="outline" asChild className="h-11 px-3 sm:px-4">
+              <Link href="/login">Log in</Link>
+            </Button>
+            <Button asChild className="h-11 px-3 sm:px-4">
+              <Link href="/saas/apply">Apply now</Link>
+            </Button>
+          </div>
+        </nav>
+      </header>
+
       <main>
-        <section className="relative overflow-hidden border-b">
-          <div className="bg-primary/8 absolute -top-40 right-[-8rem] h-96 w-96 rounded-full blur-3xl" />
-          <div className="bg-info/10 absolute bottom-[-10rem] left-[-8rem] h-80 w-80 rounded-full blur-3xl" />
-          <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.15fr_.85fr] lg:items-center lg:py-32">
-            <div>
-              <p className="text-primary text-xs font-semibold tracking-[0.22em] uppercase">
-                Built for turf owners
+        {/* Hero: Stage. Text on four tracks, the booking site on six, bleeding off the right edge on desktop. */}
+        <section className="overflow-x-clip">
+          <div className="mx-auto grid max-w-[90rem] items-center gap-12 px-4 py-12 sm:px-6 sm:py-16 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[minmax(0,4fr)_minmax(0,6fr)] lg:gap-16 lg:py-12 lg:pr-0 lg:pl-16">
+            <div className="max-w-xl">
+              <h1 className="saas-display">Run your turf from one admin panel.</h1>
+              <p className="saas-lead mt-6 max-w-[34ch]">
+                Venue, grounds, slots and staff sign-ins, on a monthly or yearly plan.
               </p>
-              <h1 className="mt-5 max-w-3xl text-4xl leading-tight font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Run your turf from one clear dashboard.
-              </h1>
-              <p className="text-muted-foreground mt-6 max-w-2xl text-base leading-7 sm:text-lg">
-                Apply for owner access, wait for SaaS admin approval, then sign in to manage your
-                turf account. Your business begins in Setting up so you can complete onboarding
-                safely.
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg" className="h-12 px-6">
-                  <Link href="/saas/apply">
-                    Apply for owner access <ArrowRight />
-                  </Link>
+              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button asChild size="lg" className="h-12 px-6 text-base">
+                  <Link href="/saas/apply">Apply for owner access</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="h-12 px-6">
-                  <Link href="/login">Already approved? Log in</Link>
+                <Button asChild variant="outline" size="lg" className="h-12 px-6 text-base">
+                  <a href="#plans">See plans and pricing</a>
                 </Button>
               </div>
             </div>
-            <div className="bg-card relative rounded-3xl border p-5 shadow-xl sm:p-7">
-              <div className="flex items-center justify-between gap-4 border-b pb-5">
-                <div>
-                  <p className="text-sm font-semibold">Owner onboarding</p>
-                  <p className="text-muted-foreground mt-1 text-xs">A simple, controlled start</p>
+
+            <figure className="min-w-0">
+              <div
+                className="saas-shot aspect-[2000/1083] lg:rounded-r-none"
+                data-slot="hero"
+                data-kind="product"
+                data-alt="The turf's customer booking website on desktop: header, hero search and venue facts"
+              >
+                <Image
+                  src="/saas/booking-site-desktop.jpg"
+                  alt="A turf's customer booking website on desktop, with a date, sport and format search"
+                  width={2000}
+                  height={1083}
+                  sizes="(min-width: 1024px) 60vw, 100vw"
+                  priority
+                />
+              </div>
+              <figcaption className="text-muted-foreground mt-3 text-sm">
+                The booking website your customers see.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        {/* What each plan includes: an index of rows, the head beside them. */}
+        <section id="features" className="scroll-mt-20 py-24 sm:py-32 lg:py-36">
+          <div className="mx-auto grid max-w-[90rem] gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-16">
+            <h2 className="saas-section lg:col-span-4">Included in each plan today</h2>
+            <ul className="border-border divide-border divide-y border-y lg:col-span-8">
+              {available.map(({ title, description, icon: Icon }) => (
+                <li
+                  key={title}
+                  className="grid gap-2 py-6 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-8 sm:py-7"
+                >
+                  <h3 className="saas-title flex items-center gap-3">
+                    <Icon aria-hidden className="text-primary size-5 shrink-0" />
+                    {title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed sm:pt-1">{description}</p>
+                </li>
+              ))}
+              <li className="grid gap-2 py-6 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-8 sm:py-7">
+                <h3 className="saas-title text-muted-foreground flex items-center gap-3">
+                  <Clock aria-hidden className="size-5 shrink-0" />
+                  Not available for turf accounts yet
+                </h3>
+                <div className="text-muted-foreground leading-relaxed sm:pt-1">
+                  <ul className="space-y-1">
+                    {upcoming.map((item) => (
+                      <li key={item} className="text-foreground">
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-sm">
+                    Website, payment and email preferences can be saved during setup.
+                  </p>
                 </div>
-                <ShieldCheck className="text-primary h-7 w-7" />
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        {/* The booking website, shown on the phone most customers book from. */}
+        <section className="bg-muted py-24 sm:py-28">
+          <div className="mx-auto grid max-w-[90rem] items-center gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-16">
+            <div className="lg:col-span-5">
+              <h2 className="saas-section">{bookingWebsite.title}</h2>
+              <p className="saas-lead mt-6 max-w-[40ch]">{bookingWebsite.description}</p>
+            </div>
+            <figure className="flex justify-center lg:col-span-6 lg:col-start-7">
+              <div
+                className="saas-shot aspect-[780/1480] w-full max-w-[22rem] rounded-[28px]"
+                data-slot="phone"
+                data-kind="product"
+                data-alt="The turf's customer booking website on a phone, the search card in view"
+              >
+                <Image
+                  src="/saas/booking-site-phone.jpg"
+                  alt="The same booking website on a phone, with the find slots search"
+                  width={780}
+                  height={1480}
+                  sizes="22rem"
+                />
               </div>
-              <ol className="mt-6 space-y-5">
-                {[
-                  "Submit your turf and owner details",
-                  "SaaS admin reviews and activates",
-                  "Log in at /login with your chosen password",
-                ].map((step, index) => (
-                  <li key={step} className="flex gap-4">
-                    <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className="font-medium">{step}</p>
-                      {index === 1 && (
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          The turf remains Setting up after owner activation.
-                        </p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
+            </figure>
+          </div>
+        </section>
+
+        {/* The real process, on the ink band. */}
+        <section className="saas-band py-24 sm:py-32">
+          <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-16">
+            <h2 className="saas-section max-w-[16ch]">From application to setup</h2>
+            <ol className="mt-14 grid gap-12 md:grid-cols-3 md:gap-8">
+              {steps.map(({ title, description }, index) => (
+                <li key={title} className="border-t border-current/20 pt-6">
+                  <span aria-hidden className="saas-numeral block text-6xl leading-none">
+                    {index + 1}
+                  </span>
+                  <h3 className="saas-title mt-6">{title}</h3>
+                  <p className="saas-band-muted mt-3 max-w-[36ch] leading-relaxed">{description}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <SaasPricing />
+
+        {/* The close: the hero's action again, with the one term that matters at activation. */}
+        <section className="border-border border-t py-20 sm:py-24">
+          <div className="mx-auto flex max-w-[90rem] flex-col gap-8 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-16">
+            <div>
+              <h2 className="saas-section">Ready to set up your turf?</h2>
+              <p className="saas-lead mt-4">Activation starts your first paid billing period.</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="h-12 px-6 text-base">
+                <Link href="/saas/apply">Apply now</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
+                <Link href="/login">Sign in to Turf Admin</Link>
+              </Button>
             </div>
           </div>
-        </section>
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="max-w-2xl">
-            <p className="text-primary text-xs font-semibold tracking-widest uppercase">
-              One operating view
-            </p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              The tools a turf team needs to stay organised.
-            </h2>
-          </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {features.map(({ icon: Icon, title, text }) => (
-              <article key={title} className="bg-card rounded-2xl border p-6">
-                <span className="bg-primary/10 text-primary flex h-11 w-11 items-center justify-center rounded-xl">
-                  <Icon />
-                </span>
-                <h3 className="mt-5 text-lg font-semibold">{title}</h3>
-                <p className="text-muted-foreground mt-2 text-sm leading-6">{text}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-        <section className="bg-muted/30 border-y">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-            <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
-              <div>
-                <p className="text-primary text-xs font-semibold tracking-widest uppercase">
-                  Approval flow
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight">
-                  No account opens without review.
-                </h2>
-                <p className="text-muted-foreground mt-4 text-sm leading-6">
-                  Your application stays pending until the SaaS admin activates it. Before
-                  activation, the selected email and password cannot be used to log in.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {["Application received", "Admin activation", "Owner login enabled"].map((item) => (
-                  <div key={item} className="bg-card flex items-center gap-3 rounded-xl border p-4">
-                    <CheckCircle2 className="text-primary h-5 w-5 shrink-0" />
-                    <span className="text-sm font-medium">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-        <section className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-24">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Ready to set up your turf?
-          </h2>
-          <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-sm leading-6">
-            Send your application now. After approval, use the regular owner login page to access
-            your dashboard.
-          </p>
-          <Button asChild size="lg" className="mt-8 h-12 px-7">
-            <Link href="/saas/apply">
-              Start application <ArrowRight />
-            </Link>
-          </Button>
         </section>
       </main>
-      <footer className="border-t">
-        <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col gap-3 px-4 py-7 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span>Turf SaaS owner platform</span>
-          <div className="flex gap-5">
-            <Link className="hover:text-foreground" href="/saas/apply">
-              Apply
-            </Link>
-            <Link className="hover:text-foreground" href="/login">
-              Owner login
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </>
+    </div>
   );
 }

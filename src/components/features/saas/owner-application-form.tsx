@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,14 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { OwnerApplicationPlans, useOwnerApplicationPlans } from "./owner-application-plans";
+import { planCharge } from "@/lib/platform-billing";
+import type { BillingInterval } from "@/types/platform-billing";
+import {
+  OwnerApplicationPlans,
+  useOwnerApplicationPlans,
+  useSubscriptionPaymentMethods,
+} from "./owner-application-plans";
+import { OwnerApplicationPayment } from "./owner-application-payment";
 
 const schema = z
   .object({
@@ -26,13 +33,26 @@ const schema = z
     confirmPassword: z.string(),
     planId: z.string().uuid("Choose a subscription plan"),
     interval: z.enum(["monthly", "yearly"]),
+    paymentMethod: z.enum(["bkash", "nagad", "bank_transfer"], "Choose a payment method"),
+    paymentReference: z
+      .string()
+      .trim()
+      .max(100)
+      .refine(
+        (value) =>
+          /^[A-Z0-9][A-Z0-9._/-]{2,99}$/.test(
+            value.normalize("NFKC").replace(/\s+/g, "").toUpperCase()
+          ),
+        "Enter a valid transaction reference"
+      ),
+    paymentDate: z.iso.date("Enter the date you sent the payment"),
   })
   .refine((value) => value.password === value.confirmPassword, {
     path: ["confirmPassword"],
     message: "Passwords do not match",
   });
 
-type Values = z.infer<typeof schema>;
+export type PurchaseValues = z.infer<typeof schema>;
 type Failure = {
   success: false;
   error: string;
@@ -58,13 +78,20 @@ function Field({
   );
 }
 
-export function OwnerApplicationForm() {
+export function OwnerApplicationForm({
+  initialPlanId,
+  initialInterval,
+}: {
+  initialPlanId: string;
+  initialInterval: BillingInterval;
+}) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [requestId, setRequestId] = useState("");
+  const attempt = useRef<{ requestId: string; payload: string } | null>(null);
   const plans = useOwnerApplicationPlans();
-  const form = useForm<Values>({
+  const methods = useSubscriptionPaymentMethods();
+  const form = useForm<PurchaseValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: "",
@@ -73,42 +100,64 @@ export function OwnerApplicationForm() {
       ownerEmail: "",
       password: "",
       confirmPassword: "",
-      planId: "",
-      interval: "monthly",
+      planId: initialPlanId,
+      interval: initialInterval,
+      paymentReference: "",
+      paymentDate: "",
     },
   });
   const planId = useWatch({ control: form.control, name: "planId" });
   const interval = useWatch({ control: form.control, name: "interval" });
-  async function submit(values: Values) {
+  const selectedPlan = plans.data?.find((plan) => plan.id === planId);
+  const hasPaymentMethods = Object.values(methods.data ?? {}).some(Boolean);
+  async function submit(values: PurchaseValues) {
     setError("");
-    const currentRequestId = requestId || crypto.randomUUID();
-    if (!requestId) setRequestId(currentRequestId);
+    if (!selectedPlan || selectedPlan.id !== values.planId) {
+      form.setError("planId", { message: "Choose an available subscription plan" });
+      return;
+    }
+    if (!methods.data?.[values.paymentMethod]) {
+      form.setError("paymentMethod", { message: "Choose an available payment method" });
+      return;
+    }
+    const payload = {
+      name: values.name,
+      slug: values.slug,
+      ownerName: values.ownerName,
+      ownerEmail: values.ownerEmail,
+      password: values.password,
+      planId: values.planId,
+      interval: values.interval,
+      paymentMethod: values.paymentMethod,
+      paymentReference: values.paymentReference,
+      paymentDate: values.paymentDate,
+      timezone: "Asia/Dhaka",
+      currency: "bdt",
+      planVersion: selectedPlan.version,
+      expectedAmount: planCharge(selectedPlan, values.interval),
+    };
+    const signature = JSON.stringify(payload);
+    if (attempt.current?.payload !== signature)
+      attempt.current = { requestId: crypto.randomUUID(), payload: signature };
     try {
       const response = await fetch("/api/v1/owner-applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          requestId: currentRequestId,
-          name: values.name,
-          slug: values.slug,
-          ownerName: values.ownerName,
-          ownerEmail: values.ownerEmail,
-          password: values.password,
-          timezone: "Asia/Dhaka",
-          currency: "bdt",
-          planId: values.planId,
-          interval: values.interval,
+          ...payload,
+          requestId: attempt.current.requestId,
         }),
       });
       const json = (await response.json()) as { success: true } | Failure;
       if (!json.success) {
         json.details?.forEach((item) => {
           if (item.field in values)
-            form.setError(item.field as keyof Values, { message: item.message });
+            form.setError(item.field as keyof PurchaseValues, { message: item.message });
         });
         setError(json.error);
         return;
       }
+      attempt.current = null;
       form.reset();
       setSuccess(true);
     } catch {
@@ -122,11 +171,12 @@ export function OwnerApplicationForm() {
       <main className="mx-auto flex min-h-dvh max-w-2xl items-center px-4 py-12 sm:px-6">
         <section className="bg-card w-full rounded-3xl border p-6 text-center shadow-lg sm:p-10">
           <CheckCircle2 className="text-success mx-auto h-12 w-12" />
-          <h1 className="mt-5 text-2xl font-bold tracking-tight">Application received</h1>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight">
+            Payment submitted for verification
+          </h1>
           <p className="text-muted-foreground mx-auto mt-3 max-w-md text-sm leading-6">
-            Your account is waiting for SaaS admin approval. After activation, sign in from the
-            regular login page with the email and password you selected. Your first plan invoice
-            will be ready for manual payment confirmation.
+            Keep your transaction reference until verification is complete. Once the platform admin
+            confirms the full payment, you can sign in with the email and password you chose.
           </p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild className="h-11">
@@ -152,13 +202,22 @@ export function OwnerApplicationForm() {
         <p className="text-primary text-xs font-semibold tracking-widest uppercase">
           Turf owner access
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Apply for activation</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+          Apply for turf owner access
+        </h1>
         <p className="text-muted-foreground mt-3 text-sm leading-6">
-          Choose your login details now. You can sign in only after the SaaS admin approves and
-          activates your application.
+          Choose a plan, set up your login details and submit the first payment for verification.{" "}
+          <Link href="/saas#access" className="text-primary underline">
+            See what your plan includes
+          </Link>
+          .
         </p>
       </div>
-      <form className="mt-8 space-y-5" onSubmit={form.handleSubmit(submit)} noValidate>
+      <form
+        className="mt-8 space-y-5"
+        onSubmit={(event) => void form.handleSubmit(submit)(event)}
+        noValidate
+      >
         <OwnerApplicationPlans
           plans={plans.data}
           planId={planId}
@@ -261,6 +320,12 @@ export function OwnerApplicationForm() {
             SaaS admin.
           </p>
         </section>
+        <OwnerApplicationPayment
+          form={form}
+          plan={selectedPlan}
+          interval={interval}
+          methods={methods}
+        />
         {error && (
           <p
             role="alert"
@@ -279,10 +344,12 @@ export function OwnerApplicationForm() {
           <Button
             type="submit"
             className="h-12 px-6"
-            disabled={busy || plans.isLoading || !plans.data?.length}
+            disabled={
+              busy || plans.isError || methods.isError || !selectedPlan || !hasPaymentMethods
+            }
           >
             {busy ? <Loader2 className="animate-spin" /> : <Send />}
-            {busy ? "Submitting…" : "Submit application"}
+            {busy ? "Submitting…" : "Submit payment and application"}
           </Button>
         </div>
       </form>

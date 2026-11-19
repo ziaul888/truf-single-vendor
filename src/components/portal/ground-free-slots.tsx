@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { formatSlotsParam, slotPriceLabel, slotStartTime } from "@/lib/slot-format";
 import type { PublicSlot } from "@/types/slot";
 

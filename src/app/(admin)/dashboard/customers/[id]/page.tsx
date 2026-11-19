@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import { useCustomerDetail, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { toApiFailure } from "@/lib/api-error";
 import { ConfirmDialog } from "@/components/features/confirm-dialog";
 import { CustomerBookingHistory } from "@/components/features/customers/customer-booking-history";
@@ -35,7 +36,7 @@ export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data, isLoading, isError } = useCustomerDetail(id);
-  const { data: me } = useMe();
+  const { data: me } = useMe(useDashboardAudience());
   const remove = useDeleteCustomer();
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -53,7 +54,7 @@ export default function CustomerDetailPage() {
     );
   }
 
-  const canDelete = me?.role === "admin";
+  const canDelete = me?.role === "admin" || me?.role === "owner";
   const firstDue = data.duePayments[0];
 
   function handleDelete() {

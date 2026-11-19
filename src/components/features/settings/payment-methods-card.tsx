@@ -42,8 +42,8 @@ const SWITCHES: { key: SwitchKey; label: string; desc: string; name: string }[] 
 const offWhy = (switchedOn: boolean, missing: string) => (switchedOn ? missing : "Switched off below.");
 
 /** Which ways to pay are on, plus the admin-only switches for the booking website. */
-export function PaymentMethodsCard({ status, switches, canEdit, onSaved }: {
-  status: PaymentStatus; switches: PortalSwitches; canEdit: boolean; onSaved: () => void;
+export function PaymentMethodsCard({ status, switches, canEdit, onSaved, tenant = false }: {
+  status: PaymentStatus; switches: PortalSwitches; canEdit: boolean; onSaved: () => void; tenant?: boolean;
 }) {
   const save = useUpdateSlotSettings();
 
@@ -51,7 +51,7 @@ export function PaymentMethodsCard({ status, switches, canEdit, onSaved }: {
     try {
       await save.mutateAsync({ [key]: on });
       onSaved();
-      toast.success(`${name} turned ${on ? "on" : "off"} for customers`);
+      toast.success(tenant ? `${name} preference saved` : `${name} turned ${on ? "on" : "off"} for customers`);
     } catch (err) {
       toast.error(toApiFailure(err).error);
     }
@@ -61,8 +61,8 @@ export function PaymentMethodsCard({ status, switches, canEdit, onSaved }: {
   const wallet = "Customers send money and enter the TrxID; staff verify it.";
   return (
     <SettingsSection title="Payment methods" icon={Wallet} description="Card online; bKash and Nagad sent by hand and verified by staff">
-      <MethodRow icon={CreditCard} label="Card (Stripe)" on={methods.card}
-        desc={methods.card ? "Customers pay online at checkout." : offWhy(switches.portalCardEnabled, "Needs Stripe keys in turf-api.")} />
+      {!tenant && <MethodRow icon={CreditCard} label="Card (Stripe)" on={methods.card}
+        desc={methods.card ? "Customers pay online at checkout." : offWhy(switches.portalCardEnabled, "Needs Stripe keys in turf-api.")} />}
       <MethodRow icon={Banknote} label="Cash" on={methods.cash} desc="Staff record cash payments on a booking." />
       <MethodRow icon={Building} label="Bank transfer" on={methods.bankTransfer} desc="Staff record bank transfers on a booking." />
       <MethodRow icon={Smartphone} label="bKash" on={methods.bkash}
@@ -71,7 +71,7 @@ export function PaymentMethodsCard({ status, switches, canEdit, onSaved }: {
         desc={methods.nagad ? wallet : offWhy(switches.portalNagadEnabled, "Set the Nagad number below to offer it to customers.")} />
       <div className="space-y-4 border-t pt-4">
         <p className="text-xs text-muted-foreground">On the booking website. Each switch saves straight away.</p>
-        {SWITCHES.map(({ key, label, desc, name }) => (
+        {SWITCHES.filter(({ key }) => !tenant || key !== "portalCardEnabled").map(({ key, label, desc, name }) => (
           <SettingToggle key={key} label={label} desc={desc} checked={switches[key]}
             onChange={(on) => toggle(key, name, on)} disabled={!canEdit || save.isPending} />
         ))}

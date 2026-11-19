@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { PortalLink as Link, useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Lock, Wallet } from "lucide-react";
 import { PortalApiError, startCheckout, markLeavingForPayment, toAppPath } from "@/lib/portal-bookings";
 import type { CheckoutMethod } from "@/types/booking";
-import { CUSTOMER_SESSION_KEY, useCustomerSession } from "@/components/portal/account/use-customer-session";
+import { customerSessionKey, useCustomerSession } from "@/components/portal/account/use-customer-session";
 import { checkoutFormSchema, CHECKOUT_FIELDS, EMAIL_REQUIRED_MESSAGE, type CheckoutFormValues } from "./checkout-schema";
 import { Field, PaymentChoice, SignInNotice } from "./checkout-fields";
 import { formatSlotsParam, slotStartMinute, slotStartTime } from "@/lib/slot-format";
@@ -31,6 +31,7 @@ export function CheckoutForm({
   /** The method chosen before signing in (`?method=` on the way back). */
   initialMethod?: CheckoutMethod;
 }) {
+  const slug = useTurfPortal()?.slug;
   const router = useRouter();
   const queryClient = useQueryClient();
   const options = useCheckoutOptions();
@@ -102,7 +103,7 @@ export function CheckoutForm({
           ...(bookingMoneyOn && { depositMethod: payWallet.method }),
           reference: reference.trim().toUpperCase(), payerNumber: payerNumber.trim(),
         }),
-      });
+      }, slug);
       setLeaving(true);
       if (result.checkoutUrl) {
         markLeavingForPayment(result.bookingId, 0);
@@ -129,11 +130,11 @@ export function CheckoutForm({
     if (err.code === "EMAIL_REQUIRED") return setError("customerEmail", { message: EMAIL_REQUIRED_MESSAGE });
     if (err.code === "SIGN_IN_REQUIRED") {
       // The session ended meanwhile: drop it so the sign-in notice shows.
-      queryClient.setQueryData(CUSTOMER_SESSION_KEY, null);
+      queryClient.setQueryData(customerSessionKey(slug), null);
       setFormError({ message: "Please sign in with your phone number to pay at the venue or by bKash / Nagad.", slotTaken: false });
     } else if (err.code === "TOO_MANY_OPEN_BOOKINGS") {
       setFormError({
-        message: "You already have 3 unpaid bookings waiting. Pay or cancel one of them first, or pay by card.",
+        message: slug ? "You already have 3 unpaid bookings. Pay or cancel one before booking again." : "You already have 3 unpaid bookings waiting. Pay or cancel one of them first, or pay by card.",
         slotTaken: false, myBookings: true,
       });
     } else if (err.code === "TOO_MANY_SLOTS") {
@@ -171,7 +172,7 @@ export function CheckoutForm({
           />
           <Field
             id="customerEmail" label={session ? "Email (optional)" : "Email"} type="email" autoComplete="email" className="sm:col-span-2"
-            hint={session
+            hint={slug ? "Find your confirmation in My bookings." : session
               ? "Your confirmation link will be sent here. No email: no confirmation emails; find your bookings under My bookings."
               : "Your confirmation link will be sent here."}
             error={errors.customerEmail?.message} {...register("customerEmail")}

@@ -6,8 +6,8 @@ import { HomeSection, SectionHeading } from "./home-section";
 
 const FEATURED_COUNT = 6;
 
-export async function FeaturedGroundsSection({ content }: { content: WebsiteSections["featuredGrounds"] }) {
-  const grounds = (await listPublicGrounds()).slice(0, FEATURED_COUNT);
+export async function FeaturedGroundsSection({ content, slug }: { content: WebsiteSections["featuredGrounds"]; slug?: string }) {
+  const grounds = (await listPublicGrounds({}, slug)).slice(0, FEATURED_COUNT);
   if (grounds.length === 0) return null;
   const single = grounds.length === 1 ? grounds[0] : null;
 

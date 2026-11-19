@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { PortalLink as Link, useTurfPortal } from "@/components/portal/turf-portal-scope";
+import { turfPortalPath } from "@/lib/turf-portal-path";
 import { usePathname } from "next/navigation";
 import { CalendarDays, House, Trophy, UserRound, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,11 @@ interface Tab {
  * Checkout has its own submit button, so the bar stays off there.
  */
 export function PortalTabBar({ bookHref }: { bookHref: string }) {
-  const pathname = usePathname();
+  const slug = useTurfPortal()?.slug;
+  const fullPath = usePathname();
+  const base = turfPortalPath(slug);
+  const inTurf = slug && (fullPath === base || fullPath.startsWith(base + "/"));
+  const pathname = inTurf ? fullPath.slice(base.length) || "/" : fullPath;
   const tabs = useTabs(pathname, bookHref);
   if (pathname.startsWith("/checkout")) return null;
 

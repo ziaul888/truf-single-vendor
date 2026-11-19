@@ -16,6 +16,7 @@ import { UsersEmptyState, UsersTable } from "@/components/features/users/users-t
 import { UserFormSheet } from "@/components/features/users/user-form-sheet";
 import { ResetPasswordDialog } from "@/components/features/users/reset-password-dialog";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useUpdateUser, useUsers, type StaffUser } from "@/hooks/useUsers";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { toApiFailure } from "@/lib/api-error";
@@ -24,10 +25,10 @@ import { NoPermission } from "@/components/features/no-permission";
 const PAGE_SIZE = 20;
 
 export default function StaffPage() {
-  const { data: me, isLoading: meLoading } = useMe();
+  const { data: me, isLoading: meLoading } = useMe(useDashboardAudience());
 
   if (meLoading) return <CenteredSpinner />;
-  if (me?.role !== "admin") return <NoPermission reason="Only admins can manage staff accounts." />;
+  if (me?.role !== "admin" && me?.role !== "owner") return <NoPermission reason="Only admins can manage staff accounts." />;
   return <StaffManager currentUserId={me.id} />;
 }
 

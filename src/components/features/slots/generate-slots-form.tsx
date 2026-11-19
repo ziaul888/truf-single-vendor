@@ -23,7 +23,7 @@ interface Props { onSuccess?: () => void; compact?: boolean }
 // Hours, slot length and prices always come from the ground; existing slots are never overwritten.
 export function GenerateSlotsForm({ onSuccess, compact }: Props) {
   const { data: me } = useMe(useDashboardAudience());
-  const today = venueToday(0, me?.role === "owner" ? me.tenant.timezone : undefined);
+  const today = venueToday(0, me && "tenant" in me ? me.tenant.timezone : undefined);
   const [groundId, setGroundId] = useState("all");
   const [fromDate, setFromDate] = useState(today);
   const [toDate,   setToDate]   = useState(() => addDays(today, 6));

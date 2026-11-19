@@ -1,7 +1,8 @@
 import Image from "next/image";
-import Link from "next/link";
+import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround, getPublicSlots } from "@/services/portal-grounds";
+import { getTurfPortalSlug } from "@/services/turf-portal-request";
 import { clockTime, formatSlotDate, formatSlotRange, parseSlotsParam, slotCountLabel, slotStartTime } from "@/lib/slot-format";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { CheckoutStepper } from "@/components/portal/checkout/checkout-stepper";
@@ -17,8 +18,8 @@ export default async function CheckoutPage({
 }: {
   searchParams: Promise<{ groundId?: string; date?: string; slots?: string; hour?: string; minute?: string; method?: string }>;
 }) {
-  const { groundId, date, slots: slotsParam, hour, minute, method } = await searchParams;
-  const ground = groundId ? await getPublicGround(groundId) : null;
+  const [{ groundId, date, slots: slotsParam, hour, minute, method }, slug] = await Promise.all([searchParams, getTurfPortalSlug()]);
+  const ground = groundId ? await getPublicGround(groundId, slug) : null;
 
   // `slots=18:00,19:30` (one ground and date). Older links carry one slot as `hour` and `minute`.
   const hourNum = hour && /^\d+$/.test(hour) ? Number(hour) : null;
@@ -26,7 +27,7 @@ export default async function CheckoutPage({
   const legacyTime = hourNum != null && hourNum < 24 ? [clockTime(hourNum, minute === "30" ? 30 : 0)] : [];
   const requestedTimes = slotsParam !== undefined ? parseSlotsParam(slotsParam) : legacyTime;
   // The slot prices come from turf-api (peak hours included), so the portal doesn't calculate them.
-  const daySlots = ground && date ? await getPublicSlots(ground.id, date) : [];
+  const daySlots = ground && date ? await getPublicSlots(ground.id, date, slug) : [];
   const slots = requestedTimes.flatMap((time) => daySlots.find((s) => slotStartTime(s) === time) ?? []);
   // Any slot missing or taken makes the whole booking unavailable.
   const unavailable = !!ground && requestedTimes.length > 0 && (slots.length !== requestedTimes.length || slots.some((s) => !s.available));

@@ -3,6 +3,7 @@
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useSystemStatus } from "@/hooks/useSettings";
 import { NoPermission } from "@/components/features/no-permission";
 import { SettingsPageHeader } from "@/components/features/settings/settings-page-header";
@@ -22,12 +23,21 @@ function Spinner() {
 
 // Admin only: the API refuses system status for managers.
 export default function SystemSettingsPage() {
-  const { data: me, isLoading: meLoading } = useMe();
-  const isAdmin = me?.role === "admin";
-  const status = useSystemStatus({ enabled: isAdmin });
+  const audience = useDashboardAudience();
+  const { data: me, isLoading: meLoading } = useMe(audience);
+  const tenant = audience === "owner";
+  const isAdmin = me?.role === "admin" || me?.role === "owner";
+  const status = useSystemStatus({ enabled: isAdmin && !tenant });
 
   if (meLoading) return <Spinner />;
   if (!isAdmin) return <NoPermission reason="Only admins can see system status and reset settings." />;
+
+  if (tenant) return (
+    <div className="space-y-5">
+      <SettingsPageHeader title={TITLE} description="Manage saved settings for your turf" />
+      <ResetSettings />
+    </div>
+  );
 
   return (
     <div className="space-y-5">

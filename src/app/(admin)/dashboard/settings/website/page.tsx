@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WebsiteSettingsSchema, type WebsiteSettings } from "@/validations/website-settings";
 import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useUpdateWebsite, useVenue, useWebsiteSettings, type WebsiteSection } from "@/hooks/useSettings";
 import { applyApiErrors, toApiFailure } from "@/lib/api-error";
 import { SettingsPageHeader } from "@/components/features/settings/settings-page-header";
@@ -22,6 +23,7 @@ import {
 } from "@/components/features/website-settings/section-editors";
 import { AmenitiesEditor } from "@/components/features/website-settings/amenities-editor";
 import { WebsitePreview } from "@/components/features/website-settings/website-preview";
+import { TurfPortalCard } from "@/components/features/website-settings/turf-portal-card";
 
 const FORM_ROOTS = ["hero", "sections", "social"];
 
@@ -36,8 +38,10 @@ const toForm = ({ hero, sections, social }: WebsiteSection): WebsiteSettings => 
 export default function WebsiteSettingsPage() {
   const { data, isLoading, isError, refetch } = useWebsiteSettings();
   const { data: venue } = useVenue();
-  const { data: me } = useMe();
-  const canEdit = me?.role === "admin";
+  const audience = useDashboardAudience();
+  const { data: me } = useMe(audience);
+  const tenant = audience === "owner";
+  const canEdit = me?.role === "admin" || me?.role === "owner";
   const save = useUpdateWebsite();
   const form = useForm<WebsiteSettings>({ resolver: zodResolver(WebsiteSettingsSchema) });
   const { reset, handleSubmit, formState: { isDirty } } = form;
@@ -76,11 +80,11 @@ export default function WebsiteSettingsPage() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
       <SettingsPageHeader title="Website" description="What customers see on the booking site" audit={data}>
-        <Button asChild size="sm" variant="ghost">
+        {!tenant && <Button asChild size="sm" variant="ghost">
           <Link href="/" target="_blank" rel="noopener noreferrer">
             <ExternalLink className="mr-1.5 h-4 w-4" />View site
           </Link>
-        </Button>
+        </Button>}
         {canEdit && (
           <>
             <Button type="button" size="sm" variant="outline" className="hidden md:inline-flex" disabled={!isDirty || save.isPending} onClick={() => reset(toForm(data))}>
@@ -94,6 +98,10 @@ export default function WebsiteSettingsPage() {
           </>
         )}
       </SettingsPageHeader>
+
+      {tenant && me && "tenant" in me && (
+        <TurfPortalCard slug={me.tenant.slug} setupComplete={me.tenant.setupComplete} canEdit={canEdit} dirty={isDirty} />
+      )}
 
       {me && !canEdit && <ReadOnlyNotice />}
 

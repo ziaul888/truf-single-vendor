@@ -1,5 +1,6 @@
 "use client";
 
+import { useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -14,8 +15,9 @@ export function CancelBooking({
   booking: PublicBooking; token: string; onCancelled: (b: PublicBooking) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const slug = useTurfPortal()?.slug;
   const cancel = useMutation({
-    mutationFn: () => cancelPublicBooking(booking.id, token),
+    mutationFn: () => cancelPublicBooking(booking.id, token, slug),
     onSuccess: (updated) => {
       setConfirming(false);
       onCancelled(updated);
