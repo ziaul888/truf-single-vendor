@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ownerApi } from "@/lib/owner-api";
 import { toApiFailure } from "@/lib/api-error";
-import { turfPortalPath } from "@/lib/turf-portal-path";
+import { turfPortalPath, turfPortalPublicUrl } from "@/lib/turf-portal-path";
 
 interface PortalStatus { slug: string; published: boolean }
 
@@ -33,7 +33,7 @@ export function TurfPortalCard({ slug, canEdit, setupComplete, dirty }: {
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(new URL(path, window.location.origin).href);
+      await navigator.clipboard.writeText(turfPortalPublicUrl(slug, window.location.origin));
       toast.success("Website link copied");
     } catch {
       toast.error("Couldn’t copy the link. Open the site to copy its address.");

@@ -1,16 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   CUSTOMER_PORTAL_HOME, CUSTOMER_PORTAL_HOME_HEADER, isLocalHost, isTurfPortalPage, isTurfPortalSlug,
-  TURF_PORTAL_HEADER, turfPortalPath, turfPortalSlugForPath,
+  PLATFORM_ADMIN_HOST, SAAS_PRODUCTION_ORIGIN, TURF_OWNER_HOSTS, TURF_PORTAL_HEADER,
+  turfPortalPath, turfPortalSlugForHost, turfPortalSlugForPath,
 } from "@/lib/turf-portal-path";
 
 const ADMIN_PREFIX = "/dashboard";
 const OWNER_ENTRY = "/admin";
 const ADMIN_LOGIN = "/login";
-const ADMIN_HOSTS = new Set(["admin-turforg.vercel.app", "turfadmin-panel.vercel.app"]);
-const PLATFORM_HOST = "platform-turforg.vercel.app";
-const TURF_NATION_HOST = "turfnation-turforg.vercel.app";
-const TURF_NATION_SLUG = "turfnation";
+
+function redirectToPublicTurf(req: NextRequest, slug: string, pathname: string) {
+  const url = new URL(turfPortalPath(slug, pathname), SAAS_PRODUCTION_ORIGIN);
+  url.search = req.nextUrl.search;
+  return NextResponse.redirect(url);
+}
 
 function passToTurfPortal(req: NextRequest, slug: string) {
   const requestHeaders = new Headers(req.headers);
@@ -46,13 +49,17 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const host = (req.headers.get("host") ?? "").toLowerCase();
   const turfSlug = turfPortalSlugForPath(pathname);
-  if (host === TURF_NATION_HOST) {
-    if (turfSlug === TURF_NATION_SLUG || isTurfPortalPage(pathname)) {
-      return passToTurfPortal(req, TURF_NATION_SLUG);
+  const aliasSlug = turfPortalSlugForHost(host);
+  if (aliasSlug) {
+    if (turfSlug === aliasSlug || isTurfPortalPage(pathname)) {
+      return redirectToPublicTurf(req, aliasSlug, pathname);
     }
     return new NextResponse(null, { status: 404 });
   }
 
+  if (turfSlug && (TURF_OWNER_HOSTS.has(host) || host === PLATFORM_ADMIN_HOST)) {
+    return redirectToPublicTurf(req, turfSlug, pathname);
+  }
   if (turfSlug) return passToTurfPortal(req, turfSlug);
   const local = isLocalHost(host);
   const requestHeaders = new Headers(req.headers);
@@ -61,8 +68,8 @@ export async function proxy(req: NextRequest) {
   if (!local || pathname === CUSTOMER_PORTAL_HOME) {
     requestHeaders.set(CUSTOMER_PORTAL_HOME_HEADER, CUSTOMER_PORTAL_HOME);
   }
-  const isAdminHost = host.startsWith("admin.") || ADMIN_HOSTS.has(host);
-  const platformRoot = (host === PLATFORM_HOST || host.startsWith("manage.")) && pathname === "/";
+  const isAdminHost = host.startsWith("admin.") || TURF_OWNER_HOSTS.has(host);
+  const platformRoot = (host === PLATFORM_ADMIN_HOST || host.startsWith("manage.")) && pathname === "/";
   const platformPage = pathname === "/platform" || pathname.startsWith("/platform/");
   if (platformRoot || platformPage) {
     if (pathname === "/platform/login") return NextResponse.next();
@@ -74,7 +81,7 @@ export async function proxy(req: NextRequest) {
     }
     if (platformRoot) {
       url.pathname = "/platform";
-      return host === PLATFORM_HOST ? NextResponse.redirect(url) : NextResponse.rewrite(url);
+      return host === PLATFORM_ADMIN_HOST ? NextResponse.redirect(url) : NextResponse.rewrite(url);
     }
     return NextResponse.next();
   }
