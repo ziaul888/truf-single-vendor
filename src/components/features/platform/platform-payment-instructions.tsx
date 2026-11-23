@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,33 +15,29 @@ import type {
   SubscriptionPaymentMethod,
 } from "@/types/platform-billing";
 import { BillingError } from "./billing-parts";
+import { PlatformSettingsSection, PlatformSettingsStatus } from "./platform-settings-section";
 
 const methods = Object.keys(subscriptionMethodLabels) as SubscriptionPaymentMethod[];
 
 export function PlatformPaymentInstructions({ userId }: { userId?: string }) {
   const query = usePlatformPaymentMethods(userId);
   return (
-    <details className="bg-card rounded-2xl border p-5">
-      <summary className="cursor-pointer font-semibold">Purchase payment instructions</summary>
-      <p className="text-muted-foreground mt-3 text-sm">
-        Enter the receiving details buyers should use. Blank methods stay unavailable. These
-        instructions are visible on the public purchase page.
-      </p>
-      {query.isError ? (
-        <div className="mt-4 space-y-2">
-          <BillingError message={toApiFailure(query.error).error} />
-          <Button variant="outline" onClick={() => void query.refetch()}>
-            Try again
-          </Button>
-        </div>
-      ) : !query.data ? (
-        <p className="text-muted-foreground mt-4 text-sm" role="status">
-          Loading instructions…
-        </p>
-      ) : (
+    <PlatformSettingsSection
+      title="Subscription payment instructions"
+      icon={Wallet}
+      description="These receiving details appear on the public plan application page. Leave a method blank to hide it from applicants."
+    >
+      {query.data ? (
         <InstructionsForm initial={query.data} userId={userId} />
+      ) : (
+        <PlatformSettingsStatus
+          subject="payment instructions"
+          error={query.error}
+          fetching={query.isFetching}
+          onRetry={() => void query.refetch()}
+        />
       )}
-    </details>
+    </PlatformSettingsSection>
   );
 }
 
@@ -62,16 +59,19 @@ function InstructionsForm({
       const saved = await save.mutateAsync(values);
       form.reset(saved);
       await queryClient.invalidateQueries({ queryKey: ["owner-application", "payment-methods"] });
-      toast.success("Purchase payment instructions saved");
+      toast.success("Subscription payment instructions saved");
     } catch {
       // The API error is displayed next to the form.
     }
   }
   return (
-    <form className="mt-5 space-y-4" onSubmit={form.handleSubmit(submit)}>
-      <fieldset disabled={save.isPending} className="grid gap-4 md:grid-cols-3">
+    <form className="space-y-4" onSubmit={form.handleSubmit(submit)}>
+      <fieldset disabled={save.isPending} className="grid gap-4 sm:grid-cols-2">
         {methods.map((method) => (
-          <div key={method} className="space-y-2">
+          <div
+            key={method}
+            className={method === "bank_transfer" ? "space-y-2 sm:col-span-2" : "space-y-2"}
+          >
             <Label htmlFor={`payment-instructions-${method}`}>
               {subscriptionMethodLabels[method]}
             </Label>
@@ -90,9 +90,15 @@ function InstructionsForm({
         ))}
       </fieldset>
       {save.isError && <BillingError message={toApiFailure(save.error).error} />}
-      <Button type="submit" disabled={!form.formState.isDirty || save.isPending}>
-        {save.isPending ? "Saving…" : "Save purchase instructions"}
-      </Button>
+      <div className="flex justify-end border-t pt-4">
+        <Button
+          type="submit"
+          className="min-h-11 w-full sm:w-auto"
+          disabled={!form.formState.isDirty || save.isPending}
+        >
+          {save.isPending ? "Saving…" : "Save payment instructions"}
+        </Button>
+      </div>
     </form>
   );
 }

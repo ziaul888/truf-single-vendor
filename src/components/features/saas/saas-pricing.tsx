@@ -2,18 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Layers3, RefreshCw, ShieldCheck } from "lucide-react";
+import { ArrowRight, Layers3, RefreshCw, ShieldCheck } from "lucide-react";
+import { PlanFeaturesList } from "@/components/plan-features-list";
 import { Button } from "@/components/ui/button";
 import { formatBdt, planCharge } from "@/lib/platform-billing";
 import type { BillingInterval } from "@/types/platform-billing";
 import { BillingCycleToggle, useOwnerApplicationPlans } from "./owner-application-plans";
-
-const included = [
-  "Your customer booking website",
-  "Grounds, slots and booking calendar",
-  "Your own admin and manager accounts",
-  "Customer records, reports and exports",
-];
 
 export function SaasPricing() {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
@@ -91,19 +85,16 @@ export function SaasPricing() {
                       {plan.description}
                     </p>
                     <p className="saas-plan-price">
-                      <span className="saas-numeral">{formatBdt(planCharge(plan, interval))}</span>
+                      <span className="saas-numeral">
+                        {plan.trialDays ? "Free" : formatBdt(planCharge(plan, interval))}
+                      </span>
                       <span className="text-muted-foreground text-sm">
-                        / {interval === "monthly" ? "month" : "year"}
+                        {plan.trialDays
+                          ? `for ${plan.trialDays} days`
+                          : `/ ${interval === "monthly" ? "month" : "year"}`}
                       </span>
                     </p>
-                    <ul className="saas-check-list saas-plan-features">
-                      {included.map((feature) => (
-                        <li key={feature}>
-                          <Check aria-hidden />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
+                    <PlanFeaturesList features={plan.features} className="saas-plan-features" />
                     <div className="mt-auto pt-8">
                       <Button
                         asChild
@@ -121,8 +112,8 @@ export function SaasPricing() {
                 ))}
               </div>
               <p className="saas-price-note">
-                <ShieldCheck aria-hidden className="size-4" /> Apply now and pay later. Account
-                activation follows payment verification.
+                <ShieldCheck aria-hidden className="size-4" /> Trial plans start after approval. For
+                paid plans, you can apply before paying.
               </p>
             </>
           ) : (

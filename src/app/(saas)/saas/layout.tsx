@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
+import { SAAS_SCREENSHOT_DETAILS } from "@/lib/saas-screenshots";
 import "./saas.css";
 
 const display = Bricolage_Grotesque({
@@ -10,7 +11,7 @@ const display = Bricolage_Grotesque({
 
 const title = "TurfOrg · Plans and pricing";
 const description = "Compare monthly and yearly plans for turf settings, grounds, slot generation and staff management.";
-const image = "/saas/booking-site-desktop.jpg";
+const image = SAAS_SCREENSHOT_DETAILS.desktop.src;
 
 export const metadata: Metadata = {
   title: { absolute: title },

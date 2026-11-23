@@ -60,6 +60,7 @@ export interface OwnerApplication {
     currency: string;
     monthlyAmount: number;
     yearlyAmount: number;
+    trialDays?: number | null;
     selectedAmount: number;
   } | null;
   status: OwnerApplicationStatus;

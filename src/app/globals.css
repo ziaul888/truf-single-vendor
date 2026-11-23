@@ -2,6 +2,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Resolve the primary palette at each theme boundary. */
+:root,
+.dark,
+.pitch {
+  --primary: var(--theme-primary);
+  --primary-foreground: var(--theme-primary-foreground);
+}
+
 /* ─── Light theme — Old Trafford daylight ─────────────────────── */
 :root {
   /* Base — warm off-white, like a matchday programme */
@@ -15,8 +23,8 @@
   --popover-foreground:  oklch(0.15  0.02  30);
 
   /* Primary — Manchester United red (≈ #DA291C, Pantone 186 C) */
-  --primary:             oklch(0.55  0.22  28);
-  --primary-foreground:  oklch(0.99  0     0);
+  --theme-primary:       oklch(0.55  0.22  28);
+  --theme-primary-foreground: oklch(0.99 0 0);
 
   /* Secondary — soft red wash for chips/badges */
   --secondary:           oklch(0.94  0.04  28);
@@ -85,8 +93,8 @@
   --popover-foreground:  oklch(0.96  0.005 35);
 
   /* Primary — bright Man Utd red, glowing on dark */
-  --primary:             oklch(0.65  0.24  28);
-  --primary-foreground:  oklch(0.99  0     0);
+  --theme-primary:       oklch(0.65  0.24  28);
+  --theme-primary-foreground: oklch(0.99 0 0);
 
   /* Secondary */
   --secondary:           oklch(0.22  0.025 30);
@@ -161,8 +169,8 @@ html.pitch body {
   --popover-foreground:  oklch(0.97  0.01  150);
 
   /* Primary — match-day gold (≈ #E5BB2E) */
-  --primary:             oklch(0.80  0.15  90);
-  --primary-foreground:  oklch(0.20  0.05  90);
+  --theme-primary:       oklch(0.80  0.15  90);
+  --theme-primary-foreground: oklch(0.20 0.05 90);
 
   /* Secondary — muted green chip */
   --secondary:           oklch(0.32  0.05  150);

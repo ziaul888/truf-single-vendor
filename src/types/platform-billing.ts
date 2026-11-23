@@ -1,4 +1,5 @@
 import type { Paginated } from "./api";
+import type { PlanFeature } from "@/lib/plan-features";
 export interface PlatformPlan {
   id: string;
   code: string;
@@ -9,9 +10,18 @@ export interface PlatformPlan {
   currency: "bdt";
   monthlyAmount: number;
   yearlyAmount: number;
+  trialDays?: number | null;
+  features?: PlanFeature[];
   createdAt: string;
 }
-export type SubscriptionStatus = "pending" | "scheduled" | "active" | "past_due" | "cancelled";
+export type SubscriptionStatus =
+  | "pending"
+  | "scheduled"
+  | "active"
+  | "trialing"
+  | "trial_ended"
+  | "past_due"
+  | "cancelled";
 export type InvoiceStatus = "issued" | "overdue" | "paid" | "void";
 export type BillingInterval = "monthly" | "yearly";
 export type SubscriptionPaymentMethod = "bkash" | "nagad" | "bank_transfer";
@@ -27,6 +37,7 @@ export interface PlatformSubscription {
   amount: number;
   startDate: string;
   paidThrough: string | null;
+  trialEndsOn?: string | null;
   status: SubscriptionStatus;
   cancelAtPeriodEnd: boolean;
   cancellationRequestedAt: string | null;

@@ -48,12 +48,15 @@ export function PlatformSubscriptionForm({
     `/tenants/${tenantId}/subscription`
   );
   const plan = plans.data?.data.find((row) => row.id === values.planId);
+  const isTrial = !!plan?.trialDays;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setBusy(true);
     try {
-      await command.mutateAsync(values);
+      await command.mutateAsync(
+        isTrial ? { ...values, interval: "monthly", dueOn: values.startDate } : values
+      );
       close();
     } catch (err) {
       setError(toApiFailure(err).error);
@@ -67,9 +70,7 @@ export function PlatformSubscriptionForm({
   if (!plans.data.data.length)
     return (
       <div className="space-y-4">
-        <p className="text-muted-foreground text-sm">
-          Create a plan with your monthly and yearly prices first.
-        </p>
+        <p className="text-muted-foreground text-sm">Create a paid plan or a free trial first.</p>
         <Button asChild>
           <Link href="/platform/plans/new">Create plan</Link>
         </Button>
@@ -98,30 +99,39 @@ export function PlatformSubscriptionForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="subscription-interval">Billing frequency</Label>
-          <Select
-            value={values.interval}
-            onValueChange={(interval) =>
-              setValues({ ...values, interval: interval === "yearly" ? "yearly" : "monthly" })
-            }
-          >
-            <SelectTrigger id="subscription-interval">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="yearly">Yearly</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {!isTrial && (
+          <div className="space-y-2">
+            <Label htmlFor="subscription-interval">Billing frequency</Label>
+            <Select
+              value={values.interval}
+              onValueChange={(interval) =>
+                setValues({ ...values, interval: interval === "yearly" ? "yearly" : "monthly" })
+              }
+            >
+              <SelectTrigger id="subscription-interval">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {plan && (
           <p className="bg-muted rounded-xl p-3 text-sm">
-            Invoice amount:{" "}
-            <strong>
-              {formatBdt(values.interval === "monthly" ? plan.monthlyAmount : plan.yearlyAmount)}
-            </strong>{" "}
-            / {values.interval === "monthly" ? "month" : "year"}
+            {isTrial ? (
+              <strong>Free for {plan.trialDays} days</strong>
+            ) : (
+              <>
+                <strong>
+                  {formatBdt(
+                    values.interval === "monthly" ? plan.monthlyAmount : plan.yearlyAmount
+                  )}
+                </strong>
+                {` / ${values.interval === "monthly" ? "month" : "year"}`}
+              </>
+            )}
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
@@ -130,29 +140,37 @@ export function PlatformSubscriptionForm({
               { key: "startDate", label: "Subscription starts" },
               { key: "dueOn", label: "Payment due" },
             ] as const
-          ).map(({ key, label }) => (
-            <div key={key} className="space-y-2">
-              <Label htmlFor={`subscription-${key}`}>{label}</Label>
-              <Input
-                id={`subscription-${key}`}
-                type="date"
-                min="2000-01-01"
-                max="2100-12-31"
-                required
-                value={values[key]}
-                onChange={(e) => setValues({ ...values, [key]: e.target.value })}
-              />
-            </div>
-          ))}
+          )
+            .filter(({ key }) => !isTrial || key === "startDate")
+            .map(({ key, label }) => (
+              <div key={key} className="space-y-2">
+                <Label htmlFor={`subscription-${key}`}>{label}</Label>
+                <Input
+                  id={`subscription-${key}`}
+                  type="date"
+                  min="2000-01-01"
+                  max="2100-12-31"
+                  required
+                  value={values[key]}
+                  onChange={(e) => setValues({ ...values, [key]: e.target.value })}
+                />
+              </div>
+            ))}
         </div>
       </fieldset>
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        Creates the first unpaid invoice. The subscription is paid only after you verify and record
-        the payment.
-      </p>
+      {!isTrial && (
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          Creates the first unpaid invoice. The subscription is paid only after you verify and
+          record the payment.
+        </p>
+      )}
       <BillingError message={error} />
       <Button className="h-11 w-full" disabled={!values.planId || command.isPending} type="submit">
-        {command.isPending ? "Assigning…" : "Assign plan and create invoice"}
+        {command.isPending
+          ? "Assigning…"
+          : isTrial
+            ? "Assign trial"
+            : "Assign plan and create invoice"}
       </Button>
     </form>
   );

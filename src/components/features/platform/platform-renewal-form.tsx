@@ -85,8 +85,9 @@ export function PlatformCancellationForm({ userId, subscription, close, setBusy 
   return (
     <form onSubmit={submit} className="space-y-5">
       <p className="bg-muted rounded-xl p-3 text-sm leading-relaxed">
-        Paid periods remain valid until their end. Unpaid invoices will be voided. This action does
-        not refund payments.
+        {subscription.trialEndsOn
+          ? "Ending this trial closes its billing period immediately. You can then assign another plan."
+          : "Paid periods remain valid until their end. Unpaid invoices will be voided."}
       </p>
       <div className="space-y-2">
         <Label htmlFor="cancellation-reason">Reason</Label>
@@ -108,7 +109,11 @@ export function PlatformCancellationForm({ userId, subscription, close, setBusy 
         type="submit"
         disabled={reason.trim().length < 5 || command.isPending}
       >
-        {command.isPending ? "Cancelling…" : "Confirm cancellation"}
+        {command.isPending
+          ? "Cancelling…"
+          : subscription.trialEndsOn
+            ? "End trial"
+            : "Confirm cancellation"}
       </Button>
     </form>
   );

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { isAxiosError } from "axios";
-import { Layers3, ShieldCheck, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ShieldCheck, Eye, EyeOff, Loader2 } from "lucide-react";
 import { LoginSchema, type LoginInput } from "@/validations/auth";
 import { platformApi } from "@/lib/platform-api";
 import { platformRedirectPath } from "@/lib/platform-redirect";
@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { DEFAULT_PLATFORM_BRANDING, usePlatformBranding } from "@/hooks/usePlatformBranding";
+import { PlatformBrandMark } from "./platform-brand-mark";
 
 const SignInResponse = z.object({
   success: z.literal(true),
@@ -29,6 +31,7 @@ export function PlatformLogin() {
   const [error, setError] = useState(""),
     [visible, setVisible] = useState(false),
     [locked, setLocked] = useState(false);
+  const { data: branding = DEFAULT_PLATFORM_BRANDING } = usePlatformBranding();
   const form = useForm<LoginInput>({
     resolver: zodResolver(LoginSchema),
     defaultValues: { email: "", password: "" },
@@ -65,13 +68,16 @@ export function PlatformLogin() {
   return (
     <div className="bg-background min-h-dvh px-4 py-8 sm:py-14">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-        <div className="flex items-center gap-3 font-semibold">
-          <span className="bg-primary text-primary-foreground flex h-11 w-11 items-center justify-center rounded-xl">
-            <Layers3 className="h-5 w-5" />
-          </span>
-          SaaS Admin
+        <div className="flex min-w-0 items-center gap-3">
+          <PlatformBrandMark logoUrl={branding.logoUrl} />
+          <div className="min-w-0 [overflow-wrap:anywhere]">
+            <p className="font-semibold">{branding.title}</p>
+            {branding.subtitle && (
+              <p className="text-muted-foreground text-sm">{branding.subtitle}</p>
+            )}
+          </div>
         </div>
-        <div className="[&_button]:h-11 [&_button]:w-11">
+        <div className="shrink-0 [&_button]:h-11 [&_button]:w-11">
           <ThemeToggle />
         </div>
       </div>

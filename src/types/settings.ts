@@ -121,7 +121,7 @@ export interface SystemStatus {
   counts: { grounds: number; slots: number; bookings: number; customers: number; payments: number };
   /** null until the job first runs after a restart. */
   jobs: Record<SystemJob, JobStatus | null>;
-  integrations: { stripe: boolean; sendgrid: boolean; twilio: boolean };
+  integrations: { stripe: boolean; sendgrid: boolean; resend?: boolean; twilio: boolean };
 }
 
 export const RESETTABLE_SECTIONS = ["slots", "notifications", "website"] as const;

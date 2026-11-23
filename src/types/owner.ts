@@ -1,3 +1,5 @@
+import type { PlanFeature } from "@/lib/plan-features";
+
 export interface OwnerUser {
   id: string;
   name: string;
@@ -12,6 +14,7 @@ export interface OwnerUser {
     timezone: string;
     currency: string;
     setupComplete: boolean;
+    features?: PlanFeature[];
   };
 }
 

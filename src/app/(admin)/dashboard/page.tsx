@@ -18,6 +18,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDashboardStats, useUpcomingBookings } from "@/hooks/useDashboard";
+import { useMe } from "@/hooks/useMe";
+import { useDashboardAudience } from "@/components/dashboard-audience";
+import { hasPlanFeature } from "@/lib/plan-features";
 import { slotPriceLabel } from "@/lib/slot-format";
 import type { Booking } from "@/types/booking";
 import { StatCard } from "@/components/features/dashboard/stat-card";
@@ -36,6 +39,9 @@ import { CollectPaymentDialog } from "@/components/features/bookings/collect-pay
 export default function DashboardPage() {
   const stats = useDashboardStats();
   const upcoming = useUpcomingBookings(5);
+  const { data: me } = useMe(useDashboardAudience());
+  const features = me && "tenant" in me ? me.tenant.features : undefined;
+  const showReports = hasPlanFeature(features, "reports");
   const [collecting, setCollecting] = useState<Booking | null>(null);
   const [showInsights, setShowInsights] = useState(false);
   const s = stats.data;
@@ -111,7 +117,7 @@ export default function DashboardPage() {
       </div>
 
       <section aria-label="Needs attention" className="space-y-3">
-        <AttentionCards />
+        <AttentionCards showRefundList={hasPlanFeature(features, "refunds")} />
         <NeedsOutcomeCard />
       </section>
 
@@ -183,7 +189,9 @@ export default function DashboardPage() {
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold">Insights &amp; activity</span>
             <span className="text-muted-foreground mt-0.5 block text-xs sm:text-sm">
-              Payment breakdown, weekly trends, and recent changes.
+              {showReports
+                ? "Payment breakdown, weekly trends, and recent changes."
+                : "Customer totals, active grounds, and recent changes."}
             </span>
           </span>
           <ChevronDown className="text-muted-foreground h-5 w-5 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
@@ -205,17 +213,23 @@ export default function DashboardPage() {
               />
             </div>
             <div className="grid items-start gap-4 lg:grid-cols-2 [&>*]:min-w-0">
-              <TodayMoney />
-              <WeeklyRevenueChart />
-              <BookingsByStatusChart />
+              {showReports && (
+                <>
+                  <TodayMoney />
+                  <WeeklyRevenueChart />
+                  <BookingsByStatusChart />
+                </>
+              )}
               <RecentActivity />
             </div>
-            <Button variant="outline" asChild className="w-full sm:w-auto">
-              <Link href="/dashboard/reports">
-                Open reports
-                <ArrowRight />
-              </Link>
-            </Button>
+            {showReports && (
+              <Button variant="outline" asChild className="w-full sm:w-auto">
+                <Link href="/dashboard/reports">
+                  Open reports
+                  <ArrowRight />
+                </Link>
+              </Button>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>

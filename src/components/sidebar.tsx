@@ -32,7 +32,7 @@ export function Sidebar({
   const pathname = usePathname().replace(/^\/admin(?=\/|$)/, "/dashboard");
 
   const { data: me } = useMe(audience);
-  const nav = navForRole(me?.role);
+  const nav = navForRole(me?.role, me && "tenant" in me ? me.tenant.features : undefined);
 
   const allItems = nav.flatMap((g) => g.items.map((i) => ({ ...i, group: g.label })));
   const activeItem =

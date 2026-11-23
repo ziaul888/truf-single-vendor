@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -31,9 +32,11 @@ export function BillingDialog({
         if (!busy) setOpen(value);
       }}
     >
-      <Button className="h-11" variant={variant} onClick={() => setOpen(true)}>
-        {label}
-      </Button>
+      <DialogTrigger asChild>
+        <Button className="h-11" variant={variant}>
+          {label}
+        </Button>
+      </DialogTrigger>
       {open && (
         <DialogContent
           className={busy ? "[&>button]:hidden" : ""}

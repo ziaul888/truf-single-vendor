@@ -17,7 +17,7 @@ const COUNT_LABELS: [keyof SystemStatus["counts"], string][] = [
 ];
 
 const INTEGRATIONS: [keyof SystemStatus["integrations"], string][] = [
-  ["stripe", "Stripe (card payments)"], ["sendgrid", "SendGrid (email)"], ["twilio", "Twilio"],
+  ["stripe", "Stripe (card payments)"], ["resend", "Resend (email)"], ["sendgrid", "SendGrid (email)"], ["twilio", "Twilio"],
 ];
 
 function StatusLine({ ok, okText, failText }: { ok: boolean; okText: string; failText: string }) {

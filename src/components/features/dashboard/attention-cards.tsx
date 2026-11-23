@@ -39,7 +39,7 @@ function confirmationDescription(data: DashboardAttention) {
 }
 
 /** A short action list: only show follow-ups that have work waiting. */
-export function AttentionCards() {
+export function AttentionCards({ showRefundList }: { showRefundList: boolean }) {
   const { data, isLoading, isError, isFetching, refetch } = useDashboardAttention();
 
   if (isLoading) {
@@ -89,7 +89,7 @@ export function AttentionCards() {
       label: "Send refunds",
       count: data.refundDue.count,
       description: "Send manually, then record the refund",
-      href: "/dashboard/bookings/refunds?status=due",
+      href: showRefundList ? "/dashboard/bookings/refunds?status=due" : "/dashboard/bookings?refundDue=true",
       icon: Undo2,
     });
   }

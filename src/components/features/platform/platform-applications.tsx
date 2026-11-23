@@ -74,6 +74,8 @@ function ReviewDialog({
   onClose: () => void;
 }) {
   const { action, application } = review;
+  const trialDays = application.plan?.trialDays;
+  const activationTitle = trialDays ? "Activate free trial" : "Verify payment and activate owner";
   const command = usePlatformCommand<
     { confirmed?: true; payment?: ReceiptDetails },
     PlatformTenant | OwnerApplication
@@ -85,9 +87,10 @@ function ReviewDialog({
     reference: "",
     receivedOn: billingTodayInput(),
   });
-  const payment = application.payment
-    ? undefined
-    : { ...receipt, reference: receipt.reference.trim() };
+  const payment =
+    application.payment || trialDays
+      ? undefined
+      : { ...receipt, reference: receipt.reference.trim() };
   const canActivate =
     confirmed &&
     !!application.plan &&
@@ -98,7 +101,11 @@ function ReviewDialog({
     try {
       await command.mutateAsync(action === "activate" ? { confirmed: true, payment } : {});
       toast.success(
-        action === "activate" ? "Payment recorded and owner activated" : "Application rejected"
+        action === "activate"
+          ? trialDays
+            ? "Trial activated"
+            : "Payment recorded and owner activated"
+          : "Application rejected"
       );
       onClose();
     } catch (err) {
@@ -117,20 +124,24 @@ function ReviewDialog({
         >
           <DialogHeader>
             <DialogTitle>
-              {action === "activate" ? "Verify payment and activate owner" : "Reject application?"}
+              {action === "activate" ? activationTitle : "Reject application?"}
             </DialogTitle>
             <DialogDescription className="leading-relaxed">
               {action === "activate"
-                ? "Match the transaction reference, date and full amount in your receiving account. Activation records the paid invoice and unlocks the owner’s login."
+                ? trialDays
+                  ? `Approval starts the ${trialDays}-day trial and enables the owner’s login.`
+                  : "Match the transaction reference, date and full amount in your receiving account. Activation records the paid invoice and unlocks the owner’s login."
                 : "The application will be closed and its saved password hash removed. This cannot be undone from this screen."}
             </DialogDescription>
           </DialogHeader>
           {action === "activate" && application.plan && (
             <fieldset disabled={command.isPending} className="space-y-4">
               <div className="bg-muted space-y-1 rounded-xl p-4 text-sm">
-                <p className="text-muted-foreground text-xs">Full first payment</p>
+                <p className="text-muted-foreground text-xs">
+                  {trialDays ? "Free trial" : "Full first payment"}
+                </p>
                 <p className="text-lg font-semibold">
-                  {formatBdt(application.plan.selectedAmount)}
+                  {trialDays ? `${trialDays} days` : formatBdt(application.plan.selectedAmount)}
                 </p>
                 {application.payment && (
                   <>
@@ -142,7 +153,7 @@ function ReviewDialog({
                   </>
                 )}
               </div>
-              {!application.payment && (
+              {!trialDays && !application.payment && (
                 <ReceiptDetailsFields details={receipt} onChange={setReceipt} />
               )}
               <div className="flex items-start gap-2.5">
@@ -152,7 +163,9 @@ function ReviewDialog({
                   onCheckedChange={(value) => setConfirmed(value === true)}
                 />
                 <Label htmlFor="verify-application-payment" className="leading-snug">
-                  I received the full amount and verified this payment reference.
+                  {trialDays
+                    ? "I approve this turf’s trial application."
+                    : "I received the full amount and verified this payment reference."}
                 </Label>
               </div>
             </fieldset>
@@ -180,7 +193,9 @@ function ReviewDialog({
               {command.isPending
                 ? "Saving…"
                 : action === "activate"
-                  ? "Record payment and activate"
+                  ? trialDays
+                    ? "Activate trial"
+                    : "Record payment and activate"
                   : "Reject application"}
             </Button>
           </DialogFooter>
@@ -209,7 +224,7 @@ export function PlatformApplications() {
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight">Applications</h1>
           <p className="text-muted-foreground mt-3 max-w-2xl text-sm leading-relaxed">
-            Review applications and confirm the first payment before activating turf accounts.
+            Approve trial applications or confirm the first payment for paid subscriptions.
           </p>
         </div>
         <Button asChild variant="outline" className="h-11">
@@ -292,8 +307,9 @@ export function PlatformApplications() {
                       {application.plan ? (
                         <>
                           {application.plan.name} ·{" "}
-                          {application.plan.interval === "monthly" ? "Monthly" : "Yearly"} ·{" "}
-                          {formatBdt(application.plan.selectedAmount)}
+                          {application.plan.trialDays
+                            ? `${application.plan.trialDays}-day free trial`
+                            : `${application.plan.interval === "monthly" ? "Monthly" : "Yearly"} · ${formatBdt(application.plan.selectedAmount)}`}
                         </>
                       ) : (
                         <span className="text-destructive">No plan selected</span>
@@ -313,7 +329,11 @@ export function PlatformApplications() {
                         </>
                       ) : (
                         <span className="text-muted-foreground">
-                          {application.status === "pending" ? "Awaiting payment" : "—"}
+                          {application.plan?.trialDays
+                            ? "Free trial"
+                            : application.status === "pending"
+                              ? "Awaiting payment"
+                              : "—"}
                         </span>
                       )}
                     </dd>
@@ -327,7 +347,11 @@ export function PlatformApplications() {
                       onClick={() => setReview({ application, action: "activate" })}
                     >
                       <Check />
-                      {application.payment ? "Review payment" : "Record payment"}
+                      {application.plan?.trialDays
+                        ? "Review trial"
+                        : application.payment
+                          ? "Review payment"
+                          : "Record payment"}
                     </Button>
                     <Button
                       variant="outline"

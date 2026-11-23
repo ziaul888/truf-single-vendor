@@ -18,6 +18,8 @@ const subscriptionStatuses = {
   pending: "Awaiting payment",
   scheduled: "Scheduled",
   active: "Active",
+  trialing: "On trial",
+  trial_ended: "Trial ended",
   past_due: "Past due",
   cancelled: "Cancelled",
 };
@@ -187,13 +189,17 @@ function SubscriptionCard({ subscription: sub }: { subscription: PlatformSubscri
         <BillingStatus status={sub.status} />
       </div>
       <p className="text-muted-foreground text-sm break-words">
-        {sub.planName} · {sub.interval}
+        {sub.planName} · {sub.trialEndsOn ? "Trial" : sub.interval}
       </p>
-      <p className="text-xl font-bold tabular-nums">{formatBdt(sub.amount)}</p>
+      <p className="text-xl font-bold tabular-nums">
+        {sub.trialEndsOn ? "Free" : formatBdt(sub.amount)}
+      </p>
       <p className="text-muted-foreground border-t pt-4 text-xs">
-        {sub.paidThrough
-          ? `Paid until ${displayBillingDate(sub.paidThrough)}`
-          : "No payment recorded"}
+        {sub.trialEndsOn
+          ? `Trial ends ${displayBillingDate(sub.trialEndsOn)}`
+          : sub.paidThrough
+            ? `Paid until ${displayBillingDate(sub.paidThrough)}`
+            : "No payment recorded"}
         {sub.cancelAtPeriodEnd ? " · Renewal cancelled" : ""}
       </p>
     </Link>

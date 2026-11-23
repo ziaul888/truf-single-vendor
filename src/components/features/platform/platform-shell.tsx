@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Layers3,
   LayoutDashboard,
   Building2,
   LogOut,
@@ -15,11 +14,18 @@ import {
   Repeat2,
   FileText,
   ClipboardList,
+  Settings,
 } from "lucide-react";
 import { usePlatformApplications, usePlatformMe } from "@/hooks/usePlatform";
+import {
+  DEFAULT_PLATFORM_BRANDING,
+  usePlatformBranding,
+  type PlatformBranding,
+} from "@/hooks/usePlatformBranding";
 import { platformApi } from "@/lib/platform-api";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { DashboardAccent } from "@/components/dashboard-accent";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -30,6 +36,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { PlatformLoading, PlatformReadError } from "./platform-states";
+import { PlatformBrandMark } from "./platform-brand-mark";
 
 function PlatformNavigation({
   onNavigate,
@@ -48,6 +55,7 @@ function PlatformNavigation({
         { href: "/platform/plans", label: "Plans", Icon: CreditCard },
         { href: "/platform/subscriptions", label: "Subscriptions", Icon: Repeat2 },
         { href: "/platform/invoices", label: "Invoices", Icon: FileText },
+        { href: "/platform/settings", label: "Settings", Icon: Settings },
       ].map(({ href, label, Icon }) => {
         const active = href === "/platform" ? path === href : path.startsWith(href);
         return (
@@ -77,18 +85,16 @@ function PlatformNavigation({
   );
 }
 
-function PlatformBrand() {
+function PlatformBrand({ title, subtitle, logoUrl }: PlatformBranding) {
   return (
     <Link
       href="/platform"
       className="focus-visible:ring-sidebar-ring flex min-h-12 items-center gap-3 rounded-xl outline-none focus-visible:ring-2"
     >
-      <span className="bg-sidebar-primary text-sidebar-primary-foreground flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-        <Layers3 className="h-6 w-6" />
-      </span>
-      <div>
-        <p className="font-semibold tracking-tight">SaaS Admin</p>
-        <p className="text-sidebar-foreground/55 mt-0.5 text-xs">Platform administration</p>
+      <PlatformBrandMark logoUrl={logoUrl} sidebar />
+      <div className="min-w-0 [overflow-wrap:anywhere]">
+        <p className="font-semibold tracking-tight">{title}</p>
+        {subtitle && <p className="text-sidebar-foreground/75 mt-0.5 text-xs">{subtitle}</p>}
       </div>
     </Link>
   );
@@ -98,6 +104,7 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
   const user = usePlatformMe(),
     router = useRouter(),
     queryClient = useQueryClient();
+  const { data: branding = DEFAULT_PLATFORM_BRANDING } = usePlatformBranding();
   const pendingApplications = usePlatformApplications(user.data?.id, {
     page: 1,
     limit: 1,
@@ -123,14 +130,15 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
   }
   return (
     <div className="bg-background text-foreground min-h-dvh">
+      <DashboardAccent scope="platform" id={user.data?.id} />
       <a
         href="#platform-content"
         className="focus:bg-card sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:rounded-lg focus:p-3"
       >
         Skip to content
       </a>
-      <aside className="bg-sidebar text-sidebar-foreground border-sidebar-border fixed inset-y-0 left-0 hidden w-64 flex-col border-r p-5 lg:flex">
-        <PlatformBrand />
+      <aside className="bg-sidebar text-sidebar-foreground border-sidebar-border fixed inset-y-0 left-0 hidden w-64 flex-col overflow-y-auto border-r p-5 lg:flex">
+        <PlatformBrand {...branding} />
         <p className="text-sidebar-foreground/40 mt-10 mb-3 px-4 text-[11px] font-semibold tracking-widest uppercase">
           Manage platform
         </p>
@@ -156,13 +164,20 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
                     </Button>
                   </SheetTrigger>
                   <SheetContent className="bg-sidebar text-sidebar-foreground max-w-xs [&>button]:h-11 [&>button]:w-11">
-                    <SheetHeader className="border-sidebar-border pr-16">
-                      <SheetTitle className="text-sidebar-foreground">SaaS Admin</SheetTitle>
-                      <SheetDescription className="text-sidebar-foreground/60">
-                        Platform administration
-                      </SheetDescription>
+                    <SheetHeader className="border-sidebar-border flex items-start gap-3 pr-16">
+                      <PlatformBrandMark logoUrl={branding.logoUrl} sidebar />
+                      <div className="min-w-0 [overflow-wrap:anywhere]">
+                        <SheetTitle className="text-sidebar-foreground">
+                          {branding.title}
+                        </SheetTitle>
+                        <SheetDescription
+                          className={branding.subtitle ? "text-sidebar-foreground/75" : "sr-only"}
+                        >
+                          {branding.subtitle || "Platform navigation"}
+                        </SheetDescription>
+                      </div>
                     </SheetHeader>
-                    <div className="p-5">
+                    <div className="min-h-0 overflow-y-auto p-5">
                       <PlatformNavigation
                         pendingApplications={pendingApplications.data?.total}
                         onNavigate={() => setOpen(false)}
@@ -171,11 +186,19 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
                   </SheetContent>
                 </Sheet>
               </div>
+              <PlatformBrandMark logoUrl={branding.logoUrl} className="size-9 lg:hidden" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">Platform console</p>
-                <p className="text-muted-foreground truncate text-xs">
-                  {user.data?.name ?? "SaaS Admin"}
-                </p>
+                <p className="truncate text-sm font-semibold">{branding.title}</p>
+                {branding.subtitle && (
+                  <p className="text-muted-foreground truncate text-xs lg:hidden">
+                    {branding.subtitle}
+                  </p>
+                )}
+                {user.data?.name && (
+                  <p className="text-muted-foreground hidden truncate text-xs lg:block">
+                    {user.data.name}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1 sm:gap-3">

@@ -125,9 +125,11 @@ export function OwnerApplicationPlans({
             {showAllPlans ? "Close plans" : "Change plan"}
           </Button>
         )}
-        <div className="w-full sm:w-auto">
-          <BillingCycleToggle interval={interval} onInterval={onInterval} disabled={disabled} />
-        </div>
+        {(!plans?.length || visiblePlans.some((plan) => !plan.trialDays)) && (
+          <div className="w-full sm:w-auto">
+            <BillingCycleToggle interval={interval} onInterval={onInterval} disabled={disabled} />
+          </div>
+        )}
       </div>
       {loading ? (
         <div
@@ -194,9 +196,13 @@ export function OwnerApplicationPlans({
                       </span>
                     )}
                     <span className="mt-2 flex flex-wrap items-baseline gap-x-1.5">
-                      <span className="saas-numeral text-lg">{formatBdt(amount)}</span>
+                      <span className="saas-numeral text-lg">
+                        {plan.trialDays ? "Free" : formatBdt(amount)}
+                      </span>
                       <span className="text-muted-foreground text-sm">
-                        / {interval === "monthly" ? "month" : "year"}
+                        {plan.trialDays
+                          ? `for ${plan.trialDays} days`
+                          : `/ ${interval === "monthly" ? "month" : "year"}`}
                       </span>
                     </span>
                   </span>

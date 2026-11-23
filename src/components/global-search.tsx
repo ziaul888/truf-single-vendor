@@ -94,8 +94,9 @@ const RESULT_LIMIT = 8;
 
 function SearchPalette({ onSelect }: { onSelect: () => void }) {
   const { data: me } = useMe(useDashboardAudience());
-  const role = me?.role === "owner" ? "admin" : me?.role;
-  const pages = useMemo(() => flatPages(navForRole(role)), [role]);
+  const role = me?.role;
+  const features = me && "tenant" in me ? me.tenant.features : undefined;
+  const pages = useMemo(() => flatPages(navForRole(role, features)), [role, features]);
   const router = useRouter();
   const [query, setQuery] = useState("");
   const term = useDebouncedValue(query.trim(), 300);

@@ -19,11 +19,11 @@ export function PlatformTenantBilling({ userId, tenantId }: { userId?: string; t
     <section className="bg-card space-y-6 rounded-2xl border p-5 sm:p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Subscription and billing</h2>
-        {(!sub || sub.status === "cancelled") && (
+        {(!sub || sub.status === "cancelled" || sub.status === "trial_ended") && (
           <BillingDialog
             label="Assign plan"
             title="Assign a subscription"
-            description="Choose the plan, billing frequency and first payment date."
+            description="Choose a plan and start date for this turf."
             variant="default"
           >
             {(close, setBusy) => (
@@ -43,7 +43,9 @@ export function PlatformTenantBilling({ userId, tenantId }: { userId?: string; t
             <div className="min-w-0">
               <p className="text-xl font-semibold break-words">{sub.planName}</p>
               <p className="text-muted-foreground mt-2 text-sm">
-                {formatBdt(sub.amount)} / {sub.interval === "monthly" ? "month" : "year"}
+                {sub.trialEndsOn
+                  ? "Free trial"
+                  : `${formatBdt(sub.amount)} / ${sub.interval === "monthly" ? "month" : "year"}`}
               </p>
             </div>
             <BillingStatus status={sub.status} />
@@ -54,9 +56,15 @@ export function PlatformTenantBilling({ userId, tenantId }: { userId?: string; t
               <dd className="mt-1 font-medium">{displayBillingDate(sub.startDate)}</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground">Paid until</dt>
+              <dt className="text-muted-foreground">
+                {sub.trialEndsOn ? "Trial ends" : "Paid until"}
+              </dt>
               <dd className="mt-1 font-medium">
-                {sub.paidThrough ? displayBillingDate(sub.paidThrough) : "No payment recorded"}
+                {sub.trialEndsOn
+                  ? displayBillingDate(sub.trialEndsOn)
+                  : sub.paidThrough
+                    ? displayBillingDate(sub.paidThrough)
+                    : "No payment recorded"}
               </dd>
             </div>
           </dl>
@@ -88,22 +96,28 @@ export function PlatformTenantBilling({ userId, tenantId }: { userId?: string; t
                 )}
               </BillingDialog>
             )}
-            {!sub.cancelAtPeriodEnd && sub.status !== "cancelled" && (
-              <BillingDialog
-                label="Cancel renewal"
-                title="Cancel subscription renewal"
-                description="Stop future billing and preserve any paid period."
-              >
-                {(close, setBusy) => (
-                  <PlatformCancellationForm
-                    userId={userId}
-                    subscription={sub}
-                    close={close}
-                    setBusy={setBusy}
-                  />
-                )}
-              </BillingDialog>
-            )}
+            {!sub.cancelAtPeriodEnd &&
+              sub.status !== "cancelled" &&
+              sub.status !== "trial_ended" && (
+                <BillingDialog
+                  label={sub.trialEndsOn ? "End trial" : "Cancel renewal"}
+                  title={sub.trialEndsOn ? "End this free trial" : "Cancel subscription renewal"}
+                  description={
+                    sub.trialEndsOn
+                      ? "End the trial to assign a paid plan."
+                      : "Stop future billing and preserve any paid period."
+                  }
+                >
+                  {(close, setBusy) => (
+                    <PlatformCancellationForm
+                      userId={userId}
+                      subscription={sub}
+                      close={close}
+                      setBusy={setBusy}
+                    />
+                  )}
+                </BillingDialog>
+              )}
           </div>
         </>
       ) : (

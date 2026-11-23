@@ -120,23 +120,27 @@ export function PlatformOverviewView() {
           </div>
         </section>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {stats.map(({ label, value, Icon, href, description }) => (
           <Link
             href={href}
             key={label}
-            className="bg-card hover:border-primary/35 focus-visible:ring-ring rounded-2xl border p-5 transition-colors outline-none focus-visible:ring-2 sm:p-6"
+            className="bg-card hover:border-primary/35 focus-visible:ring-ring min-w-0 rounded-2xl border p-4 transition-colors outline-none focus-visible:ring-2 sm:p-6"
           >
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-muted-foreground text-sm leading-relaxed">{label}</p>
-              <span className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+            <div className="flex items-start justify-between gap-2 sm:gap-3">
+              <p className="text-muted-foreground text-sm leading-snug sm:leading-relaxed">
+                {label}
+              </p>
+              <span className="bg-primary/10 text-primary hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:flex">
                 <Icon className="h-5 w-5" />
               </span>
             </div>
-            <p className="mt-5 text-4xl font-bold tracking-tight tabular-nums">
+            <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums sm:mt-5 sm:text-4xl">
               {value.toLocaleString()}
             </p>
-            <p className="text-muted-foreground mt-2 text-xs leading-relaxed">{description}</p>
+            <p className="text-muted-foreground mt-2 hidden text-xs leading-relaxed sm:block">
+              {description}
+            </p>
           </Link>
         ))}
       </div>

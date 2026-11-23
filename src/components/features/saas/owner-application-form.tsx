@@ -19,6 +19,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PlanFeaturesList } from "@/components/plan-features-list";
 import { formatBdt, planCharge } from "@/lib/platform-billing";
 import type { BillingInterval, PlatformPlan } from "@/types/platform-billing";
 import {
@@ -152,13 +153,16 @@ function ApplicationSummary({
             <dl className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-4 text-sm">
               <dt className="min-w-0 font-semibold [overflow-wrap:anywhere]">{plan.name}</dt>
               <dd className="text-muted-foreground">
-                {interval === "yearly" ? "Yearly" : "Monthly"}
+                {plan.trialDays ? "Trial" : interval === "yearly" ? "Yearly" : "Monthly"}
               </dd>
             </dl>
-            <p className="text-muted-foreground mt-4 text-sm">First subscription payment</p>
-            <p className="saas-numeral mt-1 text-4xl leading-tight tracking-tight [overflow-wrap:anywhere]">
-              {formatBdt(planCharge(plan, interval))}
+            <p className="text-muted-foreground mt-4 text-sm">
+              {plan.trialDays ? "Trial length" : "First subscription payment"}
             </p>
+            <p className="saas-numeral mt-1 text-4xl leading-tight tracking-tight [overflow-wrap:anywhere]">
+              {plan.trialDays ? `${plan.trialDays} days` : formatBdt(planCharge(plan, interval))}
+            </p>
+            <PlanFeaturesList features={plan.features} className="mt-5 border-t pt-4" />
           </div>
         ) : (
           <p className="text-muted-foreground mt-3 text-sm">Choose a plan to see its price.</p>
@@ -167,9 +171,13 @@ function ApplicationSummary({
       <div className="bg-muted/45 flex items-start gap-3 border-t p-5 sm:px-6">
         <ShieldCheck aria-hidden className="text-primary mt-0.5 size-5 shrink-0" />
         <div className="text-sm leading-relaxed">
-          <p className="font-semibold">Pay after applying</p>
+          <p className="font-semibold">
+            {plan?.trialDays ? "Trial approval" : "Pay after applying"}
+          </p>
           <p className="text-muted-foreground mt-1">
-            The platform admin verifies your first payment before activating your account.
+            {plan?.trialDays
+              ? "Your free trial begins when the platform admin approves your application."
+              : "The platform admin verifies your first payment before activating your account."}
           </p>
         </div>
       </div>
@@ -185,7 +193,7 @@ export function OwnerApplicationForm({
   initialInterval: BillingInterval;
 }) {
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState<"application" | "payment" | null>(null);
+  const [success, setSuccess] = useState<"application" | "payment" | "trial" | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const attempt = useRef<{ requestId: string; payload: string } | null>(null);
   const plans = useOwnerApplicationPlans();
@@ -260,7 +268,7 @@ export function OwnerApplicationForm({
       }
       attempt.current = null;
       form.reset();
-      setSuccess(payment ? "payment" : "application");
+      setSuccess(selectedPlan.trialDays ? "trial" : payment ? "payment" : "application");
     } catch {
       setError("Cannot reach the server. Please try again.");
     }
@@ -283,9 +291,11 @@ export function OwnerApplicationForm({
               Application submitted
             </h1>
             <p className="text-muted-foreground mt-4 leading-relaxed">
-              {success === "payment"
-                ? "Keep your transaction reference while the platform admin verifies your payment."
-                : "Your application is awaiting review. Arrange your first payment with the platform admin before activation."}{" "}
+              {success === "trial"
+                ? "Your trial application is awaiting review."
+                : success === "payment"
+                  ? "Keep your transaction reference while the platform admin verifies your payment."
+                  : "Your application is awaiting review. Arrange your first payment with the platform admin before activation."}{" "}
               Once your account is active, sign in with the email and password you chose.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -311,7 +321,9 @@ export function OwnerApplicationForm({
           <div className="mt-3 max-w-2xl sm:mt-4">
             <h1 className="saas-section">Apply for turf owner access</h1>
             <p className="text-muted-foreground mt-3 max-w-xl leading-relaxed">
-              Choose a plan and enter your business details to apply. You can pay after submitting.
+              {selectedPlan?.trialDays
+                ? "Enter your business details to apply for the free trial."
+                : "Choose a plan and enter your business details to apply. You can pay after submitting."}
             </p>
           </div>
           <form
@@ -327,7 +339,13 @@ export function OwnerApplicationForm({
               error={errors.planId?.message}
               loading={plans.isLoading}
               loadError={plans.isError}
-              onPlan={(value) => form.setValue("planId", value, { shouldValidate: true })}
+              onPlan={(value) => {
+                if (plans.data?.find((plan) => plan.id === value)?.trialDays) {
+                  form.setValue("includePayment", false);
+                  form.clearErrors(["paymentMethod", "paymentReference", "paymentDate"]);
+                }
+                form.setValue("planId", value, { shouldValidate: true });
+              }}
               onInterval={(value) => form.setValue("interval", value)}
               onRetry={() => plans.refetch()}
             />
@@ -474,46 +492,48 @@ export function OwnerApplicationForm({
                   </Field>
                 </div>
               </section>
-              <section
-                className="bg-card space-y-4 rounded-2xl border p-5 shadow-xs sm:p-6"
-                aria-labelledby="payment-heading"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h2 id="payment-heading" className="saas-title">
-                      Payment
-                    </h2>
-                    <p className="text-muted-foreground mt-1 text-sm">
-                      You can submit your application and pay later.
-                    </p>
+              {selectedPlan && !selectedPlan.trialDays && (
+                <section
+                  className="bg-card space-y-4 rounded-2xl border p-5 shadow-xs sm:p-6"
+                  aria-labelledby="payment-heading"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h2 id="payment-heading" className="saas-title">
+                        Payment
+                      </h2>
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        You can submit your application and pay later.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="min-h-11"
+                      aria-expanded={includePayment}
+                      aria-controls="application-payment-fields"
+                      disabled={busy}
+                      onClick={() => {
+                        form.setValue("includePayment", !includePayment);
+                        if (includePayment)
+                          form.clearErrors(["paymentMethod", "paymentReference", "paymentDate"]);
+                      }}
+                    >
+                      {includePayment ? "Pay later" : "Add payment details"}
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="min-h-11"
-                    aria-expanded={includePayment}
-                    aria-controls="application-payment-fields"
-                    disabled={busy}
-                    onClick={() => {
-                      form.setValue("includePayment", !includePayment);
-                      if (includePayment)
-                        form.clearErrors(["paymentMethod", "paymentReference", "paymentDate"]);
-                    }}
-                  >
-                    {includePayment ? "Pay later" : "Add payment details"}
-                  </Button>
-                </div>
-                <div id="application-payment-fields" hidden={!includePayment}>
-                  {includePayment && (
-                    <OwnerApplicationPayment
-                      form={form}
-                      plan={selectedPlan}
-                      interval={interval}
-                      methods={methods}
-                    />
-                  )}
-                </div>
-              </section>
+                  <div id="application-payment-fields" hidden={!includePayment}>
+                    {includePayment && (
+                      <OwnerApplicationPayment
+                        form={form}
+                        plan={selectedPlan}
+                        interval={interval}
+                        methods={methods}
+                      />
+                    )}
+                  </div>
+                </section>
+              )}
               {error && (
                 <p
                   role="alert"

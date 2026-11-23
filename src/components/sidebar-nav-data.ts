@@ -28,13 +28,16 @@ import {
   CalendarOff,
   History,
   Undo2,
+  Palette,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { featureForDashboardPath, hasPlanFeature, type PlanFeature } from "@/lib/plan-features";
 
 export interface SubItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  ownerOnly?: boolean;
 }
 export interface NavItem {
   label: string;
@@ -54,7 +57,7 @@ export const NAV: NavGroup[] = [
   {
     label: "Daily work",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-primary" },
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "text-sidebar-primary" },
       {
         label: "Bookings",
         href: "/dashboard/bookings",
@@ -127,6 +130,7 @@ export const NAV: NavGroup[] = [
         color: "text-muted-foreground",
         children: [
           { label: "General", href: "/dashboard/settings/general", icon: Building2 },
+          { label: "Appearance", href: "/dashboard/settings/appearance", icon: Palette, ownerOnly: true },
           { label: "Website", href: "/dashboard/settings/website", icon: Globe },
           { label: "Booking", href: "/dashboard/settings/booking", icon: CalendarCog },
           { label: "Payments", href: "/dashboard/settings/payments", icon: Wallet },
@@ -139,12 +143,18 @@ export const NAV: NavGroup[] = [
   },
 ];
 
-/** NAV without admin-only items unless the signed-in user is an admin. */
-export function navForRole(role: string | undefined): NavGroup[] {
-  if (role === "owner") return NAV;
-  if (role === "admin") return NAV;
+export function navForRole(role: string | undefined, features?: readonly PlanFeature[]): NavGroup[] {
+  const admin = role === "owner" || role === "admin";
+  if (role === "owner" && !features) return NAV;
+  const canVisit = ({ href, ownerOnly }: Pick<SubItem, "href" | "ownerOnly">) => {
+    if (ownerOnly && role !== "owner") return false;
+    const feature = featureForDashboardPath(href);
+    return !feature || hasPlanFeature(features, feature);
+  };
   return NAV.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.adminOnly),
+    items: group.items
+      .filter((item) => (admin || !item.adminOnly) && canVisit(item))
+      .map((item) => ({ ...item, children: item.children?.filter(canVisit) })),
   })).filter((group) => group.items.length > 0);
 }

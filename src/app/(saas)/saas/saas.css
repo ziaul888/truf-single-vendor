@@ -1,4 +1,4 @@
-/* Landing-page roles inherit the app's light, dark and pitch theme tokens. */
+/* Map SaaS styles to the theme tokens on the page. */
 .saas-page {
   --color-paper: var(--background);
   --color-paper-2: var(--muted);
@@ -20,8 +20,12 @@
 }
 
 /* Keep white action labels readable in the existing dark theme. */
-.dark .saas-page {
+.dark .saas-page:not(.pitch) {
   --color-action: color-mix(in oklch, var(--primary) 80%, var(--background));
+}
+
+.saas-page.pitch {
+  color-scheme: dark;
 }
 
 .saas-container {

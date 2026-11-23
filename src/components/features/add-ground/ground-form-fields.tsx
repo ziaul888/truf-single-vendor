@@ -20,6 +20,9 @@ import { PhotosSection, type PhotoSlot } from "./photos-section";
 import { HoursSection } from "./hours-section";
 import { AMENITIES, SPORTS as SPORT_TYPES, type Amenity } from "@/types/ground";
 import { SizeFields } from "./size-fields";
+import { useDashboardAudience } from "@/components/dashboard-audience";
+import { useMe } from "@/hooks/useMe";
+import { hasPlanFeature } from "@/lib/plan-features";
 
 export type { PhotoSlot };
 export { SectionCard };
@@ -33,6 +36,8 @@ interface GroundFormFieldsProps {
 }
 
 export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove, tenant = false }: GroundFormFieldsProps) {
+  const { data: me } = useMe(useDashboardAudience());
+  const showPortal = hasPlanFeature(me && "tenant" in me ? me.tenant.features : undefined, "website");
   const {
     register,
     control,
@@ -216,7 +221,7 @@ export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove,
               label: "Show on portal",
               desc: "Listed on the customer booking portal",
             },
-          ].map(({ name, label, desc }) => (
+          ].filter(({ name }) => showPortal || name !== "showOnPortal").map(({ name, label, desc }) => (
             <div key={name} className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium">{label}</p>

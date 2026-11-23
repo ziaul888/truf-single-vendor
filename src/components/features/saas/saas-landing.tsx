@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -10,7 +9,6 @@ import {
   ChevronDown,
   CircleCheck,
   ClipboardCheck,
-  Layers3,
   MapPin,
   MonitorSmartphone,
   ShieldCheck,
@@ -20,6 +18,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SaasPricing } from "./saas-pricing";
+import { SaasBrand } from "./saas-brand";
+import { SaasScreenshotImage } from "./saas-screenshot-image";
+import type { SaasScreenshots } from "@/lib/saas-screenshots";
 
 const features = [
   {
@@ -89,7 +90,7 @@ const steps = [
   {
     title: "Make it your turf",
     description:
-      "Once the platform admin verifies payment, your account is activated and you can start setup.",
+      "Once the platform admin approves your trial or verifies payment for a paid plan, you can sign in and set up your turf.",
     icon: CircleCheck,
   },
 ];
@@ -98,17 +99,17 @@ const questions = [
   {
     question: "What does a subscription cover?",
     answer:
-      "Each subscription covers one turf business, including its grounds, booking calendar, customer records, staff accounts, sales reports and customer booking website.",
+      "Each subscription covers one turf business. Grounds, slots, bookings and customer records are included. Check the pricing cards for the staff, reporting, refund list and website features included in each plan.",
   },
   {
     question: "Can customers book from their phones?",
     answer:
-      "Yes. Your customer booking website works on phones, tablets and desktops. Customers can check live availability and book using the payment options enabled for your turf.",
+      "Yes, with a plan that includes a customer booking website. Customers can check live availability and book from phones, tablets and desktops.",
   },
   {
     question: "How is my account activated?",
     answer:
-      "Choose a plan and submit your application. You can pay afterward. The platform admin verifies the first payment before activating your turf account and starting your billing period.",
+      "The platform admin reviews your application. A free trial starts on approval. For paid plans, the first billing period starts when your payment is verified and your account is activated.",
   },
   {
     question: "Can I pay monthly or yearly?",
@@ -129,29 +130,15 @@ const navigation = [
   { href: "#faq", label: "FAQs" },
 ];
 
-function Brand({ homeHref }: { homeHref: string }) {
+export function SaasLanding({ homeHref, screenshots }: { homeHref: string; screenshots: SaasScreenshots }) {
   return (
-    <Link href={homeHref} className="saas-brand" aria-label="TurfOrg home">
-      <span className="saas-brand-mark">
-        <Layers3 aria-hidden className="size-5" />
-      </span>
-      <span>
-        Turf<span className="text-primary">Org</span>
-        <span className="text-primary">.</span>
-      </span>
-    </Link>
-  );
-}
-
-export function SaasLanding({ homeHref }: { homeHref: string }) {
-  return (
-    <div className="saas-page">
+    <div className="saas-page pitch min-h-dvh">
       <a href="#main-content" className="saas-skip-link">
         Skip to content
       </a>
       <header className="saas-header">
         <nav aria-label="Main navigation" className="saas-container saas-nav">
-          <Brand homeHref={homeHref} />
+          <SaasBrand homeHref={homeHref} logoOnly />
           <div className="saas-nav-links">
             {navigation.map(({ href, label }) => (
               <a key={href} href={href}>
@@ -227,11 +214,9 @@ export function SaasLanding({ homeHref }: { homeHref: string }) {
                   </span>
                 </div>
                 <div className="saas-shot aspect-[2000/1083]">
-                  <Image
-                    src="/saas/booking-site-desktop.jpg"
-                    alt="Example turf booking website showing a date, sport and format search, ground information and live availability."
-                    width={2000}
-                    height={1083}
+                  <SaasScreenshotImage
+                    slot="desktop"
+                    imageUrl={screenshots.desktop}
                     sizes="(min-width: 1280px) 1120px, (min-width: 640px) 90vw, 100vw"
                     priority
                   />
@@ -309,11 +294,9 @@ export function SaasLanding({ homeHref }: { homeHref: string }) {
                 </div>
                 <div className="saas-phone-frame">
                   <div className="saas-shot aspect-[780/1480]">
-                    <Image
-                      src="/saas/booking-site-phone.jpg"
-                      alt="Mobile version of the customer booking website, with a simple search for available turf slots."
-                      width={780}
-                      height={1480}
+                    <SaasScreenshotImage
+                      slot="phone"
+                      imageUrl={screenshots.phone}
                       sizes="(min-width: 640px) 260px, 220px"
                     />
                   </div>
@@ -452,7 +435,7 @@ export function SaasLanding({ homeHref }: { homeHref: string }) {
       <footer className="saas-footer">
         <div className="saas-container flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Brand homeHref={homeHref} />
+            <SaasBrand homeHref={homeHref} />
             <p className="text-muted-foreground mt-3 text-sm">For the business behind the game.</p>
           </div>
           <nav

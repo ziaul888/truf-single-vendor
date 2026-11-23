@@ -29,6 +29,8 @@ export function BillingStatus({ status }: { status: string }) {
     pending: "Awaiting payment",
     scheduled: "Scheduled",
     active: "Active",
+    trialing: "On trial",
+    trial_ended: "Trial ended",
     past_due: "Past due",
     cancelled: "Cancelled",
     issued: "Unpaid",
@@ -42,9 +44,9 @@ export function BillingStatus({ status }: { status: string }) {
         aria-hidden
         className={cn(
           "h-1.5 w-1.5 rounded-full",
-          ["paid", "active"].includes(status)
+          ["paid", "active", "trialing"].includes(status)
             ? "bg-success"
-            : ["past_due", "overdue"].includes(status)
+            : ["past_due", "overdue", "trial_ended"].includes(status)
               ? "bg-warning"
               : status === "scheduled"
                 ? "bg-info"

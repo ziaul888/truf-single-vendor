@@ -5,9 +5,10 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { AdminTabBar } from "@/components/admin-tab-bar";
-import type { DashboardAudience } from "@/hooks/useMe";
+import { useMe, type DashboardAudience } from "@/hooks/useMe";
 import { DashboardAudienceProvider } from "@/components/dashboard-audience";
 import { TenantDashboardContent } from "@/components/tenant-dashboard-content";
+import { DashboardAccent } from "@/components/dashboard-accent";
 
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
@@ -20,6 +21,8 @@ export function DashboardShell({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: me } = useMe(audience);
+  const tenant = me && "tenant" in me ? me.tenant : undefined;
 
   useEffect(() => {
     const mq = window.matchMedia(DESKTOP_QUERY);
@@ -33,6 +36,7 @@ export function DashboardShell({
 
   return (
     <DashboardAudienceProvider audience={audience}>
+      <DashboardAccent scope="turf" id={tenant?.status === "suspended" ? undefined : tenant?.id} />
       <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
         {/* The tab bar steps aside while a page shows its own MobileActionBar. */}
         <div className="bg-background flex h-dvh overflow-hidden has-[[data-mobile-action-bar]]:[&_[data-tab-bar]]:hidden">
