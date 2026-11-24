@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Keep the fixed mobile navigation and checkout actions clear in local previews.
+  devIndicators: false,
   // Dev only: lets a phone on the local network load the dev server. Without it, Next blocks
   // the HMR socket from a LAN IP and the pages never hydrate.
   allowedDevOrigins: ["192.168.*.*"],

@@ -7,8 +7,15 @@ const VENUE_TIME_ZONE = "Asia/Dhaka";
 
 /** Today's date at the venue, "YYYY-MM-DD" — slot dates are venue-local, not UTC. */
 export function venueToday(offsetDays = 0, timeZone = VENUE_TIME_ZONE): string {
-  // en-CA formats as YYYY-MM-DD. Apply the offset to the local date, including on DST changes.
-  const date = new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  // Assemble the API's ISO date from the venue's calendar day, independent of the browser's format.
+  const { year, month, day } = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const date = `${year}-${month}-${day}`;
   return offsetDays ? addDays(date, offsetDays) : date;
 }
 

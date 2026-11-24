@@ -1,30 +1,30 @@
 import { SkeletonBlock } from "./skeleton-block";
 import { SkeletonLine } from "./skeleton-line";
 
-/**
- * SlotPicker as it first renders, before its slots arrive: price, the 7-day strip,
- * six hour cells (its own loading state) and the Continue button.
- */
+/** Match the price header, date buttons, and loading times in SlotPicker. */
 export function SlotPickerSkeleton() {
   return (
-    <div className="rounded-2xl border bg-card p-5 shadow-sm">
-      <div className="mb-1 flex items-baseline gap-2">
-        <SkeletonLine className="h-8 w-24" />
-        <SkeletonLine className="w-12" />
-      </div>
-      <SkeletonLine className="mb-5 h-4 w-56 max-w-full" />
-
-      <SkeletonLine className="mb-2 h-4 w-20" />
-      <div className="-mx-1 flex gap-2 overflow-hidden px-1 pb-2">
-        {Array.from({ length: 7 }).map((_, i) => <SkeletonBlock key={i} className="h-20.25 w-16 shrink-0" />)}
+    <div className="@container min-w-0 rounded-2xl border bg-card shadow-sm">
+      <div className="space-y-2 rounded-t-2xl border-b bg-muted/40 px-4 py-4 @sm:px-5">
+        <SkeletonLine className="h-3 w-20" />
+        <SkeletonLine className="h-6 w-28" />
       </div>
 
-      <SkeletonLine className="mt-5 mb-2 h-4 w-28" />
-      <div className="grid grid-cols-3 gap-2">
-        {Array.from({ length: 6 }).map((_, i) => <SkeletonBlock key={i} className="h-11 rounded-lg" />)}
-      </div>
+      <div className="space-y-5 px-4 py-5 @sm:px-5">
+        <div>
+          <SkeletonLine className="mb-2.5 h-4 w-24" />
+          <div className="grid grid-cols-4 gap-2 @sm:grid-cols-7 @sm:gap-1.5 @md:gap-2">
+            {Array.from({ length: 7 }).map((_, i) => <SkeletonBlock key={i} className="h-16" />)}
+          </div>
+        </div>
 
-      <SkeletonBlock className="mt-4 h-12 rounded-lg" />
+        <div>
+          <SkeletonLine className="mb-2.5 h-4 w-24" />
+          <div className="grid grid-cols-2 gap-2 @sm:grid-cols-3 @xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonBlock key={i} className="h-16" />)}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

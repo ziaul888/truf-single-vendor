@@ -2,32 +2,31 @@ import { Banknote, Clock, LayoutGrid, Timer, Trophy, Users, type LucideIcon } fr
 import { listPublicGrounds } from "@/services/portal-grounds";
 import { SPORT_META } from "@/components/portal/sports";
 import { durationLabel } from "@/lib/slot-format";
+import { hourToTime } from "@/lib/ground-format";
 import { HomeSection } from "./home-section";
 
 interface Stat { Icon: LucideIcon; value: string; label: string }
-
-const pad = (n: number) => String(n).padStart(2, "0");
 
 /** Four at-a-glance facts straight under the hero: the one ground's, or the whole venue's. */
 export async function StatsStrip({ slug }: { slug?: string } = {}) {
   const grounds = await listPublicGrounds({}, slug);
   if (grounds.length === 0) return null;
 
-  const hours = `${pad(Math.min(...grounds.map((g) => g.openHour)))}–${pad(Math.max(...grounds.map((g) => g.closeHour)))}`;
+  const hours = `${hourToTime(Math.min(...grounds.map((g) => g.openHour)))}–${hourToTime(Math.max(...grounds.map((g) => g.closeHour)))}`;
   const stats: Stat[] = grounds.length === 1 ? singleGroundStats(grounds[0], hours) : venueStats(grounds, hours);
 
   return (
     <HomeSection className="pb-0 sm:pb-0">
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <ul className="grid grid-cols-2 overflow-hidden rounded-2xl border bg-card sm:grid-cols-4">
         {stats.map(({ Icon, value, label }) => (
-          <li key={label} className="flex items-center gap-3 rounded-2xl border bg-card p-3 sm:p-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Icon className="h-5 w-5" />
+          <li key={label} className="flex min-w-0 flex-col gap-2 px-3 py-3.5 even:border-l nth-[n+3]:border-t sm:gap-3 sm:border-l sm:nth-[n+3]:border-t-0 sm:first:border-l-0 sm:p-4 lg:flex-row lg:items-center lg:px-5">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary lg:size-10">
+              <Icon className="size-4 lg:size-5" aria-hidden />
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-lg font-extrabold leading-tight tracking-tight">{value}</span>
-              <span className="block truncate text-xs text-muted-foreground">{label}</span>
-            </span>
+            <div className="min-w-0">
+              <p className="text-base font-extrabold leading-tight tracking-tight tabular-nums lg:text-lg">{value}</p>
+              <p className="mt-1 text-xs font-medium text-muted-foreground">{label}</p>
+            </div>
           </li>
         ))}
       </ul>

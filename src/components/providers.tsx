@@ -29,7 +29,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         {children}
       </ThemeProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {process.env.NODE_ENV === "development" && (
+        <div className="hidden lg:block">
+          <ReactQueryDevtools initialIsOpen={false} />
+        </div>
+      )}
     </QueryClientProvider>
   );
 }
