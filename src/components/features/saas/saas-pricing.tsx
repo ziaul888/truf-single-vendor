@@ -1,16 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ArrowRight, Layers3, RefreshCw, ShieldCheck } from "lucide-react";
 import { PlanFeaturesList } from "@/components/plan-features-list";
 import { Button } from "@/components/ui/button";
 import { formatBdt, planCharge } from "@/lib/platform-billing";
 import type { BillingInterval } from "@/types/platform-billing";
 import { BillingCycleToggle, useOwnerApplicationPlans } from "./owner-application-plans";
+import { OwnerApplicationForm, type ApplicationPlanSelection } from "./owner-application-form";
 
-export function SaasPricing() {
-  const [interval, setInterval] = useState<BillingInterval>("monthly");
+export function SaasEnrollment({ initialPlanId, initialInterval }: {
+  initialPlanId: string;
+  initialInterval: BillingInterval;
+}) {
+  const [selection, setSelection] = useState<ApplicationPlanSelection | null>(null);
+
+  return (
+    <>
+      <SaasPricing initialInterval={initialInterval} onApply={setSelection} />
+      <OwnerApplicationForm initialPlanId={initialPlanId} initialInterval={initialInterval} selection={selection} />
+    </>
+  );
+}
+
+function SaasPricing({ initialInterval, onApply }: {
+  initialInterval: BillingInterval;
+  onApply: (selection: ApplicationPlanSelection) => void;
+}) {
+  const [interval, setInterval] = useState(initialInterval);
   const plans = useOwnerApplicationPlans();
 
   return (
@@ -100,12 +117,13 @@ export function SaasPricing() {
                         asChild
                         className="saas-button h-auto min-h-12 w-full px-4 py-3 text-center whitespace-normal"
                       >
-                        <Link
-                          href={`/saas/apply?plan=${encodeURIComponent(plan.id)}&interval=${interval}`}
+                        <a
+                          href="#apply"
+                          onClick={() => onApply({ planId: plan.id, interval, trial: Boolean(plan.trialDays) })}
                         >
                           Apply for {plan.name}
                           <ArrowRight aria-hidden />
-                        </Link>
+                        </a>
                       </Button>
                     </div>
                   </article>

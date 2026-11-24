@@ -106,7 +106,7 @@ function EditGroundForm() {
     try {
       const changes = toGroundWriteInput(data);
       const updated = await update.mutateAsync({ id, changes: isDraft ? { ...changes, isActive: false } : changes });
-      if (!tenant) await syncGroundPhotos(id, ground.photos, photoSlots);
+      await syncGroundPhotos(id, ground.photos, photoSlots, tenant);
       toast.success(isDraft ? `${data.name} saved as draft (inactive)` : `${data.name} updated successfully`, {
         description: updated.slotSync ? slotSyncMessage(updated.slotSync) : undefined,
       });

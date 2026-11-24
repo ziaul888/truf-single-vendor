@@ -142,8 +142,8 @@ const meridiem = (hour: number) => ((hour % 24) < 12 ? "AM" : "PM");
  * Booked times as a short label. One slot reads as slotTimeLabel ("6 PM–7 PM"); back-to-back
  * slots merge into one range ("6:00 – 8:30 PM"); a gap starts a new range ("6:00 – 7:00 PM, 8:30 – 9:30 PM").
  */
-export function formatSlotRange(slots: SlotTimes[]): string {
-  if (slots.length === 1) return slotTimeLabel(slots[0]);
+export function formatSlotRange(slots: SlotTimes[], { hour12 = true } = {}): string {
+  if (slots.length === 1) return hour12 ? slotTimeLabel(slots[0]) : slotClockLabel(slots[0]);
   const sorted = [...slots].sort((a, b) => slotStartHours(a) - slotStartHours(b));
   const runs: { start: SlotTimes; end: SlotTimes }[] = [];
   for (const slot of sorted) {
@@ -153,6 +153,7 @@ export function formatSlotRange(slots: SlotTimes[]): string {
   }
   return runs
     .map(({ start, end }) => {
+      if (!hour12) return `${slotStartTime(start)}–${slotEndTime(end)}`;
       const from = clock12(start.startHour, slotStartMinute(start));
       const to = clock12(end.endHour, slotEndMinute(end));
       return meridiem(start.startHour) === meridiem(end.endHour)

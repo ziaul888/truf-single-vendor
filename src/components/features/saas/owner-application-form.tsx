@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft,
@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  Layers3,
   Loader2,
   ReceiptText,
   ShieldCheck,
@@ -61,7 +60,7 @@ const schema = z
     planId: z.string().uuid("Choose a subscription plan"),
     interval: z.enum(["monthly", "yearly"]),
     includePayment: z.boolean(),
-    paymentMethod: paymentDetailsSchema.shape.paymentMethod.optional(),
+    paymentMethod: paymentDetailsSchema.shape.paymentMethod.nullish(),
     paymentReference: z.string().optional(),
     paymentDate: z.string().optional(),
   })
@@ -80,6 +79,8 @@ const schema = z
   });
 
 export type PurchaseValues = z.infer<typeof schema>;
+export type ApplicationPlanSelection = { planId: string; interval: BillingInterval; trial: boolean };
+type SubmissionKind = "application" | "payment" | "trial";
 type Failure = {
   success: false;
   error: string;
@@ -111,26 +112,6 @@ function Field({
   );
 }
 
-function ApplicationHeader() {
-  return (
-    <header className="bg-card border-b">
-      <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-        <Link href="/saas" className="saas-brand" aria-label="TurfOrg home">
-          <span className="saas-brand-mark">
-            <Layers3 aria-hidden className="size-5" />
-          </span>
-          <span>
-            Turf<span className="text-primary">Org.</span>
-          </span>
-        </Link>
-        <Button asChild variant="outline" className="saas-button h-11 shrink-0">
-          <Link href="/login">Owner login</Link>
-        </Button>
-      </div>
-    </header>
-  );
-}
-
 function ApplicationSummary({
   plan,
   interval,
@@ -140,14 +121,14 @@ function ApplicationSummary({
 }) {
   return (
     <aside
-      className="bg-card min-w-0 overflow-hidden rounded-2xl border shadow-xs lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+      className="bg-card min-w-0 overflow-hidden rounded-2xl border shadow-xs lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1"
       aria-labelledby="order-summary"
     >
       <div className="p-5 sm:p-6">
-        <h2 id="order-summary" className="saas-title flex items-center gap-2.5">
+        <h3 id="order-summary" className="saas-title flex items-center gap-2.5">
           <ReceiptText aria-hidden className="text-primary size-5 shrink-0" />
           Order summary
-        </h2>
+        </h3>
         {plan ? (
           <div aria-live="polite" className="mt-5">
             <dl className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-4 text-sm">
@@ -188,13 +169,16 @@ function ApplicationSummary({
 export function OwnerApplicationForm({
   initialPlanId,
   initialInterval,
+  selection,
 }: {
   initialPlanId: string;
   initialInterval: BillingInterval;
+  selection: ApplicationPlanSelection | null;
 }) {
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState<"application" | "payment" | "trial" | null>(null);
+  const [submission, setSubmission] = useState<{ kind: SubmissionKind; selection: ApplicationPlanSelection | null } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const section = useRef<HTMLElement>(null);
   const attempt = useRef<{ requestId: string; payload: string } | null>(null);
   const plans = useOwnerApplicationPlans();
   const form = useForm<PurchaseValues>({
@@ -220,6 +204,21 @@ export function OwnerApplicationForm({
   const methods = useSubscriptionPaymentMethods(includePayment);
   const selectedPlan = plans.data?.find((plan) => plan.id === planId);
   const hasPaymentMethods = Object.values(methods.data ?? {}).some(Boolean);
+  const success = submission?.selection === selection ? submission.kind : null;
+  const { clearErrors, setValue } = form;
+
+  useEffect(() => {
+    if (!selection) return;
+    choosePlan({ clearErrors, setValue }, selection.planId, selection.trial);
+    setValue("interval", selection.interval);
+  }, [selection, clearErrors, setValue]);
+
+  useEffect(() => {
+    if (!success) return;
+    section.current?.scrollIntoView({ block: "start" });
+    section.current?.focus({ preventScroll: true });
+  }, [success]);
+
   async function submit(values: PurchaseValues) {
     setError("");
     if (!selectedPlan || selectedPlan.id !== values.planId) {
@@ -268,7 +267,7 @@ export function OwnerApplicationForm({
       }
       attempt.current = null;
       form.reset();
-      setSuccess(selectedPlan.trialDays ? "trial" : payment ? "payment" : "application");
+      setSubmission({ kind: selectedPlan.trialDays ? "trial" : payment ? "payment" : "application", selection });
     } catch {
       setError("Cannot reach the server. Please try again.");
     }
@@ -276,20 +275,18 @@ export function OwnerApplicationForm({
   const name = form.register("name");
   const { errors, isSubmitting: busy } = form.formState;
   return (
-    <div className="saas-page min-h-dvh">
-      <ApplicationHeader />
+    <section ref={section} id="apply" tabIndex={-1} className="saas-section-space" aria-labelledby="apply-heading">
       {success ? (
-        <main className="mx-auto max-w-xl px-4 py-12 sm:px-6 sm:py-20">
-          <section
+        <div className="saas-container max-w-xl">
+          <div
             className="bg-card rounded-2xl border p-6 shadow-xs sm:p-8"
-            aria-labelledby="application-success"
           >
             <span className="bg-success/10 text-success inline-flex size-12 items-center justify-center rounded-xl">
               <CheckCircle2 aria-hidden className="size-6" />
             </span>
-            <h1 id="application-success" className="saas-section mt-5">
+            <h2 id="apply-heading" className="saas-section mt-5">
               Application submitted
-            </h1>
+            </h2>
             <p className="text-muted-foreground mt-4 leading-relaxed">
               {success === "trial"
                 ? "Your trial application is awaiting review."
@@ -305,21 +302,21 @@ export function OwnerApplicationForm({
                 </Link>
               </Button>
               <Button asChild variant="outline" className="saas-button h-11">
-                <Link href="/saas">Back to TurfOrg</Link>
+                <a href="#main-content">Back to top</a>
               </Button>
             </div>
-          </section>
-        </main>
+          </div>
+        </div>
       ) : (
-        <main className="mx-auto max-w-6xl px-4 pt-4 pb-12 sm:px-6 sm:pt-6 sm:pb-16 lg:px-8">
-          <Link
-            href="/saas#plans"
+        <div className="saas-container">
+          <a
+            href="#plans"
             className="text-muted-foreground hover:text-foreground inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-medium"
           >
             <ArrowLeft aria-hidden className="size-4" /> Back to plans
-          </Link>
+          </a>
           <div className="mt-3 max-w-2xl sm:mt-4">
-            <h1 className="saas-section">Apply for turf owner access</h1>
+            <h2 id="apply-heading" className="saas-section">Apply for turf owner access</h2>
             <p className="text-muted-foreground mt-3 max-w-xl leading-relaxed">
               {selectedPlan?.trialDays
                 ? "Enter your business details to apply for the free trial."
@@ -339,13 +336,7 @@ export function OwnerApplicationForm({
               error={errors.planId?.message}
               loading={plans.isLoading}
               loadError={plans.isError}
-              onPlan={(value) => {
-                if (plans.data?.find((plan) => plan.id === value)?.trialDays) {
-                  form.setValue("includePayment", false);
-                  form.clearErrors(["paymentMethod", "paymentReference", "paymentDate"]);
-                }
-                form.setValue("planId", value, { shouldValidate: true });
-              }}
+              onPlan={(value) => choosePlan(form, value, Boolean(plans.data?.find((plan) => plan.id === value)?.trialDays))}
               onInterval={(value) => form.setValue("interval", value)}
               onRetry={() => plans.refetch()}
             />
@@ -355,9 +346,9 @@ export function OwnerApplicationForm({
                 className="bg-card space-y-5 rounded-2xl border p-5 shadow-xs sm:p-6"
                 aria-labelledby="turf-details"
               >
-                <h2 id="turf-details" className="saas-title">
+                <h3 id="turf-details" className="saas-title">
                   Turf business
-                </h2>
+                </h3>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field id="business-name" label="Business name" error={errors.name?.message}>
                     <Input
@@ -413,9 +404,9 @@ export function OwnerApplicationForm({
                 className="bg-card space-y-5 rounded-2xl border p-5 shadow-xs sm:p-6"
                 aria-labelledby="owner-details"
               >
-                <h2 id="owner-details" className="saas-title">
+                <h3 id="owner-details" className="saas-title">
                   Owner account
-                </h2>
+                </h3>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field id="owner-name" label="Owner name" error={errors.ownerName?.message}>
                     <Input
@@ -499,9 +490,9 @@ export function OwnerApplicationForm({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h2 id="payment-heading" className="saas-title">
+                      <h3 id="payment-heading" className="saas-title">
                         Payment
-                      </h2>
+                      </h3>
                       <p className="text-muted-foreground mt-1 text-sm">
                         You can submit your application and pay later.
                       </p>
@@ -563,8 +554,16 @@ export function OwnerApplicationForm({
               </div>
             </div>
           </form>
-        </main>
+        </div>
       )}
-    </div>
+    </section>
   );
+}
+
+function choosePlan({ clearErrors, setValue }: Pick<UseFormReturn<PurchaseValues>, "clearErrors" | "setValue">, planId: string, trial: boolean) {
+  if (trial) {
+    setValue("includePayment", false);
+    clearErrors(["paymentMethod", "paymentReference", "paymentDate"]);
+  }
+  setValue("planId", planId, { shouldValidate: true });
 }

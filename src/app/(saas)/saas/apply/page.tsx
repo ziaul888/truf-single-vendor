@@ -1,10 +1,4 @@
-import type { Metadata } from "next";
-import { OwnerApplicationForm } from "@/components/features/saas/owner-application-form";
-
-export const metadata: Metadata = {
-  title: { absolute: "Apply for turf owner access · TurfOrg" },
-  robots: { index: false, follow: false },
-};
+import { redirect } from "next/navigation";
 
 export default async function OwnerApplicationPage({
   searchParams,
@@ -12,10 +6,8 @@ export default async function OwnerApplicationPage({
   searchParams: Promise<{ plan?: string | string[]; interval?: string | string[] }>;
 }) {
   const { plan, interval } = await searchParams;
-  return (
-    <OwnerApplicationForm
-      initialPlanId={typeof plan === "string" ? plan : ""}
-      initialInterval={interval === "yearly" ? "yearly" : "monthly"}
-    />
-  );
+  const query = new URLSearchParams();
+  if (typeof plan === "string" && plan) query.set("plan", plan);
+  if (interval === "yearly" || interval === "monthly") query.set("interval", interval);
+  redirect(`/saas${query.size ? `?${query}` : ""}#apply`);
 }

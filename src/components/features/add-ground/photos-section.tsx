@@ -51,9 +51,9 @@ export function PhotosSection({ photoSlots, onPhotoChange, onPhotoMove }: Photos
     <SectionCard
       n="2"
       title="Ground Photos"
-      desc={`Upload up to ${PHOTO_SLOT_COUNT} photos. Drag to reorder; the first photo is the cover image.`}
+      desc={`Upload up to ${PHOTO_SLOT_COUNT} JPG or PNG photos (2 MB each). The first photo is the cover.`}
     >
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-3">
         {photoSlots.map((slot, idx) => (
           <div
             key={idx}
@@ -113,31 +113,29 @@ function PhotoTile({ slot, index, onPick }: { slot: PhotoSlot; index: number; on
   const preview = useObjectUrl(slot instanceof File ? slot : null);
   const src = typeof slot === "string" ? slot : preview;
 
+  if (!slot) {
+    return (
+      <button
+        type="button"
+        onClick={onPick}
+        className="hover:border-primary/50 hover:bg-muted/40 flex aspect-4/3 w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed p-2 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        <Upload className="text-muted-foreground size-5" aria-hidden />
+        <span className="text-xs font-medium">{index === 0 ? "Upload cover photo" : `Upload photo ${index + 1}`}</span>
+      </button>
+    );
+  }
+
   return (
-    <div
-      onClick={() => !slot && onPick()}
-      className={cn(
-        "relative flex aspect-4/3 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-xl border-2 transition-colors",
-        slot ? "border-primary/40 bg-primary/5" : "hover:border-primary/50 hover:bg-muted/40 cursor-pointer border-dashed"
+    <div className="border-primary/40 bg-primary/5 relative aspect-4/3 overflow-hidden rounded-xl border-2">
+      {src && (
+        <Image src={src} alt={`Photo ${index + 1}`} fill sizes="200px" className="object-cover" unoptimized={!!preview || src.startsWith("/")} />
       )}
-    >
-      {src ? (
-        <>
-          {/* Local previews are blob: URLs, which next/image can't optimise. */}
-          <Image src={src} alt={`Photo ${index + 1}`} fill sizes="200px" className="object-cover" unoptimized={!!preview} />
-          {index === 0 && (
-            <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>
-          )}
-          {slot instanceof File && (
-            <span className="absolute right-1.5 top-6 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">New</span>
-          )}
-        </>
-      ) : (
-        <>
-          <Upload className="text-muted-foreground/60 h-6 w-6" />
-          <p className="text-xs font-medium">{index === 0 ? "Cover photo" : `Photo ${index + 1}`}</p>
-          <p className="text-muted-foreground text-[10px]">JPG, PNG · max 2 MB</p>
-        </>
+      {index === 0 && (
+        <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>
+      )}
+      {slot instanceof File && (
+        <span className="absolute right-1.5 top-6 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">New</span>
       )}
     </div>
   );

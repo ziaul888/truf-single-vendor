@@ -58,15 +58,19 @@ export function useUpdateVenue() {
 }
 
 /** PNG or JPG, 200 KB at most. */
-export const useUploadLogo = () =>
-  useSectionMutation(KEY.venue, async (file: File) => {
+export function useUploadLogo() {
+  const { client, scope } = useDashboardApi();
+  return useSectionMutation([...scope, ...KEY.venue], async (file: File) => {
     const form = new FormData();
     form.append("logo", file);
-    return (await api.post("/admin/settings/venue/logo", form, { headers: { "Content-Type": "multipart/form-data" } })).data.data as VenueProfile;
+    return (await client.post("/admin/settings/venue/logo", form, { headers: { "Content-Type": "multipart/form-data" } })).data.data as VenueProfile;
   });
+}
 
-export const useRemoveLogo = () =>
-  useSectionMutation<void, VenueProfile>(KEY.venue, async () => (await api.delete("/admin/settings/venue/logo")).data.data);
+export function useRemoveLogo() {
+  const { client, scope } = useDashboardApi();
+  return useSectionMutation<void, VenueProfile>([...scope, ...KEY.venue], async () => (await client.delete("/admin/settings/venue/logo")).data.data);
+}
 
 // ── Website ──
 

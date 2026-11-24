@@ -46,7 +46,7 @@ export function DashboardShell({
 
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <Topbar audience={audience} />
-            <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 md:px-10 md:py-6">
+            <main className="relative flex-1 overflow-y-auto px-3 py-4 max-md:has-[[data-settings-save-bar]]:pb-0 sm:px-6 md:px-10 md:py-6">
               {audience === "owner" ? <TenantDashboardContent>{children}</TenantDashboardContent> : children}
             </main>
             <AdminTabBar menuOpen={mobileOpen} />

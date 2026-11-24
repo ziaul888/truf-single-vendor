@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { PortalLink as Link, useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight } from "lucide-react";
 import { clearPaymentReturn, getPublicBooking, paidBeforeLeaving, PortalApiError } from "@/lib/portal-bookings";
 import type { PublicBooking } from "@/types/booking";
 import { confirmationState, MAX_POLLS, paymentLanded, POLL_INTERVAL_MS } from "./confirmation-state";
@@ -52,7 +53,7 @@ export function ConfirmationView({ id, token, venueName }: { id: string; token?:
     const body = (
       <>
         {error?.message}{" "}
-        <button type="button" onClick={() => refetch()} className="font-semibold text-accent underline">Try again</button>
+        <button type="button" onClick={() => refetch()} className="font-semibold text-foreground underline underline-offset-4">Try again</button>
       </>
     );
     return <Shell><ConfirmationMessage kind="error" title="Couldn't load your booking" body={body} /></Shell>;
@@ -79,11 +80,11 @@ export function ConfirmationView({ id, token, venueName }: { id: string; token?:
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <section className="bg-sidebar py-16 text-sidebar-foreground">
-      <div className="mx-auto max-w-2xl px-4 text-center sm:px-6 lg:px-8">
+    <section className="bg-background py-8 text-foreground sm:py-12">
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-4 sm:gap-7 sm:px-6 lg:px-8">
         {children}
-        <Link href="/grounds" className="mt-8 inline-block font-semibold text-accent hover:underline">
-          Book another slot →
+        <Link href="/grounds" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border bg-card px-4 text-sm font-semibold hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+          Book another slot <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>
     </section>

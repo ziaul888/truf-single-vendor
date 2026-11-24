@@ -1,21 +1,21 @@
-import Image from "next/image";
-import { Map } from "lucide-react";
+import { Goal, Map } from "lucide-react";
 import type { PublicBooking } from "@/types/booking";
 import { fromMinorUnits } from "@/lib/ground-format";
-import { bookingSlotCount, formatBookingSlots } from "@/lib/booking-slots";
-import { formatSlotDate, slotCountLabel, slotStartTime, slotTimeLabel } from "@/lib/slot-format";
+import { bookingSlots } from "@/lib/booking-slots";
+import { formatSlotDate, formatSlotRange, slotClockLabel, slotCountLabel, slotStartTime } from "@/lib/slot-format";
+import { FallbackImage } from "@/components/fallback-image";
 import { FormatBadge } from "@/components/portal/format-badge";
 import { PAYMENT_STATUS_LABEL, WALLET_NAME, hasBookingMoney, isUnderReview, type ConfirmationState } from "./confirmation-state";
 
 const STATUS_PILL: Record<ConfirmationState, { label: string; className: string }> = {
-  confirming: { label: "Processing", className: "bg-warning/15 text-warning" },
-  unpaid: { label: "Awaiting payment", className: "bg-warning/15 text-warning" },
-  reserved: { label: "Pending", className: "bg-warning/15 text-warning" },
-  verifying: { label: "Verifying payment", className: "bg-warning/15 text-warning" },
-  confirmed: { label: "Confirmed", className: "bg-success/15 text-success" },
-  completed: { label: "Completed", className: "bg-muted text-muted-foreground" },
-  no_show: { label: "No-show", className: "bg-destructive/15 text-destructive" },
-  cancelled: { label: "Cancelled", className: "bg-destructive/15 text-destructive" },
+  confirming: { label: "Processing", className: "bg-warning/15 [&>span]:bg-warning" },
+  unpaid: { label: "Awaiting payment", className: "bg-warning/15 [&>span]:bg-warning" },
+  reserved: { label: "Pending", className: "bg-warning/15 [&>span]:bg-warning" },
+  verifying: { label: "Verifying payment", className: "bg-warning/15 [&>span]:bg-warning" },
+  confirmed: { label: "Confirmed", className: "bg-success/15 [&>span]:bg-success" },
+  completed: { label: "Completed", className: "bg-muted [&>span]:bg-muted-foreground" },
+  no_show: { label: "No-show", className: "bg-destructive/15 [&>span]:bg-destructive" },
+  cancelled: { label: "Cancelled", className: "bg-destructive/15 [&>span]:bg-destructive" },
 };
 
 const taka = (minor: number) => `৳${fromMinorUnits(minor).toLocaleString()}`;
@@ -40,37 +40,46 @@ export function BookingDetailsCard({
   booking: PublicBooking; state: ConfirmationState; venueName: string; children?: React.ReactNode;
 }) {
   const pill = STATUS_PILL[state];
-  const slotCount = bookingSlotCount(b);
+  const slots = bookingSlots(b);
+  const placeholder = (
+    <div className="absolute inset-0 grid place-items-center bg-muted text-muted-foreground">
+      <Goal className="size-6" aria-hidden />
+    </div>
+  );
   return (
-    <div className="mt-10 rounded-2xl bg-card p-4 text-left sm:p-6 text-card-foreground">
-      <div className="flex items-center gap-3 border-b pb-4">
-        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
-          {b.ground.coverPhoto ? (
-            <Image src={b.ground.coverPhoto} alt={b.ground.name} fill sizes="56px" className="object-cover" />
-          ) : (
-            <div className="h-full w-full bg-linear-to-br from-primary/80 to-primary/40" />
-          )}
+    <article aria-label="Booking details" className="w-full min-w-0 overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-4 sm:px-6">
+        <div className="flex min-w-0 flex-1 basis-40 items-center gap-3">
+          <div className="relative size-12 shrink-0 overflow-hidden rounded-xl border sm:size-14">
+            {b.ground.coverPhoto ? (
+              <FallbackImage src={b.ground.coverPhoto} alt="" fill sizes="56px" className="object-cover" unoptimized={b.ground.coverPhoto.startsWith("/")} fallback={placeholder} />
+            ) : placeholder}
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-base font-bold [overflow-wrap:anywhere] sm:text-lg">{b.ground.name}</h2>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span className="[overflow-wrap:anywhere]">{venueName}</span>
+              {b.ground.format && <FormatBadge format={b.ground.format} className="bg-muted text-muted-foreground" />}
+            </div>
+            {b.ground.address && <p className="mt-1 text-xs text-muted-foreground [overflow-wrap:anywhere]">{b.ground.address}</p>}
+          </div>
         </div>
-        <div className="min-w-0">
-          {b.ground.format && <FormatBadge format={b.ground.format} />}
-          <p className="mt-1 font-bold">{b.ground.name} · {venueName}</p>
-          {b.ground.address && <p className="text-xs text-muted-foreground">{b.ground.address}</p>}
-        </div>
-        <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${pill.className}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${pill.className}`}>
+          <span className="size-1.5 shrink-0 rounded-full" aria-hidden />
           {pill.label}
         </span>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
-        <Stat label="Booking" value={b.bookingNumber} />
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-4 border-y bg-muted/35 px-4 py-4 text-sm sm:grid-cols-3 sm:px-6">
+        <Stat label="Booking reference" value={b.bookingNumber} />
         <Stat label="Date" value={formatSlotDate(b.slot.date)} />
-        <Stat label={slotCount > 1 ? `Time · ${slotCountLabel(slotCount)}` : "Time"} value={formatBookingSlots(b)} />
+        <Stat label={slots.length > 1 ? `Time · ${slotCountLabel(slots.length)}` : "Time"} value={formatSlotRange(slots, { hour12: false })} />
       </dl>
 
-      <div className="mt-4 space-y-1.5 border-t pt-4 text-sm">
-        {b.slots && b.slots.length > 1 ? (
+      <dl className="space-y-2 px-4 py-4 text-sm sm:px-6">
+        {b.slots && slots.length > 1 ? (
           b.slots.map((s) => (
-            <Line key={slotStartTime(s)} label={slotTimeLabel(s)} value={taka(s.price)} />
+            <Line key={slotStartTime(s)} label={slotClockLabel(s)} value={taka(s.price)} />
           ))
         ) : (
           <Line label="Slot" value={taka(b.amount)} />
@@ -91,37 +100,39 @@ export function BookingDetailsCard({
         )}
         <Line label="Payment" value={paymentLabel(b)} />
         {b.walletPayment?.reference && <Line label="TrxID" value={b.walletPayment.reference} />}
-      </div>
+      </dl>
 
-      {b.ground.address && state !== "cancelled" && (
-        <a
-          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.ground.address)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold hover:bg-muted"
-        >
-          <Map className="h-4 w-4" /> Get directions
-        </a>
-      )}
-      {children}
-    </div>
+      <div className="border-t px-4 pb-4 empty:hidden sm:px-6">
+        {b.ground.address && state !== "cancelled" && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.ground.address)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold hover:bg-muted"
+          >
+            <Map className="size-4" aria-hidden /> Get directions
+          </a>
+        )}
+        {children}
+      </div>
+    </article>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-semibold">{value}</dd>
+    <div className="min-w-0 max-sm:last:col-span-2">
+      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-semibold tabular-nums [overflow-wrap:anywhere]">{value}</dd>
     </div>
   );
 }
 
 function Line({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div className={`flex justify-between ${bold ? "border-t pt-2 text-base font-bold" : ""}`}>
-      <span className={bold ? "" : "text-muted-foreground"}>{label}</span>
-      <span>{value}</span>
+    <div className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-3 ${bold ? "border-t pt-2.5 text-base font-bold" : ""}`}>
+      <dt className={bold ? "" : "text-muted-foreground"}>{label}</dt>
+      <dd className="min-w-0 text-right tabular-nums [overflow-wrap:anywhere]">{value}</dd>
     </div>
   );
 }

@@ -25,14 +25,14 @@ function activeTab(pathname: string): TabKey | null {
 
 const tabClass = (active: boolean) =>
   cn(
-    "relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-transform active:scale-95",
+    "relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-medium transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
     active ? "text-primary" : "text-muted-foreground"
   );
 
 function CountBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="bg-destructive text-destructive-foreground absolute -top-1.5 left-1/2 ml-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-semibold">
+    <span className="bg-destructive text-destructive-foreground absolute -top-0.5 left-1/2 ml-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-semibold">
       {count > 99 ? "99+" : count}
     </span>
   );
@@ -53,8 +53,8 @@ function TabLink({
 }) {
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className={tabClass(active)}>
-      <span className="relative">
-        <Icon className="h-5 w-5" />
+      <span className="relative grid size-7 place-items-center">
+        <Icon className="size-5" aria-hidden />
         <CountBadge count={badge} />
       </span>
       {label}
@@ -70,8 +70,8 @@ function NewButton({ active }: { active: boolean }) {
       aria-label="New booking"
       className={tabClass(active)}
     >
-      <span className="bg-primary text-primary-foreground ring-card relative z-10 -mt-5 flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-4">
-        <Plus className="h-6 w-6" />
+      <span className="bg-primary text-primary-foreground grid size-7 place-items-center rounded-full">
+        <Plus className="size-4" aria-hidden />
       </span>
       New
     </Link>
@@ -90,7 +90,7 @@ export function AdminTabBar({ menuOpen }: { menuOpen: boolean }) {
     <nav
       data-tab-bar
       aria-label="Main"
-      className="bg-card/95 shrink-0 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur select-none lg:hidden"
+      className="bg-card shrink-0 select-none border-t pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden"
     >
       <div className="flex h-14 items-stretch px-1">
         <TabLink href="/dashboard" label="Home" Icon={House} active={tab === "home"} />
@@ -109,7 +109,9 @@ export function AdminTabBar({ menuOpen }: { menuOpen: boolean }) {
             aria-expanded={menuOpen}
             className={tabClass(menuOpen || tab === null)}
           >
-            <Menu className="h-5 w-5" />
+            <span className="grid size-7 place-items-center">
+              <Menu className="size-5" aria-hidden />
+            </span>
             Menu
           </button>
         </DialogTrigger>

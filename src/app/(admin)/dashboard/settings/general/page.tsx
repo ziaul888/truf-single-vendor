@@ -30,7 +30,7 @@ export default function GeneralSettingsPage() {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
-      <SettingsPageHeader title="General" description={audience === "owner" ? "Turf details and locale" : "Venue details, logo and locale"} audit={venue}>
+      <SettingsPageHeader title="General" description={audience === "owner" ? "Turf details, logo and locale" : "Venue details, logo and locale"} audit={venue}>
         {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} className="hidden md:inline-flex" />}
       </SettingsPageHeader>
       {!canEdit && <ReadOnlyNotice />}
@@ -48,11 +48,9 @@ export default function GeneralSettingsPage() {
         </SettingsSection>
       </fieldset>
 
-      {audience === "staff" && (
-        <SettingsSection title="Logo" icon={ImageIcon} description="Shown in the website header and in emails">
-          <VenueLogoField logoUrl={venue.logoUrl} name={venue.name} canEdit={canEdit} />
-        </SettingsSection>
-      )}
+      <SettingsSection title="Logo" icon={ImageIcon} description={audience === "owner" ? "Shown in your dashboard and booking website" : "Shown in the website header and in emails"}>
+        <VenueLogoField logoUrl={venue.logoUrl} name={venue.name} canEdit={canEdit} />
+      </SettingsSection>
 
       <SettingsSection title="Locale" icon={Globe} description="Fixed for v1. Prices and times everywhere use these.">
         <VenueLocale locale={venue.locale} />

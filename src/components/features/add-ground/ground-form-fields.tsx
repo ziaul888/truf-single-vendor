@@ -163,8 +163,7 @@ export function GroundFormFields({ form, photoSlots, onPhotoChange, onPhotoMove,
         </div>
       </SectionCard>
 
-      {/* Section 2 — Photos (not stored by turf-api v1) */}
-      {!tenant && <PhotosSection photoSlots={photoSlots} onPhotoChange={onPhotoChange} onPhotoMove={onPhotoMove} />}
+      <PhotosSection photoSlots={photoSlots} onPhotoChange={onPhotoChange} onPhotoMove={onPhotoMove} />
 
       {/* Section 3 — Operating hours */}
       <HoursSection form={form} />

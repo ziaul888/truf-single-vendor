@@ -65,12 +65,12 @@ export function VenueLogoField({ logoUrl, name, canEdit }: { logoUrl: string | n
         {canEdit && (
           <div className="flex flex-wrap gap-2">
             <input ref={inputRef} type="file" accept={LOGO_TYPES.join(",")} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
-            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => inputRef.current?.click()}>
+            <Button type="button" variant="outline" size="sm" className="pointer-coarse:min-h-11" disabled={busy} onClick={() => inputRef.current?.click()}>
               {upload.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
               {logoUrl ? "Replace logo" : "Upload logo"}
             </Button>
             {logoUrl && (
-              <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={handleRemove}>
+              <Button type="button" variant="ghost" size="sm" className="pointer-coarse:min-h-11" disabled={busy} onClick={handleRemove}>
                 {remove.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-1.5 h-3.5 w-3.5" />}
                 Remove
               </Button>

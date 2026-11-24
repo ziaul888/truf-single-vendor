@@ -75,7 +75,7 @@ function AddGroundForm() {
     try {
       const body = toGroundWriteInput(data);
       created = await create.mutateAsync(isDraft ? { ...body, isActive: false } : body);
-      if (!tenant) await syncGroundPhotos(created.id, [], photoSlots);
+      await syncGroundPhotos(created.id, created.photos, photoSlots, tenant);
       toast.success(isDraft ? "Ground saved as draft (inactive)" : `${data.name} added successfully`);
       router.push("/dashboard/grounds");
     } catch (err) {

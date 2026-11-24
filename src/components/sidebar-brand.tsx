@@ -37,13 +37,8 @@ function BrandMark({ name, logoUrl }: { name: string; logoUrl?: string }) {
   );
 }
 
-function StaffSidebarBrand() {
-  const { data: venue } = useVenue();
-  return <BrandMark name={venue?.name ?? "Turf"} logoUrl={venue?.logoUrl ?? undefined} />;
-}
-
 /** The venue's logo from Settings → General (the same one the portal shows), or its initial until one is uploaded. */
 export function SidebarBrand({ ownerName }: { ownerName?: string | null }) {
-  if (ownerName !== undefined) return <BrandMark name={ownerName || "Turf"} />;
-  return <StaffSidebarBrand />;
+  const { data: venue } = useVenue();
+  return <BrandMark name={venue?.name || ownerName || "Turf"} logoUrl={venue?.logoUrl ?? undefined} />;
 }
