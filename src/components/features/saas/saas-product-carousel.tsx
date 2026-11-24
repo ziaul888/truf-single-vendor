@@ -1,7 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useId, useRef, useState, type KeyboardEvent, type UIEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type KeyboardEvent,
+  type UIEvent,
+} from "react";
 import {
   BarChart3,
   CalendarDays,
@@ -9,6 +18,8 @@ import {
   ChevronRight,
   LayoutDashboard,
   MonitorSmartphone,
+  Pause,
+  Play,
 } from "lucide-react";
 import { SaasScreenshotImage } from "./saas-screenshot-image";
 
@@ -39,25 +50,80 @@ const slides = [
 
 const imageSizes =
   "(min-width: 1184px) 1120px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2.5rem)";
+const AUTOPLAY_DELAY = 5000;
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+function subscribeToMotionPreference(onChange: () => void) {
+  const media = window.matchMedia(REDUCED_MOTION);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
 
 export function SaasProductCarousel({ bookingSiteUrl }: { bookingSiteUrl: string | null }) {
   const viewportId = useId();
   const viewportRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [playback, setPlayback] = useState<boolean | null>(null);
+  const [inView, setInView] = useState(false);
+  const [mouseOver, setMouseOver] = useState(false);
+  const reducedMotion = useSyncExternalStore(
+    subscribeToMotionPreference,
+    () => window.matchMedia(REDUCED_MOTION).matches,
+    () => true,
+  );
+  const playing = playback ?? !reducedMotion;
+  const rotating = playing && inView && !mouseOver;
   const active = slides[activeIndex];
 
-  function showSlide(index: number) {
+  const showSlide = useCallback((index: number) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
 
+    const left = index * viewport.clientWidth;
     viewport.scrollTo({
-      left: index * viewport.clientWidth,
-      behavior: Math.abs(index - activeIndex) > 1 ? "instant" : "auto",
+      left,
+      behavior: Math.abs(left - viewport.scrollLeft) > viewport.clientWidth + 1 ? "instant" : "auto",
     });
+  }, []);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.intersectionRatio >= 0.5), {
+      threshold: 0.5,
+    });
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!rotating) return;
+
+    let timeout: number | undefined;
+    function scheduleNext() {
+      window.clearTimeout(timeout);
+      if (document.hidden) return;
+      timeout = window.setTimeout(() => {
+        if (!document.hidden) showSlide((activeIndex + 1) % slides.length);
+      }, AUTOPLAY_DELAY);
+    }
+
+    scheduleNext();
+    document.addEventListener("visibilitychange", scheduleNext);
+    return () => {
+      window.clearTimeout(timeout);
+      document.removeEventListener("visibilitychange", scheduleNext);
+    };
+  }, [activeIndex, rotating, showSlide]);
+
+  function selectSlide(index: number) {
+    setPlayback(false);
+    showSlide(index);
   }
 
   function moveBy(direction: number) {
-    showSlide((activeIndex + direction + slides.length) % slides.length);
+    selectSlide((activeIndex + direction + slides.length) % slides.length);
   }
 
   function handleScroll(event: UIEvent<HTMLDivElement>) {
@@ -78,6 +144,13 @@ export function SaasProductCarousel({ bookingSiteUrl }: { bookingSiteUrl: string
       className="saas-product-preview"
       aria-label="Product screenshots"
       aria-roledescription="carousel"
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setMouseOver(true);
+      }}
+      onPointerLeave={() => setMouseOver(false)}
+      onFocus={(event) => {
+        if (event.target.matches(":focus-visible")) setPlayback(false);
+      }}
       onKeyDown={handleKeyDown}
     >
       <div className="saas-browser">
@@ -90,7 +163,20 @@ export function SaasProductCarousel({ bookingSiteUrl }: { bookingSiteUrl: string
           <span className="saas-browser-address" aria-hidden>
             {active.title}
           </span>
-          <div className="saas-preview-arrows" role="group" aria-label="Browse screenshots">
+          <div className="saas-preview-controls" role="group" aria-label="Screenshot controls">
+            <button
+              type="button"
+              className="no-press"
+              aria-label={playing ? "Pause slideshow" : "Play slideshow"}
+              title={playing ? "Pause slideshow" : "Play slideshow"}
+              aria-controls={viewportId}
+              onClick={() => {
+                setMouseOver(false);
+                setPlayback(!playing);
+              }}
+            >
+              {playing ? <Pause aria-hidden className="size-5" /> : <Play aria-hidden className="size-5" />}
+            </button>
             <button
               type="button"
               className="no-press"
@@ -117,6 +203,7 @@ export function SaasProductCarousel({ bookingSiteUrl }: { bookingSiteUrl: string
           ref={viewportRef}
           className="saas-preview-viewport"
           tabIndex={-1}
+          onPointerDown={() => setPlayback(false)}
           onScroll={handleScroll}
         >
           {slides.map((slide, index) => (
@@ -155,14 +242,14 @@ export function SaasProductCarousel({ bookingSiteUrl }: { bookingSiteUrl: string
             className="no-press"
             aria-pressed={index === activeIndex}
             aria-controls={viewportId}
-            onClick={() => showSlide(index)}
+            onClick={() => selectSlide(index)}
           >
             <Icon aria-hidden className="size-4 shrink-0" />
             {label}
           </button>
         ))}
       </div>
-      <span className="sr-only" aria-live="polite" aria-atomic="true">
+      <span className="sr-only" aria-live={rotating ? "off" : "polite"} aria-atomic="true">
         {active.title}, screenshot {activeIndex + 1} of {slides.length}
       </span>
     </section>

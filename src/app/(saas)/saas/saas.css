@@ -272,19 +272,19 @@
   overflow: hidden;
   border-radius: 0.375rem;
   background: var(--color-paper-2);
-  padding: 0.375rem 0.625rem;
+  padding: 0.375rem 0.375rem;
   color: var(--color-ink-2);
   font-size: 0.75rem;
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.saas-preview-arrows {
+.saas-preview-controls {
   display: flex;
   justify-self: end;
   gap: 0.5rem;
 }
-.saas-preview-arrows button {
+.saas-preview-controls button {
   display: grid;
   min-width: 2.75rem;
   min-height: 2.75rem;
@@ -345,7 +345,7 @@
   line-height: 1.25;
 }
 .saas-preview-picker button:hover,
-.saas-preview-arrows button:hover {
+.saas-preview-controls button:hover {
   background: var(--color-paper-2);
   color: var(--color-ink);
 }
