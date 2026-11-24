@@ -5,7 +5,7 @@ import AdminLink from "next/link";
 import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { useRouter } from "next/navigation";
 import { HelpCircle, LayoutDashboard, LogOut, MapPin, Menu, Phone } from "lucide-react";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCustomerSession, useCustomerSignOut } from "@/components/portal/account/use-customer-session";
 import { useIsAdmin } from "@/components/portal/account/use-admin-hint";
 
@@ -23,14 +23,19 @@ export function MobileMenu({ phone, bookHref }: { phone: string; bookHref: strin
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
+        type="button"
         aria-label="Open menu"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:text-accent md:hidden"
+        className="no-press inline-flex size-11 shrink-0 items-center justify-center rounded-lg hover:text-accent active:bg-sidebar-foreground/10 focus-visible:outline-2 focus-visible:outline-accent md:hidden"
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="pointer-events-none size-5" aria-hidden />
       </SheetTrigger>
-      <SheetContent className="max-w-xs border-l border-white/10 bg-sidebar text-sidebar-foreground">
-        <SheetTitle className="px-6 pb-2 pt-5 text-base">Menu</SheetTitle>
-        <nav className="flex flex-col px-3">
+      <SheetContent
+        className="h-dvh max-w-xs border-l border-white/10 bg-sidebar pt-[env(safe-area-inset-top)] text-sidebar-foreground motion-reduce:animate-none"
+        closeClassName="no-press right-2 top-[calc(0.5rem+env(safe-area-inset-top))] grid size-11 place-items-center rounded-lg active:bg-sidebar-foreground/10"
+      >
+        <SheetTitle className="px-6 pb-2 pt-5 pr-16 text-base">Menu</SheetTitle>
+        <SheetDescription className="sr-only">Booking website navigation</SheetDescription>
+        <nav className="flex min-h-0 flex-col overflow-y-auto px-3">
           {LINKS.map(({ href, label, Icon }) => (
             <Link key={href} href={href} onClick={close}
               className="flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium hover:bg-white/5 hover:text-accent">
@@ -45,7 +50,7 @@ export function MobileMenu({ phone, bookHref }: { phone: string; bookHref: strin
           )}
           <SignOutItem onDone={close} />
         </nav>
-        <div className="mt-auto space-y-3 border-t border-white/10 p-6">
+        <div className="mt-auto shrink-0 space-y-3 border-t border-white/10 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           {phone && (
             <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-sm opacity-85 hover:text-accent">
               <Phone className="h-4 w-4" />{phone}

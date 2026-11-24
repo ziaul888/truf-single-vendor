@@ -1,10 +1,11 @@
 import { FallbackImage } from "@/components/fallback-image";
-import { Calendar, CircleDot, Grid3x3, Search } from "lucide-react";
+import { CircleDot, Grid3x3, Search } from "lucide-react";
 import { listPublicGrounds } from "@/services/portal-grounds";
 import { addDays, venueHourNow, venueToday } from "@/lib/slot-format";
 import { turfPortalPath } from "@/lib/turf-portal-path";
 import { cn } from "@/lib/utils";
 import { SPORT_META, SPORTS, SURFACE_LABEL } from "@/components/portal/sports";
+import { PortalDatePicker } from "@/components/portal/portal-date-picker";
 import { HeroMedia } from "./hero-media";
 import { SearchForm } from "./search-form";
 import styles from "./home-motion.module.css";
@@ -107,18 +108,14 @@ function BookingCard({ grounds, single, venueName, slug, timezone }: {
       </div>
 
       <div className={`grid gap-2 sm:gap-3 ${single ? "grid-cols-1 sm:grid-cols-[1fr_auto]" : "grid-cols-2 sm:grid-cols-12"}`}>
-        <Field colSpan={single ? undefined : 4} icon={Calendar} label="Date">
-          <input
-            type="date"
-            name="date"
-            aria-label="Booking date"
-            className="w-full bg-transparent text-base font-medium outline-none sm:text-sm"
-            required
-            min={today}
-            max={addDays(today, 6)}
-            defaultValue={today}
-          />
-        </Field>
+        <PortalDatePicker
+          label="Booking date"
+          caption="Date"
+          className={cn("min-h-14 w-full rounded-xl border bg-card px-3 py-2", !single && "col-span-2 sm:col-span-4")}
+          min={today}
+          max={addDays(today, 6)}
+          defaultValue={today}
+        />
         {!single && <SportAndFormat />}
         <button
           type="submit"
@@ -137,7 +134,7 @@ function BookingCard({ grounds, single, venueName, slug, timezone }: {
 function SportAndFormat() {
   return (
     <>
-      <Field colSpan={3} icon={CircleDot} label="Sport">
+      <Field icon={CircleDot} label="Sport">
         <select name="sport" className="w-full bg-transparent text-base font-medium outline-none sm:text-sm">
           <option value="">Any sport</option>
           {SPORTS.map((s) => (
@@ -145,7 +142,7 @@ function SportAndFormat() {
           ))}
         </select>
       </Field>
-      <Field colSpan={3} icon={Grid3x3} label="Format">
+      <Field icon={Grid3x3} label="Format">
         <select name="format" className="w-full bg-transparent text-base font-medium outline-none sm:text-sm">
           <option value="">Any size</option>
           <option value="4x4">4×4</option>
@@ -162,13 +159,12 @@ function SportAndFormat() {
 }
 
 function Field({
-  colSpan, icon: Icon, label, children,
+  icon: Icon, label, children,
 }: {
-  colSpan?: number; icon: typeof Calendar; label: string; children: React.ReactNode;
+  icon: typeof CircleDot; label: string; children: React.ReactNode;
 }) {
-  const span: Record<number, string> = { 3: "sm:col-span-3", 4: "col-span-2 sm:col-span-4" };
   return (
-    <div className={`rounded-xl border bg-card px-3 py-2 ${colSpan ? span[colSpan] : ""}`}>
+    <div className="rounded-xl border bg-card px-3 py-2 sm:col-span-3">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
       <div className="mt-0.5 flex items-center gap-2">
         <Icon className="h-4 w-4 shrink-0 text-primary" />

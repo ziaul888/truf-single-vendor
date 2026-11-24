@@ -8,7 +8,7 @@ export const Sheet      = Dialog.Root;
 export const SheetTrigger = Dialog.Trigger;
 export const SheetClose   = Dialog.Close;
 
-export function SheetContent({ children, className }: { children: React.ReactNode; className?: string }) {
+export function SheetContent({ children, className, closeClassName }: { children: React.ReactNode; className?: string; closeClassName?: string }) {
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
@@ -23,8 +23,8 @@ export function SheetContent({ children, className }: { children: React.ReactNod
         )}
       >
         {children}
-        <Dialog.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-          <X className="h-4 w-4" />
+        <Dialog.Close className={cn("absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2", closeClassName)}>
+          <X className="pointer-events-none h-4 w-4" aria-hidden />
           <span className="sr-only">Close</span>
         </Dialog.Close>
       </Dialog.Content>

@@ -1,33 +1,30 @@
 import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { turfPortalPath } from "@/lib/turf-portal-path";
-import { CalendarDays, X } from "lucide-react";
+import { X } from "lucide-react";
 import { venueToday } from "@/lib/slot-format";
+import { PortalDatePicker } from "./portal-date-picker";
 import { groundsHref, type GroundsQuery } from "./grounds-query";
 
 /**
- * Pick a day to see every ground's free slots. A plain GET form, so it works without
- * JavaScript; the current filters ride along as hidden fields.
+ * Pick a day to see every ground's free slots. The current filters ride along as hidden fields.
  */
 export function GroundsDateBar({ query, filters, slug, timezone }: { query: GroundsQuery; filters?: React.ReactNode; slug?: string; timezone?: string }) {
+  const today = venueToday(0, timezone);
   return (
     // Phones: label and filter icon on the first row, date and button on the second. From sm: one wrapping row.
     <form action={turfPortalPath(slug, "/grounds")} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap">
-      <div className="flex items-center gap-2">
-        <CalendarDays className="h-4 w-4 text-primary" />
-        <label htmlFor="grounds-date" className="text-sm font-medium">
-          {query.date ? "Free slots on" : "See free slots for a day"}
-        </label>
-      </div>
+      <label htmlFor="grounds-date" className="cursor-pointer text-sm font-medium">
+        {query.date ? "Free slots on" : "See free slots for a day"}
+      </label>
       {filters && <div className="sm:order-last sm:ml-auto">{filters}</div>}
       <div className="col-span-2 flex items-center gap-2 sm:contents">
-        <input
+        <PortalDatePicker
+          key={query.date ?? today}
           id="grounds-date"
-          type="date"
-          name="date"
-          required
-          min={venueToday(0, timezone)}
-          defaultValue={query.date ?? venueToday(0, timezone)}
-          className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-base pointer-coarse:min-h-11 sm:flex-none sm:text-sm"
+          label="Grounds date"
+          min={today}
+          defaultValue={query.date ?? today}
+          className="flex-1 rounded-md border bg-background px-3 py-1 sm:flex-none"
         />
         {(["sport", "format", "surface"] as const).map((k) =>
           query[k] ? <input key={k} type="hidden" name={k} value={query[k]} /> : null,
