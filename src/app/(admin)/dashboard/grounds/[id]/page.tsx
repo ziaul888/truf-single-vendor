@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useParams } from "next/navigation";
 import { useSlots } from "@/hooks/useSlots";
 import { slotEndTime, slotStartTime, venueToday } from "@/lib/slot-format";
@@ -99,20 +100,15 @@ export default function GroundDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <Link
-            href="/dashboard/grounds"
-            className="mb-2 flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ChevronLeft className="h-4 w-4" /> Back to grounds
-          </Link>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">{g.name}</h1>
+      <DashboardPageHeader
+        title={g.name}
+        back={<DashboardBackLink href="/dashboard/grounds">Back to grounds</DashboardBackLink>}
+        description={size}
+        details={
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span
               className={cn(
-                "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
                 g.isActive
                   ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                   : "bg-muted text-muted-foreground"
@@ -125,14 +121,14 @@ export default function GroundDetailPage() {
               )}
               {g.isActive ? "Active" : "Inactive"}
             </span>
+            {g.address && (
+              <p className="flex min-w-0 items-start gap-1 text-xs text-muted-foreground">
+                <MapPin className="size-3.5 shrink-0" aria-hidden /> <span>{g.address}</span>
+              </p>
+            )}
           </div>
-          {size && <p className="mt-1 text-xs text-muted-foreground">{size}</p>}
-          {g.address && (
-            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5" /> {g.address}
-            </p>
-          )}
-        </div>
+        }
+      >
         {(me?.role === "admin" || me?.role === "owner") && (
           <Button asChild className="gap-2">
             <Link href={`/dashboard/grounds/${g.id}/edit`}>
@@ -140,10 +136,10 @@ export default function GroundDetailPage() {
             </Link>
           </Button>
         )}
-      </div>
+      </DashboardPageHeader>
 
       {/* Hero / cover */}
-      <div className="relative h-64 w-full overflow-hidden rounded-xl">
+      <div className="relative h-44 w-full overflow-hidden rounded-xl sm:h-64">
         {g.photos[0] ? (
           <Image
             src={g.photos[0]}

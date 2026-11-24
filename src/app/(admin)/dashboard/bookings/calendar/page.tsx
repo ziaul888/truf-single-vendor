@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { FilterMenu } from "@/components/features/filter-menu";
@@ -136,20 +137,11 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-5">
-      {/* Page header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Booking Calendar</h1>
-          <p className="text-sm text-muted-foreground">
-            See bookings and slot availability for your grounds.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/dashboard/bookings">
-            <List className="mr-1.5 h-4 w-4" /> List View
-          </Link>
+      <DashboardPageHeader title="Booking Calendar" description="See bookings and slot availability for your grounds.">
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/bookings"><List /> List view</Link>
         </Button>
-      </div>
+      </DashboardPageHeader>
 
       {isError && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
@@ -159,50 +151,35 @@ export default function CalendarPage() {
       )}
 
       {/* Controls bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Ground filter (a spacer with one ground keeps the navigation on the right) */}
-        {hasGroundChoice(groundList) ? (
-          <FilterMenu activeCount={groundFilter !== "all" ? 1 : 0}>
-            <Select value={groundFilter} onValueChange={(v) => { setGroundFilter(v); }}>
-              <SelectTrigger className="w-44 h-9">
-                <SelectValue placeholder="All Grounds" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Grounds</SelectItem>
-                {grounds.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FilterMenu>
-        ) : <div />}
-
+      <div className="flex flex-wrap items-center justify-between gap-2">
         {/* Navigation */}
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setCurrentDate(navigate(view, currentDate, -1))}>
+        <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 md:w-auto md:min-w-64">
+          <Button variant="outline" size="icon" className="h-9 w-9" aria-label={`Previous ${view}`} onClick={() => setCurrentDate(navigate(view, currentDate, -1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <button
             type="button"
-            className="min-w-[160px] text-center text-sm font-semibold hover:text-primary transition-colors"
+            aria-label={`Go to today, ${formatNavLabel(view, currentDate)}`}
+            className="no-press min-h-11 rounded-md text-center text-sm font-semibold transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring lg:min-h-9"
             onClick={() => setCurrentDate(today)}
           >
             {formatNavLabel(view, currentDate)}
           </button>
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setCurrentDate(navigate(view, currentDate, 1))}>
+          <Button variant="outline" size="icon" className="h-9 w-9" aria-label={`Next ${view}`} onClick={() => setCurrentDate(navigate(view, currentDate, 1))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
         {/* View switcher */}
-        <div className="flex rounded-lg border p-0.5 gap-0.5">
+        <div role="group" aria-label="Calendar view" className="grid min-w-0 flex-1 grid-cols-3 gap-1 rounded-lg border p-1 md:flex-none">
           {(["month", "week", "day"] as View[]).map((v) => (
             <button
               key={v}
               type="button"
+              aria-pressed={view === v}
               onClick={() => setView(v)}
               className={cn(
-                "px-3 py-1.5 pointer-coarse:py-2.5 rounded-md text-sm font-medium capitalize transition-all",
+                "no-press min-h-11 rounded-md px-2 py-1.5 text-sm font-medium capitalize transition-colors focus-visible:outline-2 focus-visible:outline-ring lg:min-h-8",
                 view === v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
               )}
             >
@@ -210,6 +187,22 @@ export default function CalendarPage() {
             </button>
           ))}
         </div>
+
+        {hasGroundChoice(groundList) && (
+          <FilterMenu activeCount={groundFilter !== "all" ? 1 : 0}>
+            <Select value={groundFilter} onValueChange={setGroundFilter}>
+              <SelectTrigger aria-label="Ground" className="h-11 w-44 lg:h-9">
+                <SelectValue placeholder="All grounds" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All grounds</SelectItem>
+                {grounds.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterMenu>
+        )}
       </div>
 
       {/* Stats row */}

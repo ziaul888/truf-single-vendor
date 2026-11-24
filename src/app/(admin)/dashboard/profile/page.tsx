@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { Loader2, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChangePasswordForm } from "@/components/features/users/change-password-form";
@@ -25,12 +26,7 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">My Profile</h1>
-        <p className="text-sm text-muted-foreground">
-          Your name, email and role are managed by an admin from Staff Management.
-        </p>
-      </div>
+      <DashboardPageHeader title="My Profile" description="Review your account details and change your password." />
 
       <Card>
         <CardContent className="flex flex-wrap items-center gap-5 p-6">

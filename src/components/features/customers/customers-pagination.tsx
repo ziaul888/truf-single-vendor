@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { pageWindow } from "@/components/features/slots/slot-list-section";
+import { PaginationControls } from "@/components/features/pagination-controls";
 
 export function CustomersPagination({
   page,
@@ -23,15 +22,7 @@ export function CustomersPagination({
       <p className="text-sm text-muted-foreground">
         Showing {start}–{end} of {total} customers
       </p>
-      <div className="flex items-center gap-1">
-        <Button variant="outline" size="sm" onClick={() => onChange(page - 1)} disabled={page <= 1}>Prev</Button>
-        {pageWindow(page, totalPages).map((p) => (
-          <Button key={p} variant={p === page ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => onChange(p)}>
-            {p}
-          </Button>
-        ))}
-        <Button variant="outline" size="sm" onClick={() => onChange(page + 1)} disabled={page >= totalPages}>Next</Button>
-      </div>
+      <PaginationControls page={page} totalPages={totalPages} onChange={onChange} />
     </div>
   );
 }

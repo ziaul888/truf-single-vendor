@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -76,27 +77,18 @@ function RefundBookingsView() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Refund bookings</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Track refunds and the wallet payments still to send back.
-          </p>
-        </div>
+      <DashboardPageHeader title="Refund bookings" description="Track refunds and wallet payments still to send back.">
         <Button variant="outline" asChild>
-          <Link href="/dashboard/bookings">
-            <ArrowLeft />
-            All bookings
-          </Link>
+          <Link href="/dashboard/bookings"><ArrowLeft /> All bookings</Link>
         </Button>
-      </div>
+      </DashboardPageHeader>
 
       <div aria-label="Refund status" className="grid grid-cols-3 gap-2 sm:flex">
         {REFUND_STATUSES.map((value) => (
           <Button
             key={value}
             variant={status === value ? "default" : "outline"}
-            className="min-h-11 px-2 sm:px-4"
+            className="h-auto min-h-11 whitespace-normal px-2 py-2 text-center sm:px-4"
             asChild
           >
             <Link

@@ -81,10 +81,10 @@ export default function NotificationsSettingsPage() {
         <SettingsPageHeader title={TITLE} description={DESCRIPTION} audit={settings}>
           {canEdit && (
             <>
-              <Button type="button" variant="outline" size="sm" className="hidden md:inline-flex" disabled={!isDirty || save.isPending} onClick={() => form.reset(toNotificationsForm(settings))}>
+              <Button type="button" variant="outline" size="sm" className="hidden lg:inline-flex" disabled={!isDirty || save.isPending} onClick={() => form.reset(toNotificationsForm(settings))}>
                 <Undo2 className="mr-1.5 h-4 w-4" /> Discard
               </Button>
-              <Button type="submit" size="sm" className="hidden md:inline-flex" disabled={!isDirty || save.isPending}>
+              <Button type="submit" size="sm" className="hidden lg:inline-flex" disabled={!isDirty || save.isPending}>
                 {save.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
                 {save.isPending ? "Saving…" : "Save changes"}
               </Button>
@@ -103,7 +103,7 @@ export default function NotificationsSettingsPage() {
           </div>
         </fieldset>
         {canEdit && (
-          <SettingsSaveBar>
+          <SettingsSaveBar visible={isDirty || save.isPending}>
             <SettingsSaveActions dirty={isDirty} saving={save.isPending} onDiscard={() => form.reset(toNotificationsForm(settings))} />
           </SettingsSaveBar>
         )}

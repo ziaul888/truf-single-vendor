@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { Controller } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Save, Bell, Loader2 } from "lucide-react";
+import { Save, Bell, Loader2 } from "lucide-react";
 import { useSlotSettings } from "@/hooks/useSlots";
 import { useSlotSettingsForm } from "@/hooks/useSlotSettingsForm";
 import { useMe } from "@/hooks/useMe";
@@ -39,22 +39,17 @@ export default function SlotSettingsPage() {
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link href="/dashboard/slots" className="mb-1 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground w-fit">
-            <ChevronLeft className="h-4 w-4" /> Back to slots
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Slot settings</h1>
-          <p className="text-sm text-muted-foreground">Booking window, slot generation, checkout and notifications for every ground</p>
-        </div>
+      <DashboardPageHeader
+        title="Slot settings"
+        description="Set the booking window, slot generation, checkout and notifications."
+        back={<DashboardBackLink href="/dashboard/slots">Back to slots</DashboardBackLink>}
+      >
         {canEdit && (
-          <Button type="submit" className="hidden md:inline-flex" disabled={saving || !isDirty}>
-            <Save className="mr-1.5 h-4 w-4" />
-            {saving ? "Saving…" : "Save settings"}
+          <Button type="submit" className="hidden lg:inline-flex" disabled={saving || !isDirty}>
+            <Save /> {saving ? "Saving…" : "Save settings"}
           </Button>
         )}
-      </div>
+      </DashboardPageHeader>
 
       <fieldset disabled={!canEdit} className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <GenerationSettingsCard form={form} />
@@ -103,7 +98,7 @@ export default function SlotSettingsPage() {
       </fieldset>
       {!canEdit && <p className="text-xs text-muted-foreground">Only admins can change slot settings.</p>}
       {canEdit && (
-        <SettingsSaveBar>
+        <SettingsSaveBar visible={isDirty || saving}>
           <Button type="submit" disabled={saving || !isDirty}>
             <Save className="mr-1.5 h-4 w-4" />
             {saving ? "Saving…" : "Save settings"}

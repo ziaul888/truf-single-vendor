@@ -65,7 +65,7 @@ function DeviceToggle({ device, onChange }: { device: Device; onChange: (d: Devi
           aria-pressed={device === value}
           aria-label={label}
           onClick={() => onChange(value)}
-          className={cn("rounded px-2 py-1 transition-colors", device === value ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
+          className={cn("grid size-11 place-items-center rounded transition-colors xl:size-8", device === value ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
         >
           <Icon className="h-3.5 w-3.5" />
         </button>

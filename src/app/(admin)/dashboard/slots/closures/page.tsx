@@ -1,16 +1,16 @@
 "use client";
 
+import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
-import { CalendarOff, ChevronLeft, Unlock } from "lucide-react";
+import { CalendarOff, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/features/confirm-dialog";
 import { ClosureFormSheet } from "@/components/features/slots/closure-form-sheet";
-import { pageWindow } from "@/components/features/slots/slot-list-section";
+import { PaginationControls } from "@/components/features/pagination-controls";
 import { useClosures, useLiftClosure } from "@/hooks/useSlots";
 import { useGrounds } from "@/hooks/useGrounds";
 import { useMe } from "@/hooks/useMe";
@@ -66,20 +66,15 @@ export default function ClosuresPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link href="/dashboard/slots" className="mb-1 flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ChevronLeft className="h-4 w-4" /> Back to slots
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Venue closures</h1>
-          <p className="text-sm text-muted-foreground">Close every ground, or some, for holidays or outages</p>
-        </div>
+      <DashboardPageHeader
+        title="Venue closures"
+        description="Close selected grounds or the entire venue for holidays or outages."
+        back={<DashboardBackLink href="/dashboard/slots">Back to slots</DashboardBackLink>}
+      >
         {isAdmin && (
-          <Button variant="destructive" onClick={() => setCreating(true)}>
-            <CalendarOff className="mr-1.5 h-4 w-4" /> Close venue
-          </Button>
+          <Button variant="destructive" onClick={() => setCreating(true)}><CalendarOff /> Close venue</Button>
         )}
-      </div>
+      </DashboardPageHeader>
 
       <Card className="overflow-hidden">
         {isLoading ? (
@@ -142,11 +137,7 @@ export default function ClosuresPage() {
         )}
         {totalPages > 1 && (
           <div className="flex items-center justify-end gap-1 border-t px-4 py-3">
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>Prev</Button>
-            {pageWindow(page, totalPages).map((p) => (
-              <Button key={p} variant={p === page ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p)}>{p}</Button>
-            ))}
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>Next</Button>
+            <PaginationControls page={page} totalPages={totalPages} onChange={setPage} />
           </div>
         )}
       </Card>

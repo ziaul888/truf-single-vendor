@@ -9,6 +9,7 @@ import { SPORT_GRADIENT, SPORT_EMOJI } from "@/components/features/grounds/groun
 import type { AddGroundFormData } from "@/schemas/ground";
 import { timeToHour } from "@/lib/ground-format";
 import { filledPeakRanges } from "@/schemas/ground";
+import { MobileActionBar } from "@/components/features/mobile-action-bar";
 
 // Required by turf-api: name, sport, hours and price (plus days when custom).
 const REQUIRED_TOTAL = 5;
@@ -189,7 +190,7 @@ export function PreviewSidebar({
 
       {/* Actions */}
       <div className="space-y-2">
-        <Button className="w-full" onClick={onSave} disabled={isPending}>
+        <Button className="hidden w-full lg:inline-flex" onClick={onSave} disabled={isPending}>
           {isPending ? "Saving…" : saveLabel}
         </Button>
         <Button variant="outline" className="w-full" onClick={onDraft} disabled={isPending}>
@@ -197,12 +198,25 @@ export function PreviewSidebar({
         </Button>
         <Button
           variant="ghost"
-          className="text-destructive hover:bg-destructive/10 hover:text-destructive w-full"
+          className="hidden w-full text-destructive hover:bg-destructive/10 hover:text-destructive lg:inline-flex"
           onClick={onDiscard}
         >
           Discard
         </Button>
       </div>
     </div>
+  );
+}
+
+export function GroundSaveBar({ isPending, saveLabel, onSave, onDiscard }: Pick<PreviewSidebarProps, "isPending" | "saveLabel" | "onSave" | "onDiscard">) {
+  return (
+    <MobileActionBar className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2">
+      <Button type="button" variant="outline" className="h-auto min-h-11" onClick={onDiscard} disabled={isPending}>
+        Discard
+      </Button>
+      <Button type="button" className="h-auto min-h-11 whitespace-normal" onClick={onSave} disabled={isPending}>
+        {isPending ? "Saving…" : saveLabel}
+      </Button>
+    </MobileActionBar>
   );
 }

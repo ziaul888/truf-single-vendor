@@ -1,20 +1,47 @@
-/** First matching prefix wins, so more specific paths come first. */
-const SECTIONS: { prefix: string; title: string }[] = [
-  { prefix: "/dashboard/bookings/new", title: "New booking" },
-  { prefix: "/dashboard/bookings/refunds", title: "Refund bookings" },
-  { prefix: "/dashboard/bookings", title: "Bookings" },
-  { prefix: "/dashboard/slots", title: "Slots" },
-  { prefix: "/dashboard/customers", title: "Customers" },
-  { prefix: "/dashboard/grounds", title: "Grounds" },
-  { prefix: "/dashboard/reports", title: "Reports" },
-  { prefix: "/dashboard/settings", title: "Settings" },
-  { prefix: "/dashboard/staff", title: "Staff" },
-  { prefix: "/dashboard/profile", title: "Profile" },
-];
+const PAGE_TITLES: Record<string, string> = {
+  "/bookings": "Bookings",
+  "/bookings/calendar": "Calendar",
+  "/bookings/confirmed": "Confirm bookings",
+  "/bookings/new": "New booking",
+  "/bookings/refunds": "Refund bookings",
+  "/customers": "Customers",
+  "/grounds": "Grounds",
+  "/grounds/new": "Add ground",
+  "/profile": "Profile",
+  "/reports": "Reports",
+  "/reports/bookings": "Bookings report",
+  "/reports/export": "Export data",
+  "/reports/revenue": "Sales report",
+  "/settings": "Settings",
+  "/settings/access": "Access",
+  "/settings/appearance": "Appearance",
+  "/settings/booking": "Booking settings",
+  "/settings/general": "General settings",
+  "/settings/notifications": "Notifications",
+  "/settings/payments": "Payments",
+  "/settings/system": "System",
+  "/settings/website": "Website settings",
+  "/slots": "Slots",
+  "/slots/activity": "Slot activity",
+  "/slots/blocked": "Blocked slots",
+  "/slots/closures": "Venue closures",
+  "/slots/settings": "Slot settings",
+  "/staff": "Staff",
+  "/staff/roles": "Roles",
+};
 
-/** Title for the admin section the pathname belongs to, shown in the phone header. */
+const DETAIL_TITLES: Record<string, string> = {
+  bookings: "Booking details",
+  customers: "Customer details",
+  grounds: "Ground details",
+};
+
 export function sectionTitle(pathname: string): string {
-  const dashboardPath = pathname.replace(/^\/admin(?=\/|$)/, "/dashboard");
-  const match = SECTIONS.find((s) => dashboardPath === s.prefix || dashboardPath.startsWith(`${s.prefix}/`));
-  return match?.title ?? "Dashboard";
+  const route = pathname.replace(/^\/(?:admin|dashboard)(?=\/|$)/, "");
+  if (PAGE_TITLES[route]) return PAGE_TITLES[route];
+
+  const [, section, item, action] = route.split("/");
+  if (section === "grounds" && item && action === "edit") return "Edit ground";
+  if (item && DETAIL_TITLES[section]) return DETAIL_TITLES[section];
+  return PAGE_TITLES[`/${section}`] ?? "Dashboard";
 }

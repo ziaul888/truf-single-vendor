@@ -1,4 +1,5 @@
 import type { Audited } from "@/types/settings";
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { LastChanged } from "./last-changed";
 
 interface SettingsPageHeaderProps {
@@ -13,13 +14,12 @@ interface SettingsPageHeaderProps {
 /** Title, one-line description, "Last changed by …" and the page's actions, shared by every settings page. */
 export function SettingsPageHeader({ title, description, audit, children }: SettingsPageHeaderProps) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3">
-      <div className="space-y-0.5">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground">{description}</p>
-        {audit && <LastChanged updatedAt={audit.updatedAt} updatedBy={audit.updatedBy} />}
-      </div>
-      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
-    </div>
+    <DashboardPageHeader
+      title={title}
+      description={description}
+      details={audit && <LastChanged updatedAt={audit.updatedAt} updatedBy={audit.updatedBy} />}
+    >
+      {children}
+    </DashboardPageHeader>
   );
 }

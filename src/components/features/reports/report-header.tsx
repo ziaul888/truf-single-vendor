@@ -3,6 +3,7 @@
 import { formatSlotDate } from "@/lib/slot-format";
 import type { DateRange, ReportPeriod } from "@/hooks/useReports";
 import { RangeTabs } from "./range-tabs";
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 
 interface ReportHeaderProps {
   title: string;
@@ -15,14 +16,12 @@ interface ReportHeaderProps {
 /** Title, the dates the numbers cover, and the range presets. */
 export function ReportHeader({ title, subtitle, range, period, onRange }: ReportHeaderProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
-        <p className="text-sm text-muted-foreground sm:text-base">
-          {subtitle} · {formatSlotDate(period.from)} – {formatSlotDate(period.to)}
-        </p>
-      </div>
+    <DashboardPageHeader
+      title={title}
+      description={subtitle}
+      details={<p className="text-xs text-muted-foreground">{formatSlotDate(period.from)} – {formatSlotDate(period.to)}</p>}
+    >
       <RangeTabs value={range} onChange={onRange} />
-    </div>
+    </DashboardPageHeader>
   );
 }

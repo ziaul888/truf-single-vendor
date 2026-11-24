@@ -1,12 +1,13 @@
 "use client";
 
+import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GroundFormFields, type PhotoSlot } from "@/components/features/add-ground/ground-form-fields";
-import { PreviewSidebar } from "@/components/features/add-ground/preview-sidebar";
+import { GroundSaveBar, PreviewSidebar } from "@/components/features/add-ground/preview-sidebar";
 import { AddGroundSchema, toGroundWriteInput, type AddGroundFormData } from "@/schemas/ground";
 import { showGroundApiError } from "@/components/features/add-ground/ground-api-errors";
 import { slotSyncMessage, useGround, useUpdateGround, type Ground } from "@/hooks/useGrounds";
@@ -14,8 +15,7 @@ import { hourToTime } from "@/lib/ground-format";
 import { movePhotoSlot, syncGroundPhotos } from "@/lib/ground-photos";
 import { emptyPhotoSlots, photoSlotsFrom } from "@/components/features/add-ground/photos-section";
 import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
-import { ChevronLeft, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AdminOnly } from "@/components/features/admin-only";
 import { useDashboardAudience } from "@/components/dashboard-audience";
@@ -148,30 +148,20 @@ function EditGroundForm() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link href="/dashboard/grounds" className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ChevronLeft className="h-4 w-4" /> Back to grounds
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Edit ground</h1>
-          <p className="text-muted-foreground text-sm">
-            Editing <span className="font-medium text-foreground">{ground.name}</span>
+      <DashboardPageHeader
+        title="Edit ground"
+        description={ground.name}
+        back={<DashboardBackLink href="/dashboard/grounds">Back to grounds</DashboardBackLink>}
+        details={
+          <p className="text-xs text-muted-foreground">
+            {form.watch("isActive") ? "Active" : "Inactive"} · Updated {new Date(ground.updatedAt).toLocaleDateString()}
           </p>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <div className={cn("rounded-full px-3 py-1 text-xs font-semibold", form.watch("isActive") ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground")}>
-            {form.watch("isActive") ? "Active" : "Inactive"}
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            Last updated {new Date(ground.updatedAt).toLocaleDateString()}
-          </p>
-        </div>
-      </div>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px] items-start">
         <GroundFormFields form={form} photoSlots={photoSlots} onPhotoChange={handlePhotoChange} onPhotoMove={handlePhotoMove} tenant={tenant} />
-        <div className="sticky top-6">
+        <div className="lg:sticky lg:top-6">
           <PreviewSidebar
             control={form.control}
             photoCount={photoSlots.filter(Boolean).length}
@@ -183,6 +173,7 @@ function EditGroundForm() {
           />
         </div>
       </div>
+      <GroundSaveBar isPending={saving} saveLabel="Save changes" onSave={onSave} onDiscard={() => router.push("/dashboard/grounds")} />
     </div>
   );
 }

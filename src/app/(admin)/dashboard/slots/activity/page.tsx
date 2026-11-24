@@ -1,8 +1,8 @@
 "use client";
 
+import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState } from "react";
-import Link from "next/link";
-import { ChevronLeft, History } from "lucide-react";
+import { History } from "lucide-react";
 import { FilterMenu } from "@/components/features/filter-menu";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { pageWindow } from "@/components/features/slots/slot-list-section";
+import { PaginationControls } from "@/components/features/pagination-controls";
 import { useSlotEvents } from "@/hooks/useSlots";
 import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
 import { useMe } from "@/hooks/useMe";
@@ -61,13 +61,11 @@ export default function SlotActivityPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <Link href="/dashboard/slots" className="mb-1 flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> Back to slots
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight">Slot activity</h1>
-        <p className="text-sm text-muted-foreground">Who blocked, unblocked or closed slots, and when</p>
-      </div>
+      <DashboardPageHeader
+        title="Slot activity"
+        description="See who blocked, unblocked or closed slots, and when."
+        back={<DashboardBackLink href="/dashboard/slots">Back to slots</DashboardBackLink>}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <FilterMenu activeCount={(groundId !== "all" ? 1 : 0) + (action !== "all" ? 1 : 0) + (userId !== "all" ? 1 : 0) + (from || to ? 1 : 0)}>
@@ -157,13 +155,7 @@ export default function SlotActivityPage() {
         {totalPages > 1 && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
             <p className="text-sm text-muted-foreground">{total} events</p>
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>Prev</Button>
-              {pageWindow(page, totalPages).map((p) => (
-                <Button key={p} variant={p === page ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p)}>{p}</Button>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>Next</Button>
-            </div>
+            <PaginationControls page={page} totalPages={totalPages} onChange={setPage} />
           </div>
         )}
       </Card>

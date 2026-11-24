@@ -87,10 +87,10 @@ export default function WebsiteSettingsPage() {
         </Button>}
         {canEdit && (
           <>
-            <Button type="button" size="sm" variant="outline" className="hidden md:inline-flex" disabled={!isDirty || save.isPending} onClick={() => reset(toForm(data))}>
+            <Button type="button" size="sm" variant="outline" className="hidden lg:inline-flex" disabled={!isDirty || save.isPending} onClick={() => reset(toForm(data))}>
               <RotateCcw className="mr-1.5 h-4 w-4" />Discard
             </Button>
-            <Button type="submit" size="sm" className="hidden md:inline-flex" disabled={!isDirty || save.isPending}>
+            <Button type="submit" size="sm" className="hidden lg:inline-flex" disabled={!isDirty || save.isPending}>
               {save.isPending
                 ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Saving…</>
                 : <><Save className="mr-1.5 h-4 w-4" />Save changes</>}
@@ -122,7 +122,7 @@ export default function WebsiteSettingsPage() {
         </aside>
       </div>
       {canEdit && (
-        <SettingsSaveBar>
+        <SettingsSaveBar visible={isDirty || save.isPending}>
           <SettingsSaveActions dirty={isDirty} saving={save.isPending} onDiscard={() => reset(toForm(data))} />
         </SettingsSaveBar>
       )}

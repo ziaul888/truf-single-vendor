@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState } from "react";
 import { SlotListSection }   from "@/components/features/slots/slot-list-section";
 import { GenerateSlotsForm } from "@/components/features/slots/generate-slots-form";
@@ -20,25 +21,12 @@ export default function SlotsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Slot management</h1>
-          <p className="text-muted-foreground text-sm">
-            View, generate and block slots per ground
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setBlockOpen(true)}>
-            <Ban className="mr-1.5 h-4 w-4" /> Block slot
-          </Button>
-          {canGenerate && (
-            <Button onClick={() => setGenerateOpen(true)}>
-              <Zap className="mr-1.5 h-4 w-4" /> Generate slots
-            </Button>
-          )}
-        </div>
-      </div>
+      <DashboardPageHeader title="Slot management" description="View, generate and block slots per ground.">
+        <Button variant="outline" onClick={() => setBlockOpen(true)}><Ban /> Block slot</Button>
+        {canGenerate && (
+          <Button onClick={() => setGenerateOpen(true)}><Zap /> Generate slots</Button>
+        )}
+      </DashboardPageHeader>
 
       <SlotListSection />
 

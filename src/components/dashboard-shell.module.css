@@ -1,0 +1,45 @@
+.shell {
+  --dashboard-gutter: 0.75rem;
+  --dashboard-left: max(var(--dashboard-gutter), env(safe-area-inset-left));
+  --dashboard-right: max(var(--dashboard-gutter), env(safe-area-inset-right));
+  --dashboard-bottom: env(safe-area-inset-bottom);
+}
+
+.content {
+  padding-left: var(--dashboard-left);
+  padding-right: var(--dashboard-right);
+}
+
+@keyframes dashboard-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (min-width: 40rem) {
+  .shell { --dashboard-gutter: 1.5rem; }
+}
+
+@media (min-width: 48rem) {
+  .shell { --dashboard-gutter: 2.5rem; }
+}
+
+@media (width < 64rem) {
+  .content {
+    overflow-wrap: anywhere;
+  }
+
+  .shell [data-slot="button"]:not([data-variant="link"]) {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .content:has([data-mobile-action-bar], [data-settings-save-bar]) {
+    padding-bottom: 0;
+  }
+}
+
+@media (width < 64rem) and (prefers-reduced-motion: no-preference) {
+  .content > :global(.page-enter) {
+    animation: dashboard-fade 180ms ease-out;
+  }
+}

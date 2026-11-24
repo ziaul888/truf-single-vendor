@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -48,28 +49,14 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Your bookings and priorities for today.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex">
-          <Button asChild className="min-h-11">
-            <Link href="/dashboard/bookings/new">
-              <CalendarPlus />
-              New booking
-            </Link>
-          </Button>
-          <Button variant="outline" asChild className="min-h-11">
-            <Link href="/dashboard/bookings/calendar">
-              <CalendarDays />
-              Calendar
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <DashboardPageHeader title="Dashboard" description="Your bookings and priorities for today.">
+        <Button asChild>
+          <Link href="/dashboard/bookings/new"><CalendarPlus /> New booking</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/bookings/calendar"><CalendarDays /> Calendar</Link>
+        </Button>
+      </DashboardPageHeader>
 
       {stats.isError && (
         <div

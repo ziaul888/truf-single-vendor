@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ChevronLeft, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { DashboardBackLink } from "@/components/features/dashboard/page-header";
 import { useCustomerDetail, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useMe } from "@/hooks/useMe";
 import { useDashboardAudience } from "@/components/dashboard-audience";
@@ -69,9 +70,7 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="space-y-5">
-      <Link href="/dashboard/customers" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
-        <ChevronLeft className="h-4 w-4" /> Back to customers
-      </Link>
+      <DashboardBackLink href="/dashboard/customers">Back to customers</DashboardBackLink>
 
       <CustomerProfileHeader customer={data} {...actions} />
       <CustomerStatCards customer={data} />

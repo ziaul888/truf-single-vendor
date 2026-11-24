@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -77,10 +78,7 @@ export default function ExportPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Export Data</h1>
-        <p className="text-sm text-muted-foreground sm:text-base">Download your business data as CSV or Excel</p>
-      </div>
+      <DashboardPageHeader title="Export Data" description="Download your business data as CSV or Excel." />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="min-w-0 lg:col-span-2">

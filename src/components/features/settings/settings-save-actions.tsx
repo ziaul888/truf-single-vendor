@@ -25,14 +25,14 @@ export function SettingsSaveActions({ dirty, saving, onDiscard, className }: Set
 }
 
 /**
- * Phones only: the save buttons pinned to the bottom of the screen, because the header ones scroll
- * out of reach on a long form. Put it last inside the <form>; hide the header buttons below `md`.
+ * Editing actions above the navigation below lg. Put the bar last inside the form.
  */
-export function SettingsSaveBar({ children }: { children: React.ReactNode }) {
+export function SettingsSaveBar({ visible, children }: { visible: boolean; children: React.ReactNode }) {
+  if (!visible) return null;
   return (
     <div
       data-settings-save-bar
-      className="sticky bottom-0 z-10 -mx-3 flex gap-2 border-t bg-background px-3 py-3 sm:-mx-6 sm:px-6 md:hidden [&>button]:min-h-11 [&>button]:flex-1"
+      className="sticky bottom-0 z-10 -ml-(--dashboard-left) -mr-(--dashboard-right) grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2 border-t bg-card py-3 pl-(--dashboard-left) pr-(--dashboard-right) lg:hidden [&>button]:h-auto [&>button]:min-h-11 [&>button]:px-2 [&>button]:whitespace-normal [&>button:only-child]:col-span-2 [&_svg]:mr-0"
     >
       {children}
     </div>

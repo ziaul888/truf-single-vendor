@@ -1,10 +1,11 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import {
-  ChevronLeft, ChevronRight, Loader2, Search, ShieldCheck, UserCog, UserPlus, Users,
+  ChevronLeft, ChevronRight, Loader2, Search, ShieldCheck, UserPlus, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,27 +63,12 @@ function StaffManager({ currentUserId }: { currentUserId: string }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <UserCog className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Staff</h1>
-            <p className="text-sm text-muted-foreground">Admin and manager accounts that can sign in to this panel</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2" asChild>
-            <Link href="/dashboard/staff/roles">
-              <ShieldCheck className="h-4 w-4" /> Roles
-            </Link>
-          </Button>
-          <Button onClick={() => setSheet({ open: true, user: null })} className="gap-2">
-            <UserPlus className="h-4 w-4" /> Add Staff
-          </Button>
-        </div>
-      </div>
+      <DashboardPageHeader title="Staff" description="Manage the admin and manager accounts for your turf.">
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/staff/roles"><ShieldCheck /> Roles</Link>
+        </Button>
+        <Button onClick={() => setSheet({ open: true, user: null })}><UserPlus /> Add staff</Button>
+      </DashboardPageHeader>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[200px] flex-1">

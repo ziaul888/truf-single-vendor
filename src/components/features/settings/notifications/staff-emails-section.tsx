@@ -30,7 +30,7 @@ export function StaffEmailsSection({ form }: { form: UseFormReturn<Notifications
         name="staff.recipients"
         render={({ field }) => (
           <RecipientsInput
-            value={field.value}
+            value={field.value ?? []}
             onChange={(next) => { form.clearErrors("staff.recipients"); field.onChange(next); }}
             error={recipientErrors?.message ?? recipientErrors?.root?.message}
             itemErrors={itemErrors}

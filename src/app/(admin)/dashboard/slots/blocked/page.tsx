@@ -1,7 +1,7 @@
 "use client";
 
+import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState } from "react";
-import Link from "next/link";
 import { FilterMenu } from "@/components/features/filter-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Unlock, Ban, AlertCircle, ChevronLeft } from "lucide-react";
+import { Unlock, Ban, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useSlots, useUnblockSlot, useUnblockDay } from "@/hooks/useSlots";
 import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
@@ -18,7 +18,7 @@ import {
   BLOCK_REASON_LABEL, durationLabel, formatSlotDate, slotPriceLabel, slotTimeLabel, venueToday,
 } from "@/lib/slot-format";
 import { BLOCK_REASONS, type BlockReason } from "@/types/slot";
-import { pageWindow } from "@/components/features/slots/slot-list-section";
+import { PaginationControls } from "@/components/features/pagination-controls";
 import { BlockedSlotCardList } from "@/components/features/slots/blocked-slot-card-list";
 import { ConfirmDialog } from "@/components/features/confirm-dialog";
 
@@ -73,19 +73,15 @@ export default function BlockedSlotsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link href="/dashboard/slots" className="mb-1 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground w-fit">
-            <ChevronLeft className="h-4 w-4" /> Back to slots
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Blocked slots</h1>
-          <p className="text-sm text-muted-foreground">All currently blocked time slots across grounds</p>
-        </div>
-        <Button variant="outline" size="sm" disabled={unblockDay.isPending} onClick={() => setConfirmUnblockAll(true)}>
-          <Unlock className="mr-1.5 h-4 w-4" /> {unblockDay.isPending ? "Unblocking…" : "Unblock all today"}
+      <DashboardPageHeader
+        title="Blocked slots"
+        description="Review blocked time slots across your grounds."
+        back={<DashboardBackLink href="/dashboard/slots">Back to slots</DashboardBackLink>}
+      >
+        <Button variant="outline" disabled={unblockDay.isPending} onClick={() => setConfirmUnblockAll(true)}>
+          <Unlock /> {unblockDay.isPending ? "Unblocking…" : "Unblock all today"}
         </Button>
-      </div>
+      </DashboardPageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -210,13 +206,7 @@ export default function BlockedSlotsPage() {
                 <p className="text-sm text-muted-foreground">
                   Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredTotal)} of {filteredTotal} blocked slots
                 </p>
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="sm" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>Prev</Button>
-                  {pageWindow(page, totalPages).map((p) => (
-                    <Button key={p} variant={p === page ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => setPage(p)}>{p}</Button>
-                  ))}
-                  <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>Next</Button>
-                </div>
+                <PaginationControls page={page} totalPages={totalPages} onChange={setPage} />
               </div>
             )}
           </>

@@ -9,6 +9,8 @@ import { useMe, type DashboardAudience } from "@/hooks/useMe";
 import { DashboardAudienceProvider } from "@/components/dashboard-audience";
 import { TenantDashboardContent } from "@/components/tenant-dashboard-content";
 import { DashboardAccent } from "@/components/dashboard-accent";
+import { cn } from "@/lib/utils";
+import styles from "./dashboard-shell.module.css";
 
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
@@ -39,14 +41,14 @@ export function DashboardShell({
       <DashboardAccent scope="turf" id={tenant?.status === "suspended" ? undefined : tenant?.id} />
       <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
         {/* The tab bar steps aside while a page shows its own MobileActionBar. */}
-        <div className="bg-background flex h-dvh overflow-hidden has-[[data-mobile-action-bar]]:[&_[data-tab-bar]]:hidden">
+        <div className={cn("bg-background flex h-dvh overflow-hidden has-[[data-mobile-action-bar]]:[&_[data-tab-bar]]:hidden", styles.shell)}>
           <div className="hidden lg:block">
             <Sidebar collapsed={collapsed} onCollapse={setCollapsed} audience={audience} />
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <Topbar audience={audience} />
-            <main className="relative flex-1 overflow-y-auto px-3 py-4 max-md:has-[[data-settings-save-bar]]:pb-0 sm:px-6 md:px-10 md:py-6">
+            <main className={cn("relative flex-1 overflow-y-auto py-4 md:py-6", styles.content)}>
               {audience === "owner" ? <TenantDashboardContent>{children}</TenantDashboardContent> : children}
             </main>
             <AdminTabBar menuOpen={mobileOpen} />

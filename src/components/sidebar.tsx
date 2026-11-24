@@ -54,7 +54,7 @@ export function Sidebar({
         }}
         className={cn(
           "bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-dvh overflow-hidden border-r pt-[env(safe-area-inset-top)] transition-all duration-300 ease-in-out",
-          collapsed ? "w-18" : drawer ? "w-[min(20rem,88vw)]" : "w-72"
+          collapsed ? "w-18" : drawer ? "w-[min(20rem,88vw)] pl-[env(safe-area-inset-left)] pb-[env(safe-area-inset-bottom)]" : "w-72"
         )}
       >
         {/* ─── Ambient brand glows ─── */}
@@ -132,7 +132,7 @@ export function Sidebar({
             {/* Section header */}
             <div
               key={`hdr-${panelItem.href}`}
-              className="border-sidebar-border/70 animate-in fade-in slide-in-from-left-1 relative flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 duration-300"
+              className="border-sidebar-border/70 animate-in fade-in slide-in-from-left-1 relative flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 motion-reduce:animate-none duration-300"
             >
               <div className="min-w-0 flex-1">
                 <div className="text-sidebar-foreground/45 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.18em] uppercase">
@@ -165,11 +165,12 @@ export function Sidebar({
               </div>
               {onClose && (
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-lg p-1.5 transition-colors lg:hidden"
+                  className="no-press grid size-11 shrink-0 place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground active:bg-sidebar-accent focus-visible:outline-2 focus-visible:outline-sidebar-ring lg:hidden"
                   aria-label="Close menu"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="pointer-events-none size-5" aria-hidden />
                 </button>
               )}
               {/* Accent strip */}
@@ -186,10 +187,10 @@ export function Sidebar({
             <nav
               aria-label={`${panelItem.label} pages`}
               key={`body-${panelItem.href}`}
-              className="scrollbar-hover animate-in fade-in slide-in-from-left-2 flex-1 overflow-y-auto px-3 py-4 duration-300"
+              className="scrollbar-hover animate-in fade-in slide-in-from-left-2 flex-1 overflow-y-auto px-3 py-4 motion-reduce:animate-none duration-300"
             >
               {panelItem.children && panelItem.children.length > 0 ? (
-                <ul className="space-y-1">
+                <ul className={drawer ? "space-y-2" : "space-y-1"}>
                   {panelItem.children.map((child) => {
                     const childActive = pathname === child.href;
                     return (
@@ -200,6 +201,7 @@ export function Sidebar({
                           aria-current={childActive ? "page" : undefined}
                           className={cn(
                             "group/sub relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
+                            drawer && "no-press min-h-11 active:bg-sidebar-accent",
                             childActive
                               ? cn(
                                   "font-semibold shadow-sm ring-1 ring-current/20",

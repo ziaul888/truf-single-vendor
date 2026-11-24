@@ -1,11 +1,11 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useBookingDetail } from "@/hooks/useBookings";
 import { toApiFailure } from "@/lib/api-error";
 import { ArrowLeft, CheckCircle2, SearchX } from "lucide-react";
@@ -85,30 +85,30 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
   const canConfirm = booking.status === "pending" && !isAwaitingCardPayment(booking);
   const barActions = detailActions(booking, canConfirm);
-  // Room below lg for the pinned action bar: one row of buttons, or two.
-  const barPadding = barActions.length === 0 ? "" : barActions.length > 2 ? "max-lg:pb-40" : "max-lg:pb-28";
 
   return (
-    <div className={`space-y-6 ${barPadding}`}>
-      <div className="flex flex-wrap items-center gap-4">
-        <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />Back
-        </Button>
-        <Separator orientation="vertical" className="h-5" />
-        <h1 className="text-2xl font-bold tracking-tight">
-          Booking <span className="font-mono text-muted-foreground">{booking.bookingNumber}</span>
-        </h1>
-        <div className="ml-auto flex items-center gap-2">
-          {booking.payAtVenue && <PayAtVenueBadge />}
-          {booking.cancelRequestedAt && booking.status === "pending" && <CancelRequestedBadge />}
-          <Badge variant={bookingStatusVariant(booking.status)}>{BOOKING_STATUS_LABEL[booking.status]}</Badge>
-          {canConfirm && (
-            <Button size="sm" className="bg-green-600 text-white hover:bg-green-700" onClick={() => setDialog("confirm")}>
-              <CheckCircle2 className="mr-1.5 h-4 w-4" />{isAwaitingWalletVerification(booking) ? "Verify" : "Confirm"}
-            </Button>
-          )}
-        </div>
-      </div>
+    <div className="space-y-6">
+      <DashboardPageHeader
+        title={<>Booking <span className="font-mono text-muted-foreground">{booking.bookingNumber}</span></>}
+        back={
+          <Button variant="ghost" size="sm" className="-ml-2 px-2 text-muted-foreground" onClick={() => router.back()}>
+            <ArrowLeft /> Back
+          </Button>
+        }
+        details={
+          <div className="flex flex-wrap items-center gap-2">
+            {booking.payAtVenue && <PayAtVenueBadge />}
+            {booking.cancelRequestedAt && booking.status === "pending" && <CancelRequestedBadge />}
+            <Badge variant={bookingStatusVariant(booking.status)}>{BOOKING_STATUS_LABEL[booking.status]}</Badge>
+          </div>
+        }
+      >
+        {canConfirm && (
+          <Button className="hidden bg-green-600 text-white hover:bg-green-700 lg:inline-flex" onClick={() => setDialog("confirm")}>
+            <CheckCircle2 /> {isAwaitingWalletVerification(booking) ? "Verify" : "Confirm"}
+          </Button>
+        )}
+      </DashboardPageHeader>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">

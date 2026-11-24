@@ -6,7 +6,7 @@ import { useSlots, type Slot } from "@/hooks/useSlots";
 import { hasGroundChoice, useGrounds } from "@/hooks/useGrounds";
 import { FilterMenu } from "@/components/features/filter-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { PaginationControls } from "@/components/features/pagination-controls";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -199,13 +199,7 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
                 {" · "}<span className="font-medium">{groundName}</span>
                 {" · "}{formatSlotDate(date)}
               </p>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" onClick={() => { setPage((p) => p - 1); clearSelection(); }} disabled={page === 1}>Prev</Button>
-                {pageWindow(page, totalPages).map((p) => (
-                  <Button key={p} variant={p === page ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => { setPage(p); clearSelection(); }}>{p}</Button>
-                ))}
-                <Button variant="outline" size="sm" onClick={() => { setPage((p) => p + 1); clearSelection(); }} disabled={page === totalPages}>Next</Button>
-              </div>
+              <PaginationControls page={page} totalPages={totalPages} onChange={(next) => { setPage(next); clearSelection(); }} />
             </div>
           </>
         )}
@@ -214,10 +208,4 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
       <BlockBookedSlotDialog slot={blockingBooked} onClose={() => setBlockingBooked(null)} />
     </div>
   );
-}
-
-/** Up to 5 page numbers around the current page. */
-export function pageWindow(page: number, totalPages: number) {
-  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-  return Array.from({ length: Math.min(5, totalPages) }, (_, i) => start + i);
 }

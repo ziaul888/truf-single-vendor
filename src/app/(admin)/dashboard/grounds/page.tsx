@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { FilterMenu } from "@/components/features/filter-menu";
@@ -100,21 +101,13 @@ export default function GroundsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Grounds</h1>
-          <p className="text-muted-foreground">Manage all sport grounds and pricing</p>
-        </div>
+      <DashboardPageHeader title="Grounds" description="Manage your grounds, hours and pricing.">
         {canEdit && (
-          <Button className="gap-2" asChild>
-            <Link href="/dashboard/grounds/new">
-              <PlusCircle className="h-4 w-4" />
-              Add Ground
-            </Link>
+          <Button asChild>
+            <Link href="/dashboard/grounds/new"><PlusCircle /> Add ground</Link>
           </Button>
         )}
-      </div>
+      </DashboardPageHeader>
 
       {/* Stats row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

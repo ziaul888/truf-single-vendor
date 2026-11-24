@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useState } from "react";
 import Link from "next/link";
 import { FilterMenu } from "@/components/features/filter-menu";
@@ -71,15 +72,11 @@ export default function ConfirmedPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Confirm Bookings</h1>
-          <p className="text-muted-foreground">Review and approve pending booking requests</p>
-        </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/dashboard/bookings"><List className="mr-1.5 h-4 w-4" />All Bookings</Link>
+      <DashboardPageHeader title="Confirm Bookings" description="Review and approve pending booking requests.">
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/bookings"><List /> All bookings</Link>
         </Button>
-      </div>
+      </DashboardPageHeader>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatCard icon={AlertCircle} tone="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"

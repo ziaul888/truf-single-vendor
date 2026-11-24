@@ -31,7 +31,7 @@ export default function GeneralSettingsPage() {
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       <SettingsPageHeader title="General" description={audience === "owner" ? "Turf details, logo and locale" : "Venue details, logo and locale"} audit={venue}>
-        {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} className="hidden md:inline-flex" />}
+        {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} className="hidden lg:inline-flex" />}
       </SettingsPageHeader>
       {!canEdit && <ReadOnlyNotice />}
 
@@ -56,7 +56,7 @@ export default function GeneralSettingsPage() {
         <VenueLocale locale={venue.locale} />
       </SettingsSection>
       {canEdit && (
-        <SettingsSaveBar>
+        <SettingsSaveBar visible={form.formState.isDirty || saving}>
           <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} />
         </SettingsSaveBar>
       )}

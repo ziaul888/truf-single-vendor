@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { ShieldCheck } from "lucide-react";
 import { useDashboardAudience } from "@/components/dashboard-audience";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,12 +46,12 @@ export default function StaffRolesPage() {
   const permissions = tenant ? TENANT_PERMISSIONS : ROLE_PERMISSIONS;
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Roles</h1>
-        <p className="text-sm text-muted-foreground">
-          v1 has two fixed roles. Set a person&apos;s role from Staff Management.
-        </p>
-      </div>
+      <DashboardPageHeader
+        title="Roles"
+        description="Review what each role can do. Assign roles from Staff."
+        back={<DashboardBackLink href="/dashboard/staff">Back to staff</DashboardBackLink>}
+      />
+
       <div className="grid gap-4 md:grid-cols-2">
         {USER_ROLES.map((role) => (
           <Card key={role}>

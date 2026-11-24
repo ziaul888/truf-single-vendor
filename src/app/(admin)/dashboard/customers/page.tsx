@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FilterMenu } from "@/components/features/filter-menu";
@@ -85,19 +86,13 @@ function CustomersView() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-          <p className="text-muted-foreground">Manage all registered customers</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => exportCSV(customers)} disabled={isLoading || customers.length === 0}
-            title="Exports the customers on this page">
-            <Download className="mr-1.5 h-4 w-4" /> Export CSV
-          </Button>
-          <Button onClick={() => setDrawerOpen(true)}><UserPlus className="mr-1.5 h-4 w-4" /> + Add customer</Button>
-        </div>
-      </div>
+      <DashboardPageHeader title="Customers" description="Manage customer records and booking history.">
+        <Button variant="outline" onClick={() => exportCSV(customers)} disabled={isLoading || customers.length === 0}
+          title="Exports the customers on this page">
+          <Download /> Export CSV
+        </Button>
+        <Button onClick={() => setDrawerOpen(true)}><UserPlus /> Add customer</Button>
+      </DashboardPageHeader>
 
       <StatCards stats={data?.stats} isLoading={isLoading} />
 

@@ -5,6 +5,7 @@ import { MobileActionBar } from "@/components/features/mobile-action-bar";
 import type { BookingDetail } from "@/types/booking";
 import { Banknote, CheckCircle2, Undo2, UserX, XCircle } from "lucide-react";
 import { canCollectPayment, canMarkNoShow, isAwaitingWalletVerification, isCancellable } from "./booking-status-helpers";
+import { cn } from "@/lib/utils";
 
 export type DetailAction = "confirm" | "collect" | "noShow" | "undoNoShow" | "cancel";
 
@@ -45,7 +46,7 @@ export function BookingDetailActionBar({ booking, actions, onAction }: BookingDe
     // An odd last button takes the full row.
     <MobileActionBar className="grid grid-cols-2 gap-2 [&>:last-child:nth-child(odd)]:col-span-2">
       {actions.map((a) => (
-        <Button key={a} variant={variant(a)} className={a === "confirm" ? "h-11 bg-green-600 text-white hover:bg-green-700" : "h-11"}
+        <Button key={a} variant={variant(a)} className={cn("h-auto min-h-11 whitespace-normal", a === "confirm" && "bg-green-600 text-white hover:bg-green-700")}
           onClick={() => onAction(a)}>
           {label[a]}
         </Button>

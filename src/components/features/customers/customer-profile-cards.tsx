@@ -20,15 +20,15 @@ export function CustomerProfileHeader({
 }) {
   return (
     <Card>
-      <CardContent className="p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white shadow-md" style={{ backgroundColor: avatarBg(c.name) }}>
+      <CardContent className="p-4 sm:p-6">
+        <header className="flex min-w-0 flex-col gap-3 md:flex-row md:flex-wrap md:items-start md:justify-between">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <div aria-hidden className="flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white shadow-md sm:size-16 sm:text-xl" style={{ backgroundColor: avatarBg(c.name) }}>
               {initials(c.name)}
             </div>
-            <div>
+            <div className="min-w-0 space-y-1 [overflow-wrap:anywhere]">
+              <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{c.name}</h1>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold">{c.name}</h1>
                 <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-semibold", TAG_CLS[c.tag])}>{TAG_LABEL[c.tag]}</span>
                 {c.dueAmount > 0 && (
                   <span className="rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2.5 py-0.5 text-xs font-semibold border border-red-200 dark:border-red-800">
@@ -36,21 +36,21 @@ export function CustomerProfileHeader({
                   </span>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">{c.phone} · Customer since {formatSince(c.createdAt)}</p>
+              <p className="text-sm text-muted-foreground">{c.phone} · Customer since {formatSince(c.createdAt)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/bookings/new?customer=${c.id}`}><PlusCircle className="mr-1.5 h-4 w-4" /> New booking</Link>
+          <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
+            <Button size="sm" className="col-span-2" asChild>
+              <Link href={`/dashboard/bookings/new?customer=${c.id}`}><PlusCircle /> New booking</Link>
             </Button>
-            <Button variant="outline" size="sm" onClick={onEdit}><Edit className="mr-1.5 h-4 w-4" /> Edit profile</Button>
+            <Button variant="outline" size="sm" className={cn(!canDelete && "col-span-2")} onClick={onEdit}><Edit /> Edit profile</Button>
             {canDelete && (
               <Button variant="outline" size="sm" className={DELETE_CLS} onClick={onDelete}>
-                <Trash2 className="mr-1.5 h-4 w-4" /> Delete
+                <Trash2 /> Delete
               </Button>
             )}
           </div>
-        </div>
+        </header>
       </CardContent>
     </Card>
   );

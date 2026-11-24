@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -62,26 +63,14 @@ function BookingsView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Bookings</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">Manage all ground bookings</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" asChild size="sm">
-            <Link href="/dashboard/bookings/calendar">
-              <LayoutGrid className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Calendar</span>
-            </Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/dashboard/bookings/new">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Add Booking</span>
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <DashboardPageHeader title="Bookings" description="Manage all ground bookings.">
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/bookings/calendar"><LayoutGrid /> Calendar</Link>
+        </Button>
+        <Button asChild>
+          <Link href="/dashboard/bookings/new"><Plus /> Add booking</Link>
+        </Button>
+      </DashboardPageHeader>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         {[

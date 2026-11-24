@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -28,7 +29,6 @@ import { fromMinorUnits, toMinorUnits } from "@/lib/ground-format";
 import { durationLabel, slotCountLabel, venueToday } from "@/lib/slot-format";
 import { AddBookingSchema, RepeatBookingSchema, type AddBookingFormData } from "@/schemas";
 import { isWalletMethod, type CreateBookingInput } from "@/types/booking";
-import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 /** The API reports nested fields ("customer.name"); these are the form fields they belong to. */
@@ -213,17 +213,12 @@ export default function AddBookingPage() {
   };
 
   return (
-    // Reserve only the pinned submit bar's height, including the phone's safe area.
-    <div className="space-y-6 max-lg:pb-[calc(4.25rem_+_env(safe-area-inset-bottom))]">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 rounded-xl" asChild>
-          <Link href="/dashboard/bookings"><ChevronLeft className="h-4 w-4" /></Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">New Booking</h1>
-          <p className="text-sm text-muted-foreground">Book a slot for a walk-in or phone customer</p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <DashboardPageHeader
+        title="New Booking"
+        description="Book a slot for a walk-in or phone customer."
+        back={<DashboardBackLink href="/dashboard/bookings">Back to bookings</DashboardBackLink>}
+      />
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
@@ -275,15 +270,6 @@ export default function AddBookingPage() {
                 {submitLabel}
               </Button>
             </div>
-            {/* Inside the form, so it still submits it */}
-            <MobileActionBar className="flex gap-2">
-              <Button variant="outline" className="h-11 px-5" asChild>
-                <Link href="/dashboard/bookings">Cancel</Link>
-              </Button>
-              <Button type="submit" className="h-11 flex-1" disabled={submitDisabled}>
-                {submitLabel}
-              </Button>
-            </MobileActionBar>
           </div>
 
           <div className="hidden lg:col-span-1 lg:block">
@@ -295,6 +281,14 @@ export default function AddBookingPage() {
             </div>
           </div>
         </div>
+        <MobileActionBar className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2">
+          <Button variant="outline" className="h-auto min-h-11" asChild>
+            <Link href="/dashboard/bookings">Cancel</Link>
+          </Button>
+          <Button type="submit" className="h-auto min-h-11 whitespace-normal" disabled={submitDisabled}>
+            {submitLabel}
+          </Button>
+        </MobileActionBar>
       </form>
     </div>
   );

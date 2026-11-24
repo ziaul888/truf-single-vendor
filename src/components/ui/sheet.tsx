@@ -18,12 +18,12 @@ export function SheetContent({ children, className, closeClassName }: { children
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
           "duration-300 ease-in-out",
-          "flex flex-col overflow-hidden",
+          "flex flex-col overflow-hidden max-lg:h-dvh max-lg:pt-[env(safe-area-inset-top)] motion-reduce:animate-none",
           className
         )}
       >
         {children}
-        <Dialog.Close className={cn("absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2", closeClassName)}>
+        <Dialog.Close className={cn("no-press absolute right-4 top-4 grid place-items-center rounded-lg opacity-70 ring-offset-background hover:opacity-100 active:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 max-lg:right-2 max-lg:top-[calc(0.5rem+env(safe-area-inset-top))] max-lg:size-11", closeClassName)}>
           <X className="pointer-events-none h-4 w-4" aria-hidden />
           <span className="sr-only">Close</span>
         </Dialog.Close>
@@ -33,7 +33,7 @@ export function SheetContent({ children, className, closeClassName }: { children
 }
 
 export function SheetHeader({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("border-b px-6 py-4", className)}>{children}</div>;
+  return <div className={cn("border-b px-6 py-4 max-lg:pr-16", className)}>{children}</div>;
 }
 
 export function SheetTitle({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -45,9 +45,9 @@ export function SheetDescription({ children, className }: { children: React.Reac
 }
 
 export function SheetBody({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("flex-1 overflow-y-auto px-6 py-4", className)}>{children}</div>;
+  return <div className={cn("flex-1 overflow-y-auto px-6 py-4 max-lg:[&_[data-slot=button]]:min-h-11", className)}>{children}</div>;
 }
 
 export function SheetFooter({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("border-t px-6 py-4 flex flex-col gap-2", className)}>{children}</div>;
+  return <div className={cn("border-t px-6 py-4 flex flex-col gap-2 max-lg:pb-[max(1rem,env(safe-area-inset-bottom))] max-lg:[&_[data-slot=button]]:min-h-11", className)}>{children}</div>;
 }

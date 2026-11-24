@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { pageWindow } from "@/components/features/slots/slot-list-section";
+import { PaginationControls } from "@/components/features/pagination-controls";
 
 interface BookingsPaginationProps {
   page: number;
@@ -19,15 +18,7 @@ export function BookingsPagination({ page, limit, total, onPageChange, noun = "b
       <p className="text-sm text-muted-foreground">
         Showing {total === 0 ? 0 : (page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} {noun}
       </p>
-      {totalPages > 1 && (
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page === 1}>Prev</Button>
-          {pageWindow(page, totalPages).map((p) => (
-            <Button key={p} variant={p === page ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => onPageChange(p)}>{p}</Button>
-          ))}
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={page === totalPages}>Next</Button>
-        </div>
-      )}
+      <PaginationControls page={page} totalPages={totalPages} onChange={onPageChange} />
     </div>
   );
 }

@@ -25,7 +25,7 @@ function activeTab(pathname: string): TabKey | null {
 
 const tabClass = (active: boolean) =>
   cn(
-    "relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-medium transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
+    "no-press relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-xs font-medium transition-colors active:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
     active ? "text-primary" : "text-muted-foreground"
   );
 
@@ -80,7 +80,7 @@ function NewButton({ active }: { active: boolean }) {
 
 /** Phone/tablet bottom navigation; the Menu tab opens the sidebar drawer. Hidden on lg+. */
 export function AdminTabBar({ menuOpen }: { menuOpen: boolean }) {
-  const pathname = usePathname();
+  const pathname = usePathname().replace(/^\/admin(?=\/|$)/, "/dashboard");
   const { data: attention } = useDashboardAttention();
   const tab = activeTab(pathname);
   // toVerify is a subset of toConfirm, so toConfirm alone is the number waiting on staff.
@@ -90,7 +90,7 @@ export function AdminTabBar({ menuOpen }: { menuOpen: boolean }) {
     <nav
       data-tab-bar
       aria-label="Main"
-      className="bg-card shrink-0 select-none border-t pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden"
+      className="bg-card shrink-0 select-none border-t pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[max(0.5rem,var(--dashboard-bottom))] lg:hidden"
     >
       <div className="flex h-14 items-stretch px-1">
         <TabLink href="/dashboard" label="Home" Icon={House} active={tab === "home"} />
@@ -110,7 +110,7 @@ export function AdminTabBar({ menuOpen }: { menuOpen: boolean }) {
             className={tabClass(menuOpen || tab === null)}
           >
             <span className="grid size-7 place-items-center">
-              <Menu className="size-5" aria-hidden />
+              <Menu className="pointer-events-none size-5" aria-hidden />
             </span>
             Menu
           </button>

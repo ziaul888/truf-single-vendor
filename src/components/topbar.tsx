@@ -21,30 +21,32 @@ export function Topbar({
   // Below lg the header clears the iOS status bar (full-screen app) and names the current section;
   // the Menu tab in the bottom bar opens the drawer.
   return (
-    <header className="bg-card flex h-[calc(3.5rem_+_env(safe-area-inset-top))] shrink-0 items-center gap-4 border-b px-4 pt-[env(safe-area-inset-top)] md:px-6 lg:h-[calc(4rem_+_env(safe-area-inset-top))]">
+    <header className="bg-card flex h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 items-center gap-2 border-b px-4 pt-[env(safe-area-inset-top)] max-lg:pl-[max(1rem,env(safe-area-inset-left))] max-lg:pr-[max(1rem,env(safe-area-inset-right))] sm:gap-4 md:px-6 lg:h-[calc(4rem+env(safe-area-inset-top))]">
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none sm:shrink-0">
-        <h2 className="text-foreground truncate text-base font-semibold lg:hidden">
+        <p className="text-foreground truncate text-base font-semibold lg:hidden">
           {sectionTitle(pathname)}
-        </h2>
-        <h2 className="text-foreground hidden text-base font-semibold lg:block">
+        </p>
+        <p className="text-foreground hidden text-base font-semibold lg:block">
           {title ?? sectionTitle(pathname)}
-        </h2>
+        </p>
       </div>
 
       {/* Phones: the search trigger shrinks to an icon button; it opens the same palette. */}
-      <div className="flex justify-center sm:flex-1 max-sm:[&>button]:w-9 max-sm:[&>button]:justify-center max-sm:[&>button]:px-0 max-sm:pointer-coarse:[&>button]:w-10 max-sm:[&>button>span]:hidden">
+      <div className="flex justify-center sm:flex-1 max-sm:[&>button]:w-11 max-sm:[&>button]:justify-center max-sm:[&>button]:px-0 max-sm:[&>button>span]:hidden">
         <GlobalSearch />
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-2 lg:gap-1">
         <ThemeToggle />
         <Link
           href="/dashboard/profile"
           aria-label="Profile"
           title={me ? `${me.name} (${me.role})` : undefined}
-          className="bg-primary text-primary-foreground focus-visible:ring-ring ml-1 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-coarse:h-10 pointer-coarse:w-10"
+          className="focus-visible:ring-ring grid size-11 place-items-center rounded-full text-xs font-semibold transition-opacity hover:opacity-90 active:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 lg:ml-1 lg:size-8"
         >
-          {me?.name.charAt(0).toUpperCase()}
+          <span className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-full" aria-hidden>
+            {me?.name.charAt(0).toUpperCase()}
+          </span>
         </Link>
       </div>
     </header>

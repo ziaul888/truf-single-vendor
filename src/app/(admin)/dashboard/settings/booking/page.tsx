@@ -35,7 +35,7 @@ export default function BookingSettingsPage() {
   return (
     <form onSubmit={submit} className="space-y-5">
       <SettingsPageHeader title="Booking" description="Booking window, cancellations and portal checkout" audit={settings}>
-        {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} className="hidden md:inline-flex" />}
+        {canEdit && <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} className="hidden lg:inline-flex" />}
       </SettingsPageHeader>
       {!canEdit && <ReadOnlyNotice />}
 
@@ -55,7 +55,7 @@ export default function BookingSettingsPage() {
         <CashDepositSettings form={form} />
       </fieldset>
       {canEdit && (
-        <SettingsSaveBar>
+        <SettingsSaveBar visible={form.formState.isDirty || saving}>
           <SettingsSaveActions dirty={form.formState.isDirty} saving={saving} onDiscard={discard} />
         </SettingsSaveBar>
       )}

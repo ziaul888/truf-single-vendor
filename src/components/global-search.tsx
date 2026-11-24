@@ -65,11 +65,11 @@ export function GlobalSearch() {
         onClick={() => setOpen(true)}
         aria-label="Open search"
         className={cn(
-          "border-input bg-background text-muted-foreground inline-flex h-9 pointer-coarse:h-10 w-full max-w-md items-center gap-2 rounded-lg border px-3 text-sm shadow-sm transition-colors",
+          "border-input bg-background text-muted-foreground no-press inline-flex h-11 w-full max-w-md items-center gap-2 rounded-lg border px-3 text-sm shadow-sm transition-colors active:bg-muted lg:h-9",
           "hover:border-ring/60 hover:text-foreground focus-visible:ring-ring/30 focus:outline-none focus-visible:ring-2"
         )}
       >
-        <Search className="h-4 w-4 shrink-0" />
+        <Search className="pointer-events-none h-4 w-4 shrink-0" aria-hidden />
         <span className="hidden flex-1 truncate text-left sm:inline">
           Search pages, customers, bookings…
         </span>
@@ -81,7 +81,7 @@ export function GlobalSearch() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         {/* Phones: pinned near the top so the on-screen keyboard doesn't cover the results. */}
-        <DialogContent className="overflow-hidden p-0 max-sm:top-4 max-sm:translate-y-0 sm:max-w-xl">
+        <DialogContent className="grid-cols-1 overflow-hidden p-0 max-sm:top-[max(1rem,env(safe-area-inset-top))] max-sm:translate-y-0 sm:max-w-xl">
           <DialogTitle className="sr-only">Search</DialogTitle>
           {open && <SearchPalette onSelect={() => setOpen(false)} />}
         </DialogContent>
@@ -132,13 +132,13 @@ function SearchPalette({ onSelect }: { onSelect: () => void }) {
       shouldFilter={false}
       className="[&_[cmdk-group-heading]]:text-muted-foreground flex max-h-[70vh] flex-col [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:uppercase"
     >
-      <div className="flex items-center gap-2 border-b px-3.5">
+      <div className="flex min-h-14 items-center gap-2 border-b pl-3.5 pr-14">
         <Search className="text-muted-foreground h-4 w-4 shrink-0" />
         <Command.Input
           value={query}
           onValueChange={setQuery}
           placeholder="Search pages, customers, bookings, grounds…"
-          className="placeholder:text-muted-foreground/70 flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none md:text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          className="placeholder:text-muted-foreground/70 flex h-11 min-w-0 flex-1 rounded-md bg-transparent py-3 text-base outline-none lg:text-sm disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 
