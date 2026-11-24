@@ -12,13 +12,13 @@ import {
   MapPin,
   MonitorSmartphone,
   ShieldCheck,
-  Smartphone,
   UsersRound,
   WalletCards,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SaasEnrollment } from "./saas-pricing";
 import { SaasBrand } from "./saas-brand";
+import { SaasProductCarousel } from "./saas-product-carousel";
 import { SaasScreenshotImage } from "./saas-screenshot-image";
 import type { SaasScreenshots } from "@/lib/saas-screenshots";
 import type { BillingInterval } from "@/types/platform-billing";
@@ -204,40 +204,7 @@ export function SaasLanding({ homeHref, screenshots, initialPlanId, initialInter
               </p>
             </div>
 
-            <figure className="saas-product-preview">
-              <div className="saas-browser">
-                <div className="saas-browser-bar" aria-hidden>
-                  <span className="saas-browser-dots">
-                    <i />
-                    <i />
-                    <i />
-                  </span>
-                  <span className="saas-browser-address">
-                    <ShieldCheck className="size-3.5" /> Your turf’s booking website
-                  </span>
-                  <span className="saas-browser-device">
-                    <MonitorSmartphone className="size-4" />
-                  </span>
-                </div>
-                <div className="saas-shot aspect-[2000/1083]">
-                  <SaasScreenshotImage
-                    slot="desktop"
-                    imageUrl={screenshots.desktop}
-                    sizes="(min-width: 1280px) 1120px, (min-width: 640px) 90vw, 100vw"
-                    priority
-                  />
-                </div>
-              </div>
-              <figcaption className="saas-preview-caption">
-                <span>
-                  <span className="saas-caption-line" aria-hidden /> Your business. Ready for the
-                  next booking.
-                </span>
-                <span className="hidden items-center gap-2 sm:inline-flex">
-                  <Smartphone aria-hidden className="size-4" /> Made for every screen
-                </span>
-              </figcaption>
-            </figure>
+            <SaasProductCarousel bookingSiteUrl={screenshots.desktop} />
           </div>
         </section>
 

@@ -7,7 +7,7 @@ export const DEFAULT_SAAS_SCREENSHOTS: SaasScreenshots = { desktop: null, phone:
 export const SAAS_SCREENSHOT_DETAILS = {
   desktop: {
     title: "Desktop screenshot",
-    description: "Shown in the browser preview at the top of the landing page.",
+    description: "First slide in the browser preview at the top of the landing page.",
     src: "/saas/booking-site-pitch-desktop.jpg",
     alt: "Desktop preview of the turf booking website",
     width: 2000,
