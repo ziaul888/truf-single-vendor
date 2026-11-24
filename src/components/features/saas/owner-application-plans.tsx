@@ -109,9 +109,9 @@ export function OwnerApplicationPlans({
       aria-labelledby="application-plan"
     >
       <div className="flex flex-wrap items-center gap-3">
-        <h3 id="application-plan" className="saas-title mr-auto">
+        <h2 id="application-plan" className="saas-title mr-auto">
           Subscription plan
-        </h3>
+        </h2>
         {selectedPlan && plans && plans.length > 1 && (
           <Button
             type="button"

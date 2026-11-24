@@ -16,7 +16,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SaasEnrollment } from "./saas-pricing";
+import { SaasPricing } from "./saas-pricing";
 import { SaasBrand } from "./saas-brand";
 import { SaasProductCarousel } from "./saas-product-carousel";
 import { SaasScreenshotImage } from "./saas-screenshot-image";
@@ -131,12 +131,13 @@ const navigation = [
   { href: "#faq", label: "FAQs" },
 ];
 
-export function SaasLanding({ homeHref, screenshots, initialPlanId, initialInterval }: {
+export function SaasLanding({ homeHref, screenshots, initialInterval }: {
   homeHref: string;
   screenshots: SaasScreenshots;
-  initialPlanId: string;
   initialInterval: BillingInterval;
 }) {
+  const applyHref = initialInterval === "yearly" ? "/saas/apply?interval=yearly" : "/saas/apply";
+
   return (
     <div className="saas-page pitch min-h-dvh">
       <a href="#main-content" className="saas-skip-link">
@@ -157,9 +158,9 @@ export function SaasLanding({ homeHref, screenshots, initialPlanId, initialInter
               Log in <ArrowUpRight aria-hidden className="size-4" />
             </Link>
             <Button asChild className="saas-button h-11 px-4 sm:px-5">
-              <a href="#apply">
+              <Link href={applyHref}>
                 Get started <ArrowRight aria-hidden />
-              </a>
+              </Link>
             </Button>
           </div>
         </nav>
@@ -183,9 +184,9 @@ export function SaasLanding({ homeHref, screenshots, initialPlanId, initialInter
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <Button asChild size="lg" className="saas-button h-12 px-6 text-base">
-                  <a href="#apply">
+                  <Link href={applyHref}>
                     Get started with TurfOrg <ArrowRight aria-hidden />
-                  </a>
+                  </Link>
                 </Button>
                 <Button
                   asChild
@@ -342,7 +343,7 @@ export function SaasLanding({ homeHref, screenshots, initialPlanId, initialInter
           </div>
         </section>
 
-        <SaasEnrollment initialPlanId={initialPlanId} initialInterval={initialInterval} />
+        <SaasPricing key={initialInterval} initialInterval={initialInterval} />
 
         <section id="faq" className="saas-section-space" aria-labelledby="faq-heading">
           <div className="saas-container saas-faq-layout">
@@ -356,9 +357,9 @@ export function SaasLanding({ homeHref, screenshots, initialPlanId, initialInter
               <p className="text-muted-foreground mt-5 max-w-[30ch] leading-relaxed">
                 The details, before you take the next step.
               </p>
-              <a href="#apply" className="saas-inline-link mt-6">
+              <Link href={applyHref} className="saas-inline-link mt-6">
                 Ready to get started? <ArrowUpRight aria-hidden className="size-4" />
-              </a>
+              </Link>
             </div>
             <div className="saas-faq-list">
               {questions.map(({ question, answer }) => (
@@ -391,9 +392,9 @@ export function SaasLanding({ homeHref, screenshots, initialPlanId, initialInter
                 </p>
                 <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
                   <Button asChild size="lg" className="saas-button h-12 px-6 text-base">
-                    <a href="#apply">
+                    <Link href={applyHref}>
                       Get started with TurfOrg <ArrowRight aria-hidden />
-                    </a>
+                    </Link>
                   </Button>
                   <Link href="/admin" className="saas-band-link">
                     Already a member? Log in <ArrowUpRight aria-hidden className="size-4" />

@@ -79,7 +79,6 @@ const schema = z
   });
 
 export type PurchaseValues = z.infer<typeof schema>;
-export type ApplicationPlanSelection = { planId: string; interval: BillingInterval; trial: boolean };
 type SubmissionKind = "application" | "payment" | "trial";
 type Failure = {
   success: false;
@@ -125,10 +124,10 @@ function ApplicationSummary({
       aria-labelledby="order-summary"
     >
       <div className="p-5 sm:p-6">
-        <h3 id="order-summary" className="saas-title flex items-center gap-2.5">
+        <h2 id="order-summary" className="saas-title flex items-center gap-2.5">
           <ReceiptText aria-hidden className="text-primary size-5 shrink-0" />
           Order summary
-        </h3>
+        </h2>
         {plan ? (
           <div aria-live="polite" className="mt-5">
             <dl className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-4 text-sm">
@@ -169,14 +168,12 @@ function ApplicationSummary({
 export function OwnerApplicationForm({
   initialPlanId,
   initialInterval,
-  selection,
 }: {
   initialPlanId: string;
   initialInterval: BillingInterval;
-  selection: ApplicationPlanSelection | null;
 }) {
   const [error, setError] = useState("");
-  const [submission, setSubmission] = useState<{ kind: SubmissionKind; selection: ApplicationPlanSelection | null } | null>(null);
+  const [success, setSuccess] = useState<SubmissionKind | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const section = useRef<HTMLElement>(null);
   const attempt = useRef<{ requestId: string; payload: string } | null>(null);
@@ -204,14 +201,7 @@ export function OwnerApplicationForm({
   const methods = useSubscriptionPaymentMethods(includePayment);
   const selectedPlan = plans.data?.find((plan) => plan.id === planId);
   const hasPaymentMethods = Object.values(methods.data ?? {}).some(Boolean);
-  const success = submission?.selection === selection ? submission.kind : null;
-  const { clearErrors, setValue } = form;
-
-  useEffect(() => {
-    if (!selection) return;
-    choosePlan({ clearErrors, setValue }, selection.planId, selection.trial);
-    setValue("interval", selection.interval);
-  }, [selection, clearErrors, setValue]);
+  const plansHref = interval === "yearly" ? "/saas?interval=yearly#plans" : "/saas#plans";
 
   useEffect(() => {
     if (!success) return;
@@ -266,8 +256,8 @@ export function OwnerApplicationForm({
         return;
       }
       attempt.current = null;
-      form.reset();
-      setSubmission({ kind: selectedPlan.trialDays ? "trial" : payment ? "payment" : "application", selection });
+      form.reset({ ...form.formState.defaultValues, interval: values.interval });
+      setSuccess(selectedPlan.trialDays ? "trial" : payment ? "payment" : "application");
     } catch {
       setError("Cannot reach the server. Please try again.");
     }
@@ -284,9 +274,9 @@ export function OwnerApplicationForm({
             <span className="bg-success/10 text-success inline-flex size-12 items-center justify-center rounded-xl">
               <CheckCircle2 aria-hidden className="size-6" />
             </span>
-            <h2 id="apply-heading" className="saas-section mt-5">
+            <h1 id="apply-heading" className="saas-section mt-5">
               Application submitted
-            </h2>
+            </h1>
             <p className="text-muted-foreground mt-4 leading-relaxed">
               {success === "trial"
                 ? "Your trial application is awaiting review."
@@ -302,7 +292,7 @@ export function OwnerApplicationForm({
                 </Link>
               </Button>
               <Button asChild variant="outline" className="saas-button h-11">
-                <a href="#main-content">Back to top</a>
+                <a href={plansHref}>Back to plans</a>
               </Button>
             </div>
           </div>
@@ -310,13 +300,13 @@ export function OwnerApplicationForm({
       ) : (
         <div className="saas-container">
           <a
-            href="#plans"
+            href={plansHref}
             className="text-muted-foreground hover:text-foreground inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-medium"
           >
             <ArrowLeft aria-hidden className="size-4" /> Back to plans
           </a>
           <div className="mt-3 max-w-2xl sm:mt-4">
-            <h2 id="apply-heading" className="saas-section">Apply for turf owner access</h2>
+            <h1 id="apply-heading" className="saas-section">Apply for turf owner access</h1>
             <p className="text-muted-foreground mt-3 max-w-xl leading-relaxed">
               {selectedPlan?.trialDays
                 ? "Enter your business details to apply for the free trial."
@@ -346,9 +336,9 @@ export function OwnerApplicationForm({
                 className="bg-card space-y-5 rounded-2xl border p-5 shadow-xs sm:p-6"
                 aria-labelledby="turf-details"
               >
-                <h3 id="turf-details" className="saas-title">
+                <h2 id="turf-details" className="saas-title">
                   Turf business
-                </h3>
+                </h2>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field id="business-name" label="Business name" error={errors.name?.message}>
                     <Input
@@ -404,9 +394,9 @@ export function OwnerApplicationForm({
                 className="bg-card space-y-5 rounded-2xl border p-5 shadow-xs sm:p-6"
                 aria-labelledby="owner-details"
               >
-                <h3 id="owner-details" className="saas-title">
+                <h2 id="owner-details" className="saas-title">
                   Owner account
-                </h3>
+                </h2>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field id="owner-name" label="Owner name" error={errors.ownerName?.message}>
                     <Input
@@ -490,9 +480,9 @@ export function OwnerApplicationForm({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h3 id="payment-heading" className="saas-title">
+                      <h2 id="payment-heading" className="saas-title">
                         Payment
-                      </h3>
+                      </h2>
                       <p className="text-muted-foreground mt-1 text-sm">
                         You can submit your application and pay later.
                       </p>

@@ -1,34 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ArrowRight, Layers3, RefreshCw, ShieldCheck } from "lucide-react";
 import { PlanFeaturesList } from "@/components/plan-features-list";
 import { Button } from "@/components/ui/button";
 import { formatBdt, planCharge } from "@/lib/platform-billing";
 import type { BillingInterval } from "@/types/platform-billing";
 import { BillingCycleToggle, useOwnerApplicationPlans } from "./owner-application-plans";
-import { OwnerApplicationForm, type ApplicationPlanSelection } from "./owner-application-form";
 
-export function SaasEnrollment({ initialPlanId, initialInterval }: {
-  initialPlanId: string;
-  initialInterval: BillingInterval;
-}) {
-  const [selection, setSelection] = useState<ApplicationPlanSelection | null>(null);
-
-  return (
-    <>
-      <SaasPricing initialInterval={initialInterval} onApply={setSelection} />
-      <OwnerApplicationForm initialPlanId={initialPlanId} initialInterval={initialInterval} selection={selection} />
-    </>
-  );
-}
-
-function SaasPricing({ initialInterval, onApply }: {
-  initialInterval: BillingInterval;
-  onApply: (selection: ApplicationPlanSelection) => void;
-}) {
+export function SaasPricing({ initialInterval }: { initialInterval: BillingInterval }) {
   const [interval, setInterval] = useState(initialInterval);
   const plans = useOwnerApplicationPlans();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Shared links to the former landing-page form still open the application.
+    function openApplication() {
+      if (window.location.hash === "#apply") {
+        router.replace(`/saas/apply${window.location.search}`);
+      }
+    }
+    openApplication();
+    window.addEventListener("hashchange", openApplication);
+    return () => window.removeEventListener("hashchange", openApplication);
+  }, [router]);
 
   return (
     <section id="plans" className="saas-pricing saas-section-space" aria-labelledby="plans-heading">
@@ -117,13 +114,10 @@ function SaasPricing({ initialInterval, onApply }: {
                         asChild
                         className="saas-button h-auto min-h-12 w-full px-4 py-3 text-center whitespace-normal"
                       >
-                        <a
-                          href="#apply"
-                          onClick={() => onApply({ planId: plan.id, interval, trial: Boolean(plan.trialDays) })}
-                        >
+                        <Link href={{ pathname: "/saas/apply", query: { plan: plan.id, interval } }}>
                           Apply for {plan.name}
                           <ArrowRight aria-hidden />
-                        </a>
+                        </Link>
                       </Button>
                     </div>
                   </article>

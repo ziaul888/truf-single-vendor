@@ -130,7 +130,7 @@ function FormColumn() {
 
       <p className="mt-5 text-center text-xs" style={{ color: C.muted }}>
         Own a turf?{" "}
-        <Link href="/saas#apply" style={{ color: C.accent, fontWeight: 600 }}>
+        <Link href="/saas/apply" style={{ color: C.accent, fontWeight: 600 }}>
           Apply for access
         </Link>
       </p>
