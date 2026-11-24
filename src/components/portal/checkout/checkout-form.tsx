@@ -252,6 +252,7 @@ export function CheckoutForm({
 
       <button
         type="submit"
+        data-football-kick
         disabled={disabled || busy || !canPay || needsSignIn || exceedsSlotLimit || noDepositWallet}
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >

@@ -1,0 +1,62 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ball {
+  --panel-color: #212a27;
+  --seam-color: #9da7a1;
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  translate: -50% -50%;
+  border: 1px solid var(--panel-color);
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 50% -6%, var(--panel-color) 26%, transparent 28%),
+    radial-gradient(ellipse at 101% 34%, var(--panel-color) 22%, transparent 24%),
+    radial-gradient(ellipse at 81% 98%, var(--panel-color) 21%, transparent 23%),
+    radial-gradient(ellipse at 19% 98%, var(--panel-color) 21%, transparent 23%),
+    radial-gradient(ellipse at -1% 34%, var(--panel-color) 22%, transparent 24%),
+    repeating-conic-gradient(from -2deg, var(--seam-color) 0deg 4deg, transparent 4deg 72deg),
+    radial-gradient(circle at 34% 26%, #fff 42%, #cdd6d1 92%);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 30%);
+  animation: kick 560ms ease-out both;
+}
+
+.ball::before {
+  position: absolute;
+  inset: 30%;
+  background: var(--panel-color);
+  clip-path: polygon(50% 0, 100% 38%, 81% 100%, 19% 100%, 0 38%);
+  content: "";
+}
+
+@keyframes kick {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+    transform: translate(calc(32px * var(--kick-direction)), calc(49px * var(--kick-lift)))
+      rotate(calc(150deg * var(--kick-direction))) scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(62px * var(--kick-direction)), calc(19px * var(--kick-lift)))
+      rotate(calc(300deg * var(--kick-direction))) scale(0.78);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer {
+    display: none;
+  }
+}

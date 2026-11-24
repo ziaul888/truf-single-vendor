@@ -107,6 +107,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
                     </p>
                     <Link
                       href={`/grounds/${g.id}`}
+                      data-football-kick
                       className="bg-primary text-primary-foreground inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold hover:opacity-90 pointer-coarse:min-h-11"
                     >
                       View ground

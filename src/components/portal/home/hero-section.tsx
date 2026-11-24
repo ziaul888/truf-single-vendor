@@ -120,6 +120,7 @@ function BookingCard({ grounds, single, venueName, slug, timezone }: {
         {!single && <SportAndFormat />}
         <button
           type="submit"
+          data-football-kick
           className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 ${
             single ? "sm:px-8" : "col-span-2"
           }`}

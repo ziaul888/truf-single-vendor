@@ -51,7 +51,7 @@ export function MobileMenu({ phone, bookHref }: { phone: string; bookHref: strin
               <Phone className="h-4 w-4" />{phone}
             </a>
           )}
-          <Link href={bookHref} onClick={close}
+          <Link href={bookHref} onClick={close} data-football-kick
             className="flex h-11 items-center justify-center rounded-lg bg-accent text-sm font-semibold text-accent-foreground hover:opacity-90">
             Book now
           </Link>

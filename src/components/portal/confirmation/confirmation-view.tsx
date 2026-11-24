@@ -83,7 +83,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <section className="bg-background py-8 text-foreground sm:py-12">
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-4 sm:gap-7 sm:px-6 lg:px-8">
         {children}
-        <Link href="/grounds" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border bg-card px-4 text-sm font-semibold hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+        <Link href="/grounds" data-football-kick className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border bg-card px-4 text-sm font-semibold hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
           Book another slot <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>

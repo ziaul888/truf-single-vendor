@@ -12,6 +12,7 @@ interface Tab {
   label: string;
   Icon: LucideIcon;
   active: boolean;
+  bookingAction?: boolean;
 }
 
 /**
@@ -38,10 +39,11 @@ export function PortalTabBar({ bookHref }: { bookHref: string }) {
         className="fixed inset-x-0 bottom-0 z-30 select-none border-t border-white/10 bg-sidebar/95 pb-[env(safe-area-inset-bottom)] text-sidebar-foreground backdrop-blur"
       >
         <ul className="grid h-14 grid-cols-4">
-          {tabs.map(({ href, label, Icon, active }) => (
+          {tabs.map(({ href, label, Icon, active, bookingAction }) => (
             <li key={label}>
               <Link
                 href={href}
+                data-football-kick={bookingAction}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex h-full min-h-11 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-transform active:scale-95",
@@ -67,7 +69,7 @@ function useTabs(pathname: string, bookHref: string): Tab[] {
   const accountHref = session ? "/account" : signInHref;
   return [
     { href: "/", label: "Home", Icon: House, active: pathname === "/" },
-    { href: bookHref, label: "Book", Icon: Trophy, active: pathname.startsWith("/grounds") },
+    { href: bookHref, label: "Book", Icon: Trophy, active: pathname.startsWith("/grounds"), bookingAction: true },
     { href: "/my-bookings", label: "My bookings", Icon: CalendarDays, active: pathname.startsWith("/my-bookings") },
     { href: accountHref, label: "Account", Icon: UserRound, active: pathname.startsWith("/account") || onSignIn },
   ];

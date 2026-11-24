@@ -17,6 +17,7 @@ export function GroundTile({ ground, wide }: { ground: Ground; wide?: boolean })
   return (
     <Link
       href={`/grounds/${ground.id}`}
+      data-football-kick
       className={cn(
         "group relative block overflow-hidden rounded-2xl bg-sidebar focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         compact ? "min-h-40 border bg-card" : wide ? "aspect-[2/1] md:aspect-[5/4] xl:aspect-[4/3]" : "aspect-[4/5] sm:aspect-[4/3]",

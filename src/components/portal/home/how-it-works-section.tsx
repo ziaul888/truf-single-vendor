@@ -28,6 +28,7 @@ export async function HowItWorksSection({ content, slug }: { content: WebsiteSec
         </ol>
         <Link
           href={await bookingHref(slug)}
+          data-football-kick
           className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 text-sm font-bold text-accent-foreground hover:opacity-90 sm:mt-8 sm:w-auto"
         >
           {content.buttonLabel} <ArrowRight className="h-4 w-4" />

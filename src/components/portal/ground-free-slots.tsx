@@ -24,6 +24,7 @@ export function GroundFreeSlots({ groundId, date, slots }: { groundId: string; d
           <li key={slotStartTime(s)}>
             <Link
               href={checkoutHref(groundId, date, s)}
+              data-football-kick
               className="flex flex-col items-center rounded-lg border px-3 py-1.5 text-center transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
             >
               <span className="text-sm font-semibold tabular-nums">

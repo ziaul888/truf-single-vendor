@@ -216,6 +216,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
           )}
           <button
             type="button"
+            data-football-kick
             disabled={selected.length === 0 || selected.length > maxSlots}
             onClick={handleContinue}
             className={cn(
@@ -287,6 +288,7 @@ function HourGrid({
           <button
             key={time}
             type="button"
+            data-football-kick
             aria-pressed={isSelected}
             disabled={!available || limited}
             onClick={() => onPick(time)}
@@ -334,6 +336,7 @@ function MobileContinueBar({
         </div>
         <button
           type="button"
+          data-football-kick
           onClick={onContinue}
           disabled={disabled}
           className={cn("inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50", FOCUS_RING)}
