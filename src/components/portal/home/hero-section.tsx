@@ -3,9 +3,11 @@ import { Calendar, CircleDot, Grid3x3, Search } from "lucide-react";
 import { listPublicGrounds } from "@/services/portal-grounds";
 import { addDays, venueHourNow, venueToday } from "@/lib/slot-format";
 import { turfPortalPath } from "@/lib/turf-portal-path";
+import { cn } from "@/lib/utils";
 import { SPORT_META, SPORTS, SURFACE_LABEL } from "@/components/portal/sports";
 import { HeroMedia } from "./hero-media";
 import { SearchForm } from "./search-form";
+import styles from "./home-motion.module.css";
 import type { Ground } from "@/types/api";
 import type { WebsiteSettings } from "@/validations/website-settings";
 
@@ -35,7 +37,7 @@ export async function HeroSection({ hero, venueName, slug, timezone }: {
         <div className="absolute inset-0 bg-linear-to-b from-transparent via-sidebar/10 to-sidebar/70" />
         <OpenNow grounds={grounds} timezone={timezone} />
 
-        <div className="relative w-full px-4 pb-4 sm:px-6 sm:pb-10 lg:px-8">
+        <div className={cn("relative w-full px-4 pb-4 sm:px-6 sm:pb-10 lg:px-8", styles.bookingCard)}>
           <BookingCard grounds={grounds} single={single} venueName={venueName} slug={slug} timezone={timezone} />
         </div>
       </div>

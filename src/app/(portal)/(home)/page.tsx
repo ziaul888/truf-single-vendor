@@ -12,6 +12,7 @@ import { StatsStrip } from "@/components/portal/home/stats-strip";
 import { AmenitiesSection } from "@/components/portal/home/amenities-section";
 import { HowItWorksSection } from "@/components/portal/home/how-it-works-section";
 import { VisitUsSection } from "@/components/portal/home/visit-us-section";
+import { HomeSectionReveal } from "@/components/portal/home/home-section-reveal";
 
 // Legacy venue content is cached. Published turf content is checked on each request.
 export const revalidate = 60;
@@ -54,12 +55,14 @@ export default async function LandingPage() {
         }}
       />
       <HeroSection hero={hero} venueName={venue.name} slug={slug} timezone={slug ? venue.locale.timezone : undefined} />
-      <StatsStrip slug={slug} />
-      {multi && sections.sportChips.enabled && <SportChipsSection content={sections.sportChips} slug={slug} />}
-      {sections.featuredGrounds.enabled && <FeaturedGroundsSection content={sections.featuredGrounds} slug={slug} />}
-      {sections.amenities.enabled && <AmenitiesSection content={sections.amenities} />}
-      {sections.howItWorks.enabled && <HowItWorksSection content={sections.howItWorks} slug={slug} />}
-      {sections.visitUs.enabled && <VisitUsSection content={sections.visitUs} venue={venue} />}
+      <HomeSectionReveal>
+        <StatsStrip slug={slug} />
+        {multi && sections.sportChips.enabled && <SportChipsSection content={sections.sportChips} slug={slug} />}
+        {sections.featuredGrounds.enabled && <FeaturedGroundsSection content={sections.featuredGrounds} slug={slug} />}
+        {sections.amenities.enabled && <AmenitiesSection content={sections.amenities} />}
+        {sections.howItWorks.enabled && <HowItWorksSection content={sections.howItWorks} slug={slug} />}
+        {sections.visitUs.enabled && <VisitUsSection content={sections.visitUs} venue={venue} />}
+      </HomeSectionReveal>
     </>
   );
 }
