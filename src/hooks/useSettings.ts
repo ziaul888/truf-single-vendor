@@ -5,7 +5,7 @@ import { useDashboardAudience } from "@/components/dashboard-audience";
 import { useDashboardApi } from "./useDashboardApi";
 import type { WebsiteSettings, WebsiteImageSlot } from "@/validations/website-settings";
 import type {
-  Audited, EmailLogPage, NotificationSettings, NotificationsInput, PaymentStatus, Permissions, PublicVenue,
+  Audited, EmailLogPage, NotificationSettings, NotificationsInput, PaymentStatus, Permissions,
   ResettableSection, SystemStatus, VenueInput, VenueProfile,
 } from "@/types/settings";
 
@@ -40,9 +40,6 @@ export function useVenue() {
       : get("/admin/settings/venue"),
   });
 }
-
-/** The public venue profile (name and logo), for pages nobody is signed in to, like the login page. */
-export const usePublicVenue = () => useQuery<PublicVenue>({ queryKey: ["venue", "public"], queryFn: () => get("/venue") });
 
 export function useUpdateVenue() {
   const owner = useDashboardAudience() === "owner";

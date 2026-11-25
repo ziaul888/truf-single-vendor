@@ -27,7 +27,7 @@ export default function LoginPage() {
           </Suspense>
 
           <div className="border-border mt-6 flex flex-wrap items-center gap-x-2 border-t pt-3 text-sm">
-            <span className="text-muted-foreground">New to TurfOrg?</span>
+            <span className="text-muted-foreground">Need an owner account?</span>
             <Link
               href="/saas/apply"
               className="text-primary inline-flex min-h-11 items-center gap-1 rounded-sm font-semibold underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
@@ -52,7 +52,7 @@ export default function LoginPage() {
             </figcaption>
             <Image
               src="/saas/owner-dashboard.webp"
-              alt="TurfOrg dashboard showing sales, upcoming bookings and ground availability"
+              alt="Dashboard showing sales, upcoming bookings and ground availability"
               width={1600}
               height={866}
               sizes="(min-width: 1216px) 560px, (min-width: 1024px) 50vw, 0px"
