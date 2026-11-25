@@ -57,8 +57,9 @@ const nextConfig = {
         },
       ],
       afterFiles: [
-        { source: "/saas/:path*", destination: `${saasAppOrigin}/saas/:path*` },
-        { source: "/saas-static/:path*", destination: `${saasAppOrigin}/saas-static/:path*` },
+        { source: "/saas", destination: `${saasAppOrigin}/saas` },
+        { source: "/saas/:path+", destination: `${saasAppOrigin}/saas/:path+` },
+        { source: "/saas-static/:path+", destination: `${saasAppOrigin}/saas-static/:path+` },
         {
           source: "/api/v1/:path*",
           destination: `${process.env.API_PROXY_TARGET ?? "http://localhost:4000"}/api/v1/:path*`,
