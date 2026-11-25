@@ -7,16 +7,22 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "yarn workspace turf-admin dev",
+    "dev": "yarn workspace @turforg/portal dev",
     "dev:saas": "yarn workspace @turforg/saas dev",
-    "build": "yarn workspace turf-admin build && yarn workspace @turforg/saas build",
-    "start": "yarn workspace turf-admin start",
+    "build": "yarn workspace @turforg/portal build && yarn workspace @turforg/saas build && yarn workspace @turforg/platform build && yarn workspace @turforg/admin build",
+    "start": "yarn workspace @turforg/portal start",
     "start:saas": "yarn workspace @turforg/saas start",
-    "lint": "eslint apps/operations/src apps/saas/src packages/web-shared/src",
+    "lint": "eslint apps/admin/src apps/portal/src apps/saas/src apps/platform/src packages/web-shared/src",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "test:booking-requests": "yarn workspace turf-admin test:booking-requests",
-    "test:platform-navigation": "yarn workspace turf-admin test:platform-navigation",
-    "test:platform-billing": "yarn workspace turf-admin test:platform-billing"
+    "test:booking-requests": "yarn workspace @turforg/portal test:booking-requests",
+    "test:platform-navigation": "yarn workspace @turforg/platform test:platform-navigation && yarn workspace @turforg/portal test:portal-navigation",
+    "test:platform-billing": "yarn workspace @turforg/platform test:platform-billing",
+    "dev:platform": "yarn workspace @turforg/platform dev",
+    "start:platform": "yarn workspace @turforg/platform start",
+    "dev:portal": "yarn workspace @turforg/portal dev",
+    "dev:admin": "yarn workspace @turforg/admin dev",
+    "start:portal": "yarn workspace @turforg/portal start",
+    "start:admin": "yarn workspace @turforg/admin start"
   },
   "devDependencies": {
     "eslint": "^9.11.1",

@@ -51,40 +51,58 @@ Install dependencies at the repository root with `yarn install --frozen-lockfile
 Copy each app’s `.env.example` to `.env.local` in the same directory and point
 `API_PROXY_TARGET` at the running Turf API.
 
-Run `yarn dev` for the operations app on port 3000, and `yarn dev:saas` for
-the SaaS app on port 3001. The SaaS app serves both the landing page and
-`/saas/apply`. The operations app forwards `/saas`, `/saas/apply` and the
-SaaS assets to the standalone app. Existing URLs and query parameters still work.
+| Command | Port | App |
+| --- | --- | --- |
+| `yarn dev:portal` | 3000 | Customer booking portal and public gateway |
+| `yarn dev:saas` | 3001 | SaaS landing and owner application |
+| `yarn dev:platform` | 3002 | Platform Admin |
+| `yarn dev:admin` | 3003 | Turf owner and staff dashboard |
+
+`yarn dev` starts the booking portal, which serves `/turf/<slug>`. Run it
+alongside the relevant workspace to test existing `/dashboard`, `/login`,
+`/saas`, `/saas/apply` and `/platform` URLs on port 3000.
+For direct local sign-in, include the Admin and Platform Admin origins
+on ports 3003 and 3002 in the API’s `CORS_ORIGINS` list.
 
 ```text
 apps/
-  operations/        Owner dashboard, platform admin and customer booking site
+  admin/             Turf owner and staff dashboard
+  portal/            Customer booking and public gateway
   saas/              Landing page and owner application
+  platform/          Platform Admin console and sign-in
 packages/
   web-shared/        Shared UI, branding and API types
 ```
 
 ## Independent deployment
 
-Build the apps with `yarn workspace turf-admin build` and
-`yarn workspace @turforg/saas build`. For Git deployments, import the same
-repository as two Vercel projects with root directories `apps/operations`
-and `apps/saas`. Use the repository’s Yarn workspace install, include source
-files outside each root for the shared package, and enable **Skip deployment**
-on both projects.
+Build one app with `yarn workspace @turforg/<app> build`, where `<app>` is
+`admin`, `portal`, `saas` or `platform`. Use four Vercel projects with
+the corresponding `apps/<app>` roots. Use the repository’s Yarn workspace
+install, include source files outside each root for the shared package,
+and enable **Skip deployment** for unaffected projects.
 
 Set these environment variables before moving production traffic.
 
 | Project | Variable | Value |
 | --- | --- | --- |
-| Both | `API_PROXY_TARGET` | The Render API origin |
+| All | `API_PROXY_TARGET` | The Render API origin |
+| Admin | `NEXT_PUBLIC_PORTAL_ORIGIN` | The public booking origin used in website links |
 | SaaS | `OWNER_APP_ORIGIN` | The owner dashboard origin |
 | SaaS | `NEXT_PUBLIC_SITE_URL` | The existing public origin used by customers |
-| Operations | `SAAS_APP_ORIGIN` | The standalone SaaS deployment origin |
+| Platform | `SAAS_APP_ORIGIN` | The SaaS origin linked from Platform Admin |
+| Platform | `NEXT_PUBLIC_SITE_URL` | The existing public Platform Admin origin |
+| Portal | `NEXT_PUBLIC_SITE_URL` | The canonical public origin for booking links and SEO |
+| Portal | `SAAS_APP_ORIGIN` | The standalone SaaS deployment origin |
+| Portal | `PLATFORM_APP_ORIGIN` | The standalone Platform Admin deployment origin |
+| Portal | `ADMIN_APP_ORIGIN` | The standalone Owner Admin deployment origin |
 
-The browser submits Apply through the existing public origin. Keep it in the
-API’s `CORS_ORIGINS` list. Verify the standalone deployment and its Apply flow
-through the operations app before promoting the split to production.
+Deploy the upstream apps before switching the existing gateway project to
+`apps/portal`. Keep its public, owner and platform hostnames attached. The
+gateway forwards pages and assets on the requested host, so browser API
+requests and session cookies stay on that host. Keep public sign-in and
+booking origins in the API’s `CORS_ORIGINS` list. Verify owner and platform
+sign-in, Apply, and a scoped customer booking through the gateway.
 
 
 ---

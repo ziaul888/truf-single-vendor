@@ -4,7 +4,7 @@ import nextTypescript from "eslint-config-next/typescript";
 const eslintConfig = [
   ...nextCoreWebVitals,
   ...nextTypescript,
-  { settings: { next: { rootDir: ["apps/operations/", "apps/saas/"] } } },
+  { settings: { next: { rootDir: ["apps/admin/", "apps/portal/", "apps/saas/", "apps/platform/"] } } },
 ];
 
 export default eslintConfig;
