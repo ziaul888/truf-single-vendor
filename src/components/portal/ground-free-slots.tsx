@@ -11,8 +11,7 @@ function checkoutHref(groundId: string, date: string, s: PublicSlot) {
 export function GroundFreeSlots({ groundId, date, slots }: { groundId: string; date: string; slots: PublicSlot[] }) {
   const free = slots.filter((s) => s.available);
 
-  if (slots.length === 0) return <p className="text-xs text-muted-foreground">Closed on this day.</p>;
-  if (free.length === 0) return <p className="text-xs text-muted-foreground">Fully booked on this day.</p>;
+  if (free.length === 0) return <p className="text-xs text-muted-foreground">No times available for online booking on this date.</p>;
 
   return (
     <div>

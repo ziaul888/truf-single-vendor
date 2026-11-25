@@ -41,6 +41,8 @@ export interface Slot extends SlotMinutes {
   /** Smallest currency unit, fixed when the slot was created (peak hours included). */
   price: number;
   status: SlotStatus;
+  /** The slot start time has passed in the venue's timezone. Sent on list rows. */
+  hasStarted?: boolean;
   /** Set for held and booked slots. */
   booking: { id: string; bookingNumber: string; customerName: string; paymentStatus: string } | null;
   /** Set while status is "held". */
@@ -54,6 +56,8 @@ export interface Slot extends SlotMinutes {
 export interface SlotStats {
   total: number;
   available: number;
+  /** Started slots whose stored status is still available. */
+  past?: number;
   held: number;
   booked: number;
   blocked: number;

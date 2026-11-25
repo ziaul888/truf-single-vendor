@@ -9,7 +9,7 @@ export interface GroundsQuery {
   sport?: Sport;
   format?: GroundFormat;
   surface?: Surface;
-  /** Venue-local "YYYY-MM-DD": when set, each ground lists its free slots that day. */
+  /** Venue-local "YYYY-MM-DD". Defaults to today when omitted. */
   date?: string;
   sort: GroundSort;
 }

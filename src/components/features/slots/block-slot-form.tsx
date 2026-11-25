@@ -31,10 +31,11 @@ type BlockType = (typeof BLOCK_TYPES)[number]["value"];
 const WHOLE_DAY = "whole-day";
 
 /** Single blocks: free slots, and booked ones (cancelling the booking). Held and blocked slots can't be picked. */
-const canPickSingle = (s: Slot) => s.status === "available" || s.status === "booked";
+const canPickSingle = (s: Slot) => !s.hasStarted && (s.status === "available" || s.status === "booked");
 
 const slotOptionLabel = (s: Slot) =>
-  s.status === "held" ? " · customer paying"
+  s.hasStarted ? " · already started"
+  : s.status === "held" ? " · customer paying"
   : s.status === "booked" && s.booking ? ` · booked (${s.booking.customerName})`
   : s.status !== "available" ? ` · ${s.status}` : "";
 

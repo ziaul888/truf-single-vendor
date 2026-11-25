@@ -15,6 +15,7 @@ export interface SlotFilters {
   from?: string;
   to?: string;
   status?: SlotStatus;
+  schedule?: "upcoming" | "started";
   reason?: BlockReason;
   page?: number;
   limit?: number;
@@ -27,13 +28,15 @@ function cleanParams(filters: object) {
   return Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== undefined && v !== "" && v !== "all"));
 }
 
-export function useSlots(filters: SlotFilters, { enabled = true } = {}) {
+export function useSlots(filters: SlotFilters, { enabled = true, live = false } = {}) {
   const { client, scope } = useDashboardApi();
   return useQuery<SlotPage>({
     queryKey: [...scope, ...SLOTS_KEY, "list", filters],
-    queryFn: async () => (await client.get("/admin/slots", { params: cleanParams(filters) })).data.data,
+    queryFn: async ({ signal }) => (await client.get("/admin/slots", { params: cleanParams(filters), signal })).data.data,
     placeholderData: keepPreviousData,
     enabled,
+    refetchInterval: live ? 30_000 : false,
+    ...(live && { refetchOnWindowFocus: "always" as const }),
   });
 }
 

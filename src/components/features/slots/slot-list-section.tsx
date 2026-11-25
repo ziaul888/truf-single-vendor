@@ -24,12 +24,17 @@ import { useMe } from "@/hooks/useMe";
 import { SlotCardList, SlotCustomer, SlotStatusPill, isSelectable } from "./slot-card-list";
 
 const PAGE_SIZE = 10;
+const STATUSES = [...SLOT_STATUSES, "past"] as const;
+type StatusFilter = SlotStatus | "past" | "all";
 
 export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
-  const { data: me } = useMe(useDashboardAudience());
+  const audience = useDashboardAudience();
+  const { data: me, isPending: isUserPending } = useMe(audience);
+  const today = venueToday(0, me && "tenant" in me ? me.tenant.timezone : undefined);
   const [groundId, setGroundId] = useState("all");
-  const [date,     setDate]     = useState(() => venueToday(0, me && "tenant" in me ? me.tenant.timezone : undefined));
-  const [status,   setStatus]   = useState<SlotStatus | "all">("all");
+  const [chosenDate, setChosenDate] = useState<string>();
+  const date = chosenDate ?? today;
+  const [status,   setStatus]   = useState<StatusFilter>("all");
   const [page,     setPage]     = useState(1);
   // Ticked slot ids on this page; cleared whenever the filters or page change.
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -37,9 +42,19 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
   const [blockingBooked, setBlockingBooked] = useState<Slot | null>(null);
 
   const { data: grounds } = useGrounds();
-  const { data, isLoading, isError, refetch } = useSlots({
-    groundId, date, status: status === "all" ? undefined : status, page, limit: PAGE_SIZE,
-  });
+  const enabled = audience === "staff" || !isUserPending;
+  const { data, isPending, isPlaceholderData, isError, refetch } = useSlots(
+    {
+      groundId,
+      date,
+      status: status === "past" ? "available" : status === "all" ? undefined : status,
+      schedule: status === "past" ? "started" : status === "available" ? "upcoming" : undefined,
+      page,
+      limit: PAGE_SIZE,
+    },
+    { enabled, live: date === today },
+  );
+  const loading = isPending || isPlaceholderData;
   const stats      = data?.stats;
   const slotRows   = data?.data ?? [];
   const total      = data?.total ?? 0;
@@ -47,8 +62,8 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
   const groundName = groundId === "all" ? "All grounds" : grounds?.find((g) => g.id === groundId)?.name ?? "";
 
   // Only free and blocked slots can be acted on in bulk.
-  const selectable = readOnly ? [] : slotRows.filter(isSelectable);
-  const selectedSlots = slotRows.filter((s) => selected.has(s.id));
+  const selectable = readOnly || loading ? [] : slotRows.filter(isSelectable);
+  const selectedSlots = selectable.filter((s) => selected.has(s.id));
   const allSelected = selectable.length > 0 && selectable.every((s) => selected.has(s.id));
   const clearSelection = () => setSelected(new Set());
   const toggleAll = (on: boolean) => setSelected(on ? new Set(selectable.map((s) => s.id)) : new Set());
@@ -61,23 +76,28 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
     });
   }
 
-  if (isError) return <SettingsLoadError what="slots" onRetry={() => refetch()} />;
+  // A slot change can remove the last result from this page while the list is open.
+  if (data && !isPlaceholderData && page > totalPages) {
+    setPage(totalPages);
+    clearSelection();
+  }
 
   return (
     <div className="space-y-4">
       {/* Stats — for the chosen ground and date, regardless of the status filter */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-6">
         {[
           { label: "Total slots",  value: stats?.total     ?? "—", color: "text-foreground" },
           { label: "Available",    value: stats?.available ?? "—", color: "text-blue-600 dark:text-blue-400" },
           { label: "Held",         value: stats?.held      ?? "—", color: "text-amber-600 dark:text-amber-400" },
           { label: "Booked",       value: stats?.booked    ?? "—", color: "text-green-600 dark:text-green-400" },
           { label: "Blocked",      value: stats?.blocked   ?? "—", color: "text-zinc-500" },
+          { label: "Past",         value: stats?.past      ?? "—", color: "text-muted-foreground" },
         ].map(({ label, value, color }) => (
           <Card key={label}>
             <CardContent className="p-3 sm:p-4">
               <p className="text-xs text-muted-foreground mb-1">{label}</p>
-              <p className={cn("text-xl font-bold sm:text-2xl", color)}>{isLoading ? "—" : value}</p>
+              <p className={cn("text-xl font-bold sm:text-2xl", color)}>{loading ? "—" : value}</p>
             </CardContent>
           </Card>
         ))}
@@ -90,14 +110,14 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
           type="date"
           aria-label="Slot date"
           value={date}
-          onChange={(e) => { if (e.target.value) { setDate(e.target.value); setPage(1); clearSelection(); } }}
+          onChange={(e) => { if (e.target.value) { setChosenDate(e.target.value); setPage(1); clearSelection(); } }}
           className="min-w-0 flex-1 md:order-2"
         />
 
         <FilterMenu activeCount={(groundId !== "all" ? 1 : 0) + (status !== "all" ? 1 : 0)}>
           {hasGroundChoice(grounds) && (
             <Select value={groundId} onValueChange={(v) => { setGroundId(v); setPage(1); clearSelection(); }}>
-              <SelectTrigger className="md:order-1"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Filter by ground" className="md:order-1"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All grounds</SelectItem>
                 {grounds?.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
@@ -105,11 +125,11 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
             </Select>
           )}
 
-          <Select value={status} onValueChange={(v) => { setStatus(v as SlotStatus | "all"); setPage(1); clearSelection(); }}>
-            <SelectTrigger className="md:order-3"><SelectValue /></SelectTrigger>
+          <Select value={status} onValueChange={(v) => { setStatus(v as StatusFilter); setPage(1); clearSelection(); }}>
+            <SelectTrigger aria-label="Filter by status" className="md:order-3"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
-              {SLOT_STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+              {STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
             </SelectContent>
           </Select>
         </FilterMenu>
@@ -119,8 +139,10 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
 
       {/* Table */}
       <Card className="overflow-hidden">
-        {isLoading ? (
-          <div className="space-y-px p-4">{[...Array(7)].map((_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />)}</div>
+        {isError ? (
+          <SettingsLoadError what="slots" onRetry={() => refetch()} />
+        ) : loading ? (
+          <div aria-hidden className="space-y-px p-4">{Array.from({ length: PAGE_SIZE }, (_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />)}</div>
         ) : (
           <>
             <div className="md:hidden">
@@ -167,7 +189,7 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
                       {!readOnly && <TableCell>
                         <Checkbox
                           aria-label={`Select ${slotTimeLabel(slot)}`}
-                          checked={selected.has(slot.id)}
+                          checked={isSelectable(slot) && selected.has(slot.id)}
                           disabled={!isSelectable(slot)}
                           onCheckedChange={(v) => toggleOne(slot.id, v === true)}
                         />
@@ -191,17 +213,21 @@ export function SlotListSection({ readOnly = false }: { readOnly?: boolean }) {
                 )}
               </TableBody>
             </Table>
-
-            {/* Pagination */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
-              <p className="text-sm text-muted-foreground">
-                Showing {total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} slots
-                {" · "}<span className="font-medium">{groundName}</span>
-                {" · "}{formatSlotDate(date)}
-              </p>
-              <PaginationControls page={page} totalPages={totalPages} onChange={(next) => { setPage(next); clearSelection(); }} />
-            </div>
           </>
+        )}
+        {!isError && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
+            <p role="status" className="text-sm text-muted-foreground">
+              {loading ? "Loading slots…" : (
+                <>
+                  {total > 0 ? `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total} slots` : "Showing 0 slots"}
+                  {" · "}<span className="font-medium">{groundName}</span>
+                  {" · "}{formatSlotDate(date)}
+                </>
+              )}
+            </p>
+            <PaginationControls page={page} totalPages={totalPages} disabled={loading} onChange={(next) => { setPage(next); clearSelection(); }} />
+          </div>
         )}
       </Card>
       <SlotHistorySheet slot={historyOf} onClose={() => setHistoryOf(null)} />

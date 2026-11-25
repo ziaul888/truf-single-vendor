@@ -69,7 +69,7 @@ export function SlotRowActions({ slot, onHistory, onBlockBooked, large }: Props)
           <Link href={`/dashboard/bookings/${slot.booking.id}`}><Eye className="h-3 w-3" /> View</Link>
         </Button>
       )}
-      {slot.status === "available" && (
+      {!slot.hasStarted && slot.status === "available" && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className={cn(size, BLOCK_BTN)} disabled={busy}>
@@ -84,12 +84,12 @@ export function SlotRowActions({ slot, onHistory, onBlockBooked, large }: Props)
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-      {slot.status === "booked" && (
+      {!slot.hasStarted && slot.status === "booked" && (
         <Button variant="ghost" size="sm" className={cn(size, BLOCK_BTN)} onClick={() => onBlockBooked(slot)}>
           <Ban className="h-3 w-3" /> Block
         </Button>
       )}
-      {slot.status === "blocked" && (
+      {!slot.hasStarted && slot.status === "blocked" && (
         <Button
           variant="ghost" size="sm" className={cn(size, UNBLOCK_BTN)}
           disabled={busy}

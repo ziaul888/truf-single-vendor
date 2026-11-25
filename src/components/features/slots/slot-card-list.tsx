@@ -20,16 +20,17 @@ const venueClock = (iso: string) =>
   new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 
 /** Held and booked slots belong to a customer, so they can't be selected for bulk actions. */
-export const isSelectable = (s: Slot) => s.status === "available" || s.status === "blocked";
+export const isSelectable = (s: Slot) => !s.hasStarted && (s.status === "available" || s.status === "blocked");
 
 /** The slot's status pill, with the block reason on hover. */
 export function SlotStatusPill({ slot }: { slot: Slot }) {
+  const past = slot.hasStarted && slot.status === "available";
   return (
     <span
-      className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize", STATUS_CLS[slot.status])}
-      title={slot.block ? `${BLOCK_REASON_LABEL[slot.block.reason]}${slot.block.note ? `: ${slot.block.note}` : ""}` : undefined}
+      className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize", past ? "bg-muted text-muted-foreground" : STATUS_CLS[slot.status])}
+      title={past ? "This slot has already started." : slot.block ? `${BLOCK_REASON_LABEL[slot.block.reason]}${slot.block.note ? `: ${slot.block.note}` : ""}` : undefined}
     >
-      {slot.status}
+      {past ? "Past" : slot.status}
     </span>
   );
 }
@@ -71,7 +72,7 @@ export function SlotCardList({ slots, selected, showGround, onToggle, onHistory,
             {!readOnly && <label className="-m-2 flex shrink-0 cursor-pointer p-2.5">
               <Checkbox
                 aria-label={`Select ${slotTimeLabel(slot)}`}
-                checked={selected.has(slot.id)}
+                checked={isSelectable(slot) && selected.has(slot.id)}
                 disabled={!isSelectable(slot)}
                 onCheckedChange={(v) => onToggle(slot.id, v === true)}
               />

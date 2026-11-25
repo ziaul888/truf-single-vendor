@@ -15,12 +15,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { z } from "zod";
+import { FallbackImage } from "@/components/fallback-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlanFeaturesList } from "@/components/plan-features-list";
 import { formatBdt, planCharge } from "@/lib/platform-billing";
 import type { BillingInterval, PlatformPlan } from "@/types/platform-billing";
+import { checkLogoFile, LOGO_TYPES } from "@/validations/venue";
 import {
   OwnerApplicationPlans,
   useOwnerApplicationPlans,
@@ -53,6 +55,7 @@ const schema = z
       .min(3)
       .max(50)
       .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers and hyphens"),
+    logo: z.file().optional(),
     ownerName: z.string().trim().min(2, "Enter the owner's name").max(100),
     ownerEmail: z.string().trim().email("Enter a valid email"),
     password: z.string().min(12, "Use at least 12 characters").max(200),
@@ -65,6 +68,8 @@ const schema = z
     paymentDate: z.string().optional(),
   })
   .superRefine((value, ctx) => {
+    const logoError = value.logo && checkLogoFile(value.logo);
+    if (logoError) ctx.addIssue({ code: "custom", path: ["logo"], message: logoError });
     if (!value.includePayment) return;
     const payment = paymentDetailsSchema.safeParse(value);
     if (!payment.success) {
@@ -109,6 +114,15 @@ function Field({
       )}
     </div>
   );
+}
+
+function readLogo(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 function ApplicationSummary({
@@ -175,6 +189,8 @@ export function OwnerApplicationForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<SubmissionKind | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInput = useRef<HTMLInputElement>(null);
   const section = useRef<HTMLElement>(null);
   const attempt = useRef<{ requestId: string; payload: string } | null>(null);
   const plans = useOwnerApplicationPlans();
@@ -209,6 +225,15 @@ export function OwnerApplicationForm({
     section.current?.focus({ preventScroll: true });
   }, [success]);
 
+  useEffect(() => {
+    if (logoPreview) return () => URL.revokeObjectURL(logoPreview);
+  }, [logoPreview]);
+
+  function selectLogo(file?: File) {
+    form.setValue("logo", file, { shouldDirty: true, shouldValidate: true });
+    setLogoPreview(file && !checkLogoFile(file) ? URL.createObjectURL(file) : null);
+  }
+
   async function submit(values: PurchaseValues) {
     setError("");
     if (!selectedPlan || selectedPlan.id !== values.planId) {
@@ -219,6 +244,15 @@ export function OwnerApplicationForm({
     if (payment && !methods.data?.[payment.paymentMethod]) {
       form.setError("paymentMethod", { message: "Choose an available payment method" });
       return;
+    }
+    let logo: string | undefined;
+    if (values.logo) {
+      try {
+        logo = await readLogo(values.logo);
+      } catch {
+        form.setError("logo", { message: "Couldn’t read the logo. Choose the file again." });
+        return;
+      }
     }
     const payload = {
       name: values.name,
@@ -233,6 +267,7 @@ export function OwnerApplicationForm({
       currency: "bdt",
       planVersion: selectedPlan.version,
       expectedAmount: planCharge(selectedPlan, values.interval),
+      logo,
     };
     const signature = JSON.stringify(payload);
     if (attempt.current?.payload !== signature)
@@ -256,6 +291,7 @@ export function OwnerApplicationForm({
         return;
       }
       attempt.current = null;
+      setLogoPreview(null);
       form.reset({ ...form.formState.defaultValues, interval: values.interval });
       setSuccess(selectedPlan.trialDays ? "trial" : payment ? "payment" : "application");
     } catch {
@@ -389,6 +425,44 @@ export function OwnerApplicationForm({
                     </p>
                   </Field>
                 </div>
+                <Field id="turf-logo" label="Turf logo (optional)" error={errors.logo?.message}>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {logoPreview && (
+                      <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border bg-muted">
+                        <FallbackImage src={logoPreview} alt="Turf logo preview" fill unoptimized className="object-contain" />
+                      </div>
+                    )}
+                    <Input
+                      ref={logoInput}
+                      id="turf-logo"
+                      type="file"
+                      accept={LOGO_TYPES.join(",")}
+                      disabled={busy}
+                      className="w-full min-w-0 sm:w-auto"
+                      onChange={(event) => selectLogo(event.target.files?.[0])}
+                      aria-invalid={!!errors.logo}
+                      aria-describedby={errors.logo ? "turf-logo-hint turf-logo-error" : "turf-logo-hint"}
+                    />
+                    {(logoPreview || errors.logo) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => {
+                          if (logoInput.current) logoInput.current.value = "";
+                          selectLogo();
+                          logoInput.current?.focus();
+                        }}
+                      >
+                        Remove logo
+                      </Button>
+                    )}
+                  </div>
+                  <p id="turf-logo-hint" className="text-muted-foreground text-sm">
+                    PNG or JPG, up to 200 KB.
+                  </p>
+                </Field>
               </section>
               <section
                 className="bg-card space-y-5 rounded-2xl border p-5 shadow-xs sm:p-6"

@@ -7,6 +7,7 @@ import { getPublicSlots, listPublicGrounds } from "@/services/portal-grounds";
 import { getPublicVenue } from "@/services/website-settings";
 import { getTurfPortalSlug } from "@/services/turf-portal-request";
 import { socialMetadata } from "@/lib/seo";
+import { venueToday } from "@/lib/slot-format";
 import {
   parseGroundsQuery,
   sortGrounds,
@@ -38,29 +39,23 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
   const [list, venue] = await Promise.all([listPublicGrounds({ sport, format, surface }, slug), getPublicVenue(slug)]);
   const sorted = sortGrounds(list, query.sort);
   const filtered = Boolean(sport || format || surface);
-  const slotsByGround = query.date
-    ? await slotsFor(
-        sorted.map((g) => g.id),
-        query.date,
-        slug
-      )
-    : null;
-  // With a date, grounds that still have free slots come first (keeping the chosen sort within each group).
-  const hasFree = (id: string) => slotsByGround?.get(id)?.some((s) => s.available) ?? false;
-  const grounds = slotsByGround
-    ? [...sorted].sort((a, b) => Number(hasFree(b.id)) - Number(hasFree(a.id)))
-    : sorted;
+  const today = venueToday(0, venue.locale.timezone);
+  const date = query.date ?? today;
+  const slotsByGround = await slotsFor(sorted.map((g) => g.id), date, slug);
+  // Grounds with free slots come first while preserving the chosen sort within each group.
+  const hasFree = (id: string) => slotsByGround.get(id)?.some((s) => s.available) ?? false;
+  const grounds = sorted.sort((a, b) => Number(hasFree(b.id)) - Number(hasFree(a.id)));
 
   return (
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 sm:gap-8 sm:px-6 sm:py-8 lg:grid-cols-[260px_1fr] lg:px-8">
       {/* Phones get the filter icon inside the date bar; from md the panel sits in its own column. */}
       <GroundsFilterSidebar query={query} layout="panel" />
       <div>
-        <GroundsDateBar query={query} slug={slug} timezone={slug ? venue.locale.timezone : undefined} filters={<GroundsFilterSidebar query={query} layout="menu" />} />
+        <GroundsDateBar query={query} slug={slug} today={today} filters={<GroundsFilterSidebar query={query} layout="menu" />} />
         <div className="mt-4">
           <ResultsHeader count={grounds.length} query={query} venueName={venue.name} />
         </div>
-        <div className={`mt-3 grid grid-cols-1 gap-3 sm:mt-4 sm:gap-5 ${slotsByGround ? "" : "md:grid-cols-2"}`}>
+        <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-5">
           {grounds.length === 0 && (
             <p className="text-muted-foreground rounded-xl border border-dashed p-10 text-center text-sm md:col-span-2">
               {filtered
@@ -106,7 +101,7 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
                       <span className="text-muted-foreground text-xs font-normal">/hr</span>
                     </p>
                     <Link
-                      href={`/grounds/${g.id}`}
+                      href={`/grounds/${g.id}${query.date ? `?date=${date}` : ""}`}
                       data-football-kick
                       className="bg-primary text-primary-foreground inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold hover:opacity-90 pointer-coarse:min-h-11"
                     >
@@ -115,15 +110,9 @@ export default async function GroundsPage({ searchParams }: { searchParams: Sear
                   </div>
                 </div>
               </div>
-              {slotsByGround && query.date && (
-                <div className="border-t p-3 sm:p-4">
-                  <GroundFreeSlots
-                    groundId={g.id}
-                    date={query.date}
-                    slots={slotsByGround.get(g.id) ?? []}
-                  />
-                </div>
-              )}
+              <div className="border-t p-3 sm:p-4">
+                <GroundFreeSlots groundId={g.id} date={date} slots={slotsByGround.get(g.id) ?? []} />
+              </div>
             </article>
           ))}
         </div>

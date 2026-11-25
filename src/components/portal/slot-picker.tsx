@@ -172,7 +172,7 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
               </span>
               <div className="min-w-0">
                 <div role="status">
-                  <p className="font-semibold">{closure?.label || "No booking times available"}</p>
+                  <p className="font-semibold">{closure?.label || "No times available for online booking"}</p>
                   <p className="mt-1 text-muted-foreground">Choose another date to check availability.</p>
                 </div>
                 {nextAvailableDate && (
@@ -189,8 +189,11 @@ export function SlotPicker({ ground, initialDate }: { ground: Ground; initialDat
                 )}
               </div>
             </div>
-          ) : (
-            <HourGrid slots={daySlots} selected={selectedTimes} atLimit={atLimit} onPick={toggleTime} />
+          ) : null}
+          {!isLoading && !isError && daySlots.length > 0 && (
+            <div className={cn(!hasAvailability && "mt-3")}>
+              <HourGrid slots={daySlots} selected={selectedTimes} atLimit={atLimit} onPick={toggleTime} />
+            </div>
           )}
           {selected.length > maxSlots && (
             <p role="alert" className="mt-2 text-xs text-destructive">The booking limit changed. Remove slots to continue.</p>
