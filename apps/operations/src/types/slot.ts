@@ -1,0 +1,231 @@
+// Slot shapes exactly as turf-api returns them. Keep the enums in sync with
+// turf-api's src/slots/slots.schemas.ts.
+
+import type { Weekday } from "@/types/ground";
+
+/**
+ * Minutes and "HH:MM" times next to startHour/endHour (hour part only): a 90-minute slot can
+ * start or end on a half hour. Missing from older APIs; read them through lib/slot-format.
+ */
+export interface SlotMinutes {
+  startMinute?: 0 | 30;
+  endMinute?: 0 | 30;
+  startTime?: string;
+  endTime?: string;
+}
+
+/** `held`: a customer is paying in Stripe checkout (up to holdMinutes). */
+export const SLOT_STATUSES = ["available", "held", "booked", "blocked"] as const;
+export const BLOCK_REASONS = ["maintenance", "reserved", "event", "weather", "other"] as const;
+
+export type SlotStatus = (typeof SLOT_STATUSES)[number];
+export type BlockReason = (typeof BLOCK_REASONS)[number];
+
+export interface SlotBlock {
+  reason: BlockReason;
+  note: string | null;
+  blockedBy: { id: string; name: string } | null;
+  blockedAt: string;
+}
+
+/** Admin slot. Times are venue-local (Asia/Dhaka): a calendar date plus hours (and minutes). */
+export interface Slot extends SlotMinutes {
+  id: string;
+  groundId: string;
+  groundName: string;
+  /** "YYYY-MM-DD" */
+  date: string;
+  startHour: number;
+  endHour: number;
+  durationMinutes: 60 | 90 | 120;
+  /** Smallest currency unit, fixed when the slot was created (peak hours included). */
+  price: number;
+  status: SlotStatus;
+  /** The slot start time has passed in the venue's timezone. Sent on list rows. */
+  hasStarted?: boolean;
+  /** Set for held and booked slots. */
+  booking: { id: string; bookingNumber: string; customerName: string; paymentStatus: string } | null;
+  /** Set while status is "held". */
+  heldUntil?: string | null;
+  block: SlotBlock | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Counts for the same ground and dates, ignoring the status and reason filters. */
+export interface SlotStats {
+  total: number;
+  available: number;
+  /** Started slots whose stored status is still available. */
+  past?: number;
+  held: number;
+  booked: number;
+  blocked: number;
+}
+
+export interface SlotPage {
+  data: Slot[];
+  total: number;
+  page: number;
+  limit: number;
+  stats: SlotStats;
+}
+
+/** Customer view: never says why a slot is unavailable. */
+export interface PublicSlot extends SlotMinutes {
+  id: string;
+  date: string;
+  startHour: number;
+  endHour: number;
+  price: number;
+  isPeak: boolean;
+  available: boolean;
+}
+
+export interface GenerateResult {
+  generated: number;
+  skipped: number;
+  days: number;
+  slotsPerDay: number;
+}
+
+export type BulkBlockInput = {
+  groundId: string;
+  date: string;
+  reason: BlockReason;
+  note?: string;
+} & (
+  | { type: "single"; startHour: number; startMinute?: number }
+  | { type: "fullDay" }
+  | { type: "recurringWeekly"; weekdays: Weekday[]; untilDate: string; startHour?: number; startMinute?: number }
+);
+
+export interface BulkBlockResult {
+  blocked: number;
+  skippedBooked: number;
+  cancelledBookings: number;
+}
+
+export interface CalendarApiSlot extends SlotMinutes {
+  id: string;
+  groundId: string;
+  groundName: string;
+  date: string;
+  startHour: number;
+  endHour: number;
+  status: "held" | "booked" | "blocked";
+  /** "reason: note" for blocked slots. */
+  note?: string;
+  // Booked and held slots:
+  bookingId?: string;
+  customerName?: string;
+  customerPhone?: string;
+  /** Smallest unit. The booking's total, repeated on each of its slots. */
+  amount?: number;
+  advancePaid?: number;
+  /** Slots in the booking. Missing from older APIs. */
+  slotCount?: number;
+  /** This slot's own price, smallest unit. Missing from older APIs. */
+  price?: number;
+}
+
+export interface SlotCalendar {
+  slots: CalendarApiSlot[];
+  totals: { date: string; groundId: string; totalSlots: number }[];
+}
+
+export interface SlotSettings {
+  advanceBookingDays: number;
+  autoGenerate: boolean;
+  cancellationCutoffHours: number;
+  notifyCustomerOnBlock: boolean;
+  notifyAdminOnBooking: boolean;
+  /** Minutes a slot stays held during Stripe checkout (5–30). */
+  holdMinutes: number;
+  /** Portal bookings only, smallest unit. */
+  serviceFee: number;
+  /** Lets portal customers choose "pay at venue". */
+  portalCashEnabled: boolean;
+  /** Lets customers and staff put several slots of one ground and date in one booking. Off by default. */
+  multiSlotEnabled: boolean;
+  /** Most slots in one booking (2–4). Returned even while multi-slot is off. */
+  maxSlotsPerBooking: number;
+  /** Cash bookings also pay a share of the total by bKash / Nagad (booking money); the rest is paid at the venue. Off by default. */
+  cashDepositEnabled: boolean;
+  /** The booking money share of the total, 1–100. Returned even while the deposit is off. */
+  cashDepositPercent: number;
+  /** Card on the portal (also needs Stripe keys); bKash / Nagad (also need the number). Off keeps the number. Saved on Settings → Payments. */
+  portalCardEnabled: boolean;
+  portalBkashEnabled: boolean;
+  portalNagadEnabled: boolean;
+  /** The venue's bKash / Nagad number for portal payments; null = not offered. Saved on Settings → Payments. */
+  bkashNumber: string | null;
+  nagadNumber: string | null;
+  updatedAt: string | null;
+  updatedBy: StaffRef | null;
+}
+
+/** Returned by PATCH /admin/grounds/:id when the change touched slots. */
+export interface SlotSync {
+  removed: number;
+  generated: number;
+  kept: number;
+}
+
+// ── Bulk actions, history and closures (turf-api, 29 Oct 2026) ──
+
+export type SlotEventAction = "block" | "unblock" | "close" | "reopen";
+export interface StaffRef { id: string; name: string }
+
+export interface BulkSlotsResult {
+  done: number;
+  failed: { id: string; code: string; error: string }[];
+}
+
+/** One entry in a slot's audit trail. `user` is null for a system action, or if that staff account no longer exists. */
+export interface SlotEvent {
+  id: string;
+  action: SlotEventAction;
+  reason: BlockReason | null;
+  note: string | null;
+  user: StaffRef | null;
+  createdAt: string;
+}
+
+/** An event in the venue-wide log. `slotId` is null when the slot was later regenerated. */
+export interface SlotEventListItem extends SlotEvent, Pick<SlotMinutes, "startMinute" | "startTime"> {
+  slotId: string | null;
+  groundId: string;
+  groundName: string;
+  date: string;
+  startHour: number;
+}
+
+export interface Closure {
+  id: string;
+  fromDate: string;
+  toDate: string;
+  /** [] = every ground, including grounds added later. */
+  groundIds: string[];
+  reason: BlockReason;
+  note: string | null;
+  publicLabel: string | null;
+  createdBy: StaffRef | null;
+  createdAt: string;
+  liftedAt: string | null;
+  liftedBy: StaffRef | null;
+}
+
+export interface CreateClosureInput {
+  fromDate: string;
+  toDate: string;
+  groundIds?: string[];
+  reason: BlockReason;
+  note?: string;
+  publicLabel?: string;
+}
+
+export interface CreateClosureResult { closure: Closure; blocked: number; skippedBooked: number }
+
+/** What customers see: `label` is the public label, or "Closed". */
+export interface PublicClosure { fromDate: string; toDate: string; groundIds: string[]; label: string }

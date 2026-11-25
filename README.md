@@ -45,61 +45,48 @@ Turf Management System - Admin Panel built with Next.js 16, TypeScript, and Tail
 
 ---
 
-## 📦 Installation
+## Run locally
 
-### 1. Install Dependencies
-```bash
-npm install
+Install dependencies at the repository root with `yarn install --frozen-lockfile`.
+Copy each app’s `.env.example` to `.env.local` in the same directory and point
+`API_PROXY_TARGET` at the running Turf API.
+
+Run `yarn dev` for the operations app on port 3000, and `yarn dev:saas` for
+the SaaS app on port 3001. The SaaS app serves both the landing page and
+`/saas/apply`. Existing `/saas` and `/saas/apply` links on the operations
+host redirect to the SaaS app and keep their query parameters.
+
+```text
+apps/
+  operations/        Owner dashboard, platform admin and customer booking site
+  saas/              Landing page and owner application
+packages/
+  web-shared/        Shared UI, branding and API types
 ```
 
-or with pnpm (faster):
-```bash
-pnpm install
-```
+## Independent deployment
 
-### 2. Setup Environment Variables
-Copy `.env.example` to `.env.local`:
-```bash
-cp .env.example .env.local
-```
+Build the apps with `yarn workspace turf-admin build` and
+`yarn workspace @turforg/saas build`. For Git deployments, import the same
+repository as two Vercel projects with root directories `apps/operations`
+and `apps/saas`. Use the repository’s Yarn workspace install, include source
+files outside each root for the shared package, and enable **Skip deployment**
+on both projects.
 
-Then update values as needed.
+Set these environment variables before moving production traffic.
 
-### 3. Run Development Server
-```bash
-npm run dev
-```
+| Project | Variable | Value |
+| --- | --- | --- |
+| Both | `API_PROXY_TARGET` | The Render API origin |
+| SaaS | `OWNER_APP_ORIGIN` | The owner dashboard origin |
+| SaaS | `NEXT_PUBLIC_SITE_URL` | The canonical SaaS origin |
+| Operations | `SAAS_APP_ORIGIN` | The SaaS origin |
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Add the exact SaaS origin to the API’s existing `CORS_ORIGINS` list. The Apply
+POST uses a same-origin proxy and the API checks the browser’s origin.
+Keep the existing Render service and database. Verify the standalone SaaS
+deployment and its Apply flow before activating the operations redirects.
 
----
-
-## 📂 Folder Structure
-
-```
-turf-admin/
-├── src/
-│   ├── app/                    # Next.js App Router pages
-│   │   ├── layout.tsx          # Root layout
-│   │   ├── page.tsx            # Home page
-│   │   └── globals.css         # Global styles
-│   ├── components/             # React components
-│   │   ├── ui/                 # shadcn/ui components (add with CLI)
-│   │   └── providers.tsx       # Theme + Query providers
-│   ├── lib/                    # Utilities & helpers
-│   │   └── utils.ts            # cn(), formatCurrency(), etc.
-│   ├── hooks/                  # Custom React hooks
-│   ├── store/                  # Zustand stores
-│   ├── types/                  # TypeScript types
-│   └── schemas/                # Zod schemas
-├── public/                     # Static assets
-├── .env.example                # Environment variables template
-├── components.json             # shadcn/ui config
-├── next.config.mjs             # Next.js config
-├── tailwind.config.ts          # Tailwind config
-├── tsconfig.json               # TypeScript config
-└── package.json
-```
 
 ---
 
