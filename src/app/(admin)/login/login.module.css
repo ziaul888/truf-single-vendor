@@ -1,0 +1,21 @@
+.page {
+  --login-error: color-mix(in oklch, var(--destructive) 54%, var(--foreground));
+  padding-block: max(1.5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-bottom));
+  color-scheme: dark;
+  background-image: radial-gradient(ellipse at 50% 0%, var(--background), transparent 75%);
+}
+
+.preview {
+  background:
+    radial-gradient(
+      ellipse at 90% 90%,
+      color-mix(in oklch, var(--primary) 12%, transparent),
+      transparent 65%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 4rem,
+      color-mix(in oklch, var(--foreground) 2.5%, transparent) 4rem 8rem
+    ),
+    var(--background);
+}

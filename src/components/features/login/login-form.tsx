@@ -5,9 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowRight, CircleAlert, Eye, EyeOff, Loader2, LockKeyhole, Mail, type LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LoginSchema, type LoginInput } from "@/validations/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
-import { LOGIN_COLORS as C } from "./login-theme";
+import { cn } from "@/lib/utils";
 
 const LOCK_MS = 60_000;
 
@@ -81,44 +85,34 @@ export function LoginForm() {
   const disabled = isSubmitting || locked;
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+    <form className="grid gap-5" onSubmit={form.handleSubmit(onSubmit)} aria-busy={isSubmitting} noValidate>
       <LoginField
-        label="Email Address"
-        icon="✉"
+        label="Email address"
+        icon={Mail}
         type="email"
         autoComplete="username"
-        placeholder="your@email.com"
+        placeholder="name@example.com"
         disabled={disabled}
         error={errors.email?.message}
         registration={form.register("email")}
       />
       <LoginField
         label="Password"
-        icon="🔒"
+        icon={LockKeyhole}
         type={showPass ? "text" : "password"}
         autoComplete="current-password"
-        placeholder="••••••••"
         disabled={disabled}
         error={errors.password?.message}
         registration={form.register("password")}
         trailing={
           <button
             type="button"
-            onClick={() => setShowPass(!showPass)}
+            onClick={() => setShowPass((visible) => !visible)}
             aria-label={showPass ? "Hide password" : "Show password"}
-            style={{
-              position: "absolute",
-              right: 14,
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: C.faint,
-              fontSize: 14,
-            }}
+            aria-controls="login-password"
+            className="no-press text-muted-foreground hover:text-foreground focus-visible:outline-ring absolute inset-y-0 right-0 grid w-12 place-items-center rounded-xl focus-visible:outline-2 focus-visible:-outline-offset-4"
           >
-            {showPass ? "🙈" : "👁"}
+            {showPass ? <EyeOff aria-hidden className="size-4" /> : <Eye aria-hidden className="size-4" />}
           </button>
         }
       />
@@ -126,18 +120,10 @@ export function LoginForm() {
       {serverError && (
         <div
           role="alert"
-          style={{
-            background: "rgba(224,82,82,0.1)",
-            border: "1px solid rgba(224,82,82,0.3)",
-            borderRadius: 8,
-            padding: "10px 14px",
-            marginBottom: 16,
-            fontSize: 12,
-            color: C.danger,
-            animation: "slideUp 0.3s ease",
-          }}
+          className="border-destructive/35 bg-destructive/10 flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm text-[color:var(--login-error)] [overflow-wrap:anywhere]"
         >
-          ⚠ {serverError}
+          <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <span>{serverError}</span>
         </div>
       )}
 
@@ -148,121 +134,60 @@ export function LoginForm() {
 
 interface LoginFieldProps {
   label: string;
-  icon: string;
+  icon: LucideIcon;
   type: string;
   autoComplete: string;
-  placeholder: string;
+  placeholder?: string;
   disabled: boolean;
   error?: string;
   registration: UseFormRegisterReturn;
   trailing?: React.ReactNode;
 }
 
-function LoginField({ label, icon, error, registration, trailing, ...input }: LoginFieldProps) {
+function LoginField({ label, icon: Icon, error, registration, trailing, ...input }: LoginFieldProps) {
   const id = `login-${registration.name}`;
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label
-        htmlFor={id}
-        style={{
-          fontSize: 11,
-          letterSpacing: 2,
-          color: C.muted,
-          textTransform: "uppercase",
-          display: "block",
-          marginBottom: 8,
-        }}
-      >
-        {label}
-      </label>
-      <div style={{ position: "relative" }}>
-        <span
+    <div className="grid min-w-0 gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <Icon
           aria-hidden
-          style={{
-            position: "absolute",
-            left: 14,
-            top: "50%",
-            transform: "translateY(-50%)",
-            color: C.faint,
-            fontSize: 15,
-          }}
-        >
-          {icon}
-        </span>
-        <input
+          className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2"
+        />
+        <Input
           id={id}
           {...input}
           {...registration}
+          autoCapitalize="none"
+          spellCheck={false}
           aria-invalid={!!error}
-          className="login-input"
-          style={{
-            width: "100%",
-            padding: `12px ${trailing ? 44 : 14}px 12px 38px`,
-            background: C.inputBg,
-            border: `1.5px solid ${error ? C.danger : C.border}`,
-            borderRadius: 8,
-            color: C.text,
-            // 16px: anything smaller makes iOS Safari zoom the page when the field is focused.
-            fontSize: 16,
-            fontFamily: "'DM Sans', sans-serif",
-            transition: "border-color 0.2s ease",
-            opacity: input.disabled ? 0.5 : 1,
-            boxSizing: "border-box",
-          }}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className={cn(
+            "bg-background/75 border-input/90 h-12 pl-11 placeholder:text-muted-foreground/85 md:text-base",
+            trailing && "pr-12",
+          )}
         />
         {trailing}
       </div>
-      {error && <p style={{ marginTop: 6, fontSize: 11, color: C.danger }}>{error}</p>}
+      {error && (
+        <p id={`${id}-error`} className="text-sm text-[color:var(--login-error)] [overflow-wrap:anywhere]">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
 function SubmitButton({ loading, locked }: { loading: boolean; locked: boolean }) {
+  const Icon = loading ? Loader2 : locked ? LockKeyhole : ArrowRight;
   return (
-    <button
+    <Button
       type="submit"
       disabled={loading || locked}
-      style={{
-        width: "100%",
-        padding: "14px",
-        background: loading ? "transparent" : `linear-gradient(135deg, ${C.accent}, ${C.accent}cc)`,
-        border: loading ? `1.5px solid ${C.accent}` : "none",
-        borderRadius: 8,
-        color: loading ? C.accent : "#060d09",
-        fontSize: 13,
-        fontWeight: 700,
-        letterSpacing: 2,
-        textTransform: "uppercase",
-        cursor: loading || locked ? "not-allowed" : "pointer",
-        fontFamily: "'DM Sans', sans-serif",
-        opacity: locked ? 0.5 : 1,
-        transition: "all 0.3s ease",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 10,
-      }}
+      className="h-12 w-full rounded-xl text-sm font-semibold disabled:opacity-65"
     >
-      {loading ? (
-        <>
-          <span
-            aria-hidden
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: "50%",
-              border: `2px solid ${C.accent}`,
-              borderTopColor: "transparent",
-              animation: "spin 0.8s linear infinite",
-            }}
-          />
-          Signing in…
-        </>
-      ) : locked ? (
-        "🔒 Try again in a minute"
-      ) : (
-        "Sign In"
-      )}
-    </button>
+      {loading ? "Signing in…" : locked ? "Try again in a minute" : "Sign in"}
+      <Icon aria-hidden className={loading ? "motion-safe:animate-spin" : undefined} />
+    </Button>
   );
 }
