@@ -6,11 +6,18 @@ const api = new URL(process.env.API_PROXY_TARGET ?? "http://localhost:4000").ori
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  assetPrefix: "/saas-static",
   turbopack: { root: fileURLToPath(new URL("../..", import.meta.url)) },
-  images: { remotePatterns: [{ protocol: "https", hostname: "**" }] },
+  images: {
+    path: "/saas-static/_next/image",
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
+  },
   async rewrites() {
     return {
-      beforeFiles: [{ source: "/", destination: "/saas" }],
+      beforeFiles: [
+        { source: "/", destination: "/saas" },
+        { source: "/saas-static/_next/image", destination: "/_next/image" },
+      ],
       afterFiles: [
         "/api/v1/owner-applications/:path*",
         "/api/v1/platform/branding",

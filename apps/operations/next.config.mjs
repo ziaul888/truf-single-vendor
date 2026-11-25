@@ -41,11 +41,7 @@ const nextConfig = {
   },
   // Existing workspace bookmarks open the owner's dashboard.
   async redirects() {
-    return [
-      { source: "/businesses/:path*", destination: "/dashboard", permanent: false },
-      { source: "/saas", destination: `${saasAppOrigin}/saas`, permanent: false },
-      { source: "/saas/apply", destination: `${saasAppOrigin}/saas/apply`, permanent: false },
-    ];
+    return [{ source: "/businesses/:path*", destination: "/dashboard", permanent: false }];
   },
   // Staff and platform calls stay on this origin; Next forwards them to turf-api
   // so their separate httpOnly session cookies remain first-party.
@@ -61,6 +57,8 @@ const nextConfig = {
         },
       ],
       afterFiles: [
+        { source: "/saas/:path*", destination: `${saasAppOrigin}/saas/:path*` },
+        { source: "/saas-static/:path*", destination: `${saasAppOrigin}/saas-static/:path*` },
         {
           source: "/api/v1/:path*",
           destination: `${process.env.API_PROXY_TARGET ?? "http://localhost:4000"}/api/v1/:path*`,

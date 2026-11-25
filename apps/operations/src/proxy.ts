@@ -5,7 +5,6 @@ import {
   turfPortalPath, turfPortalSlugForHost, turfPortalSlugForPath,
 } from "@/lib/turf-portal-path";
 import { getDefaultTurf } from "@/services/turf-portal-request";
-import { saasAppOrigin } from "@/lib/saas-app-origin.mjs";
 
 const ADMIN_PREFIX = "/dashboard";
 const OWNER_ENTRY = "/admin";
@@ -84,7 +83,9 @@ export async function proxy(req: NextRequest) {
   }
 
   if (pathname === "/" && !local) {
-    return NextResponse.redirect(new URL(`/${req.nextUrl.search}`, saasAppOrigin));
+    const url = req.nextUrl.clone();
+    url.pathname = "/saas";
+    return NextResponse.redirect(url);
   }
 
   if (pathname === CUSTOMER_PORTAL_HOME) {

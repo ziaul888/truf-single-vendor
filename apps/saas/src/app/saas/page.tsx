@@ -13,7 +13,7 @@ export default async function SaasPage({
   ]);
   return (
     <SaasLanding
-      homeHref="/"
+      homeHref="/saas"
       ownerHref={ownerAppUrl("/admin")}
       screenshots={screenshots}
       initialInterval={interval === "yearly" ? "yearly" : "monthly"}

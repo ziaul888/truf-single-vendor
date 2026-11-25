@@ -53,8 +53,8 @@ Copy each app’s `.env.example` to `.env.local` in the same directory and point
 
 Run `yarn dev` for the operations app on port 3000, and `yarn dev:saas` for
 the SaaS app on port 3001. The SaaS app serves both the landing page and
-`/saas/apply`. Existing `/saas` and `/saas/apply` links on the operations
-host redirect to the SaaS app and keep their query parameters.
+`/saas/apply`. The operations app forwards `/saas`, `/saas/apply` and the
+SaaS assets to the standalone app. Existing URLs and query parameters still work.
 
 ```text
 apps/
@@ -79,13 +79,12 @@ Set these environment variables before moving production traffic.
 | --- | --- | --- |
 | Both | `API_PROXY_TARGET` | The Render API origin |
 | SaaS | `OWNER_APP_ORIGIN` | The owner dashboard origin |
-| SaaS | `NEXT_PUBLIC_SITE_URL` | The canonical SaaS origin |
-| Operations | `SAAS_APP_ORIGIN` | The SaaS origin |
+| SaaS | `NEXT_PUBLIC_SITE_URL` | The existing public origin used by customers |
+| Operations | `SAAS_APP_ORIGIN` | The standalone SaaS deployment origin |
 
-Add the exact SaaS origin to the API’s existing `CORS_ORIGINS` list. The Apply
-POST uses a same-origin proxy and the API checks the browser’s origin.
-Keep the existing Render service and database. Verify the standalone SaaS
-deployment and its Apply flow before activating the operations redirects.
+The browser submits Apply through the existing public origin. Keep it in the
+API’s `CORS_ORIGINS` list. Verify the standalone deployment and its Apply flow
+through the operations app before promoting the split to production.
 
 
 ---

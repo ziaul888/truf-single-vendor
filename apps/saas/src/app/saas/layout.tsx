@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import { SAAS_SCREENSHOT_DETAILS } from "@/lib/saas-screenshots";
-import { DEFAULT_TAB_ICONS, tabIcons } from "@/lib/app-icons";
 import { getPlatformBranding } from "@/services/platform-branding";
 import "./saas.css";
 
@@ -23,7 +22,10 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: { title, description, siteName: "TurfOrg", images: [image] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
     appleWebApp: null,
-    icons: logoUrl ? tabIcons("platform") : DEFAULT_TAB_ICONS,
+    icons: logoUrl ? {
+      icon: { url: "/saas/app-icon?size=32", sizes: "32x32", type: "image/png" },
+      apple: { url: "/saas/app-icon?size=180", sizes: "180x180", type: "image/png" },
+    } : { icon: "/saas/platform-icon.svg", apple: "/saas/platform-icon.svg" },
   };
 }
 

@@ -1,7 +1,6 @@
 import Image from "next/image";
 import dashboardPreview from "@/assets/owner-dashboard.webp";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowUpRight, LayoutDashboard } from "lucide-react";
 import { LoginBrand, TurfLoginBrand } from "@/components/features/login/login-branding";
@@ -49,12 +48,12 @@ export default async function LoginPage({ searchParams }: {
 
           <div className="border-border mt-6 flex flex-wrap items-center gap-x-2 border-t pt-3 text-sm">
             <span className="text-muted-foreground">Need an owner account?</span>
-            <Link
+            <a
               href="/saas/apply"
               className="text-primary inline-flex min-h-11 items-center gap-1 rounded-sm font-semibold underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
             >
               Apply for access <ArrowUpRight aria-hidden className="size-4 shrink-0" />
-            </Link>
+            </a>
           </div>
         </section>
 

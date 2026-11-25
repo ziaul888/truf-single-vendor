@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
-import { DEFAULT_TAB_ICONS } from "@/lib/app-icons";
 import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
 
@@ -11,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
   title: "TurfOrg",
-  icons: DEFAULT_TAB_ICONS,
+  icons: { icon: "/saas/platform-icon.svg", apple: "/saas/platform-icon.svg" },
   alternates: { canonical: "./" },
 };
 
