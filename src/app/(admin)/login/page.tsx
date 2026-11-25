@@ -1,10 +1,24 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowUpRight, LayoutDashboard } from "lucide-react";
 import { LoginBrand, TurfLoginBrand } from "@/components/features/login/login-branding";
 import { LoginForm } from "@/components/features/login/login-form";
+import { DEFAULT_TAB_ICONS, tabIcons } from "@/lib/app-icons";
+import { getTurfLoginBranding, TURFORG_BRAND } from "@/services/tab-branding";
 import styles from "./login.module.css";
+
+export async function generateMetadata({ searchParams }: {
+  searchParams: Promise<{ turf?: string | string[] }>;
+}): Promise<Metadata> {
+  const { turf } = await searchParams;
+  const brand = await getTurfLoginBranding(turf);
+  return {
+    title: `Owner sign in · ${brand?.venue.name ?? TURFORG_BRAND.name}`,
+    icons: brand ? tabIcons({ turf: brand.slug }) : DEFAULT_TAB_ICONS,
+  };
+}
 
 export default async function LoginPage({ searchParams }: {
   searchParams: Promise<{ turf?: string | string[] }>;

@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { getPublicVenue } from "@/services/website-settings";
 import { getTurfPortalSlug } from "@/services/turf-portal-request";
 import { ConfirmationView } from "@/components/portal/confirmation/confirmation-view";
+
+export const metadata: Metadata = { title: "Booking confirmation" };
 
 export default async function ConfirmationPage({
   params,

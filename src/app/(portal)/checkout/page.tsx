@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { FORMAT_LABEL } from "@/lib/portal-stub-data";
 import { getPublicGround, getPublicSlots } from "@/services/portal-grounds";
@@ -12,6 +13,8 @@ import { CheckoutTotals } from "@/components/portal/checkout/checkout-totals";
 import { GroundRules } from "@/components/portal/ground-rules";
 import type { Ground } from "@/types/api";
 import type { PublicSlot } from "@/types/slot";
+
+export const metadata: Metadata = { title: "Checkout" };
 
 export default async function CheckoutPage({
   searchParams,

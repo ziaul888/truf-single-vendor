@@ -1,4 +1,5 @@
 export const TURF_PORTAL_HEADER = "x-turf-portal-slug";
+export const DASHBOARD_PATH_HEADER = "x-turf-dashboard-path";
 export const CUSTOMER_PORTAL_HOME = "/turf";
 export const CUSTOMER_PORTAL_HOME_HEADER = "x-turf-portal-home";
 export const SAAS_PRODUCTION_ORIGIN = "https://turforg.vercel.app";

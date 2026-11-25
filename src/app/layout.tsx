@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { getPublicVenue } from "@/services/website-settings";
 import { siteUrl } from "@/lib/site-url";
-import { socialMetadata, venueDescription } from "@/lib/seo";
+import { DEFAULT_TAB_ICONS } from "@/lib/app-icons";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -12,23 +11,12 @@ const inter = Inter({ subsets: ["latin"] });
 /** Phones first: `cover` lets sticky bottom bars pad for the home indicator with env(safe-area-inset-bottom). */
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
-/** The tab title and icon follow the venue's name and logo (Settings → General), on the portal and admin alike. */
-export async function generateMetadata(): Promise<Metadata> {
-  const venue = await getPublicVenue();
-  const description = venueDescription(venue.name, venue.address);
-  return {
-    // Resolves the relative canonical and share-image URLs below.
-    metadataBase: siteUrl(),
-    title: { default: venue.name, template: `%s · ${venue.name}` },
-    description,
-    // Each page is its own canonical, without its query string (?date=, ?sport= and so on).
-    alternates: { canonical: "./" },
-    ...socialMetadata({ title: venue.name, description, siteName: venue.name }),
-    icons: { ...(venue.logoUrl && { icon: venue.logoUrl }), apple: "/app-icon?size=180" },
-    // Opened from the home screen it runs full screen, like an app; headers pad for the status bar.
-    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: venue.name },
-  };
-}
+export const metadata: Metadata = {
+  metadataBase: siteUrl(),
+  title: "TurfOrg",
+  alternates: { canonical: "./" },
+  icons: DEFAULT_TAB_ICONS,
+};
 
 export default function RootLayout({
   children,

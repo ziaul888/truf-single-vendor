@@ -1,19 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { platformApi } from "@/lib/platform-api";
+import type { PlatformBranding } from "@/lib/platform-branding";
 import type { ApiSuccess } from "@/types/api";
 
-export interface PlatformBranding {
-  title: string;
-  subtitle: string;
-  logoUrl: string | null;
-}
-
-export const DEFAULT_PLATFORM_BRANDING: PlatformBranding = {
-  title: "SaaS Admin",
-  subtitle: "Platform administration",
-  logoUrl: null,
-};
+export { DEFAULT_PLATFORM_BRANDING, type PlatformBranding } from "@/lib/platform-branding";
 
 const queryKey = ["platform", "branding"];
 

@@ -1,15 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { cookies } from "next/headers";
-
-/** The staff app installs on its own (admin.webmanifest), opening straight on the dashboard. */
-const staffMetadata: Metadata = {
-  manifest: "/admin.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Turf Admin" },
-};
+import { cookies, headers } from "next/headers";
+import { tabIcons } from "@/lib/app-icons";
+import { dashboardTitle } from "@/lib/dashboard-title";
+import { DASHBOARD_PATH_HEADER } from "@/lib/turf-portal-path";
+import { getDashboardBranding } from "@/services/tab-branding";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return staffMetadata;
+  const [requestHeaders, { venue, isOwner }] = await Promise.all([headers(), getDashboardBranding()]);
+  const title = dashboardTitle(requestHeaders.get(DASHBOARD_PATH_HEADER) ?? "");
+  return {
+    title: `${title} · ${venue.name}`,
+    icons: tabIcons(isOwner ? "owner" : undefined),
+    manifest: "/admin.webmanifest",
+    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: `${venue.name} Admin` },
+  };
 }
 
 export const viewport: Viewport = {

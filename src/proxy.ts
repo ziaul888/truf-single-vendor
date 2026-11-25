@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  CUSTOMER_PORTAL_HOME, CUSTOMER_PORTAL_HOME_HEADER, isLocalHost, isTurfPortalPage,
+  CUSTOMER_PORTAL_HOME, CUSTOMER_PORTAL_HOME_HEADER, DASHBOARD_PATH_HEADER, isLocalHost, isTurfPortalPage,
   PLATFORM_ADMIN_HOST, SAAS_PRODUCTION_ORIGIN, TURF_OWNER_HOSTS, TURF_PORTAL_HEADER,
   turfPortalPath, turfPortalSlugForHost, turfPortalSlugForPath,
 } from "@/lib/turf-portal-path";
@@ -108,6 +108,7 @@ export async function proxy(req: NextRequest) {
 
   // Presence check only: turf-api verifies the token on every request, and a 401
   // there sends the user back to /login. The frontend never holds JWT_SECRET.
+  requestHeaders.set(DASHBOARD_PATH_HEADER, pathname);
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 

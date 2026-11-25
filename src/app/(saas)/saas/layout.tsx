@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import { SAAS_SCREENSHOT_DETAILS } from "@/lib/saas-screenshots";
+import { DEFAULT_TAB_ICONS, tabIcons } from "@/lib/app-icons";
+import { getPlatformBranding } from "@/services/tab-branding";
 import "./saas.css";
 
 const display = Bricolage_Grotesque({
@@ -13,14 +15,17 @@ const title = "TurfOrg · Plans and pricing";
 const description = "Compare monthly and yearly plans for turf settings, grounds, slot generation and staff management.";
 const image = SAAS_SCREENSHOT_DETAILS.desktop.src;
 
-export const metadata: Metadata = {
-  title: { absolute: title },
-  description,
-  openGraph: { title, description, siteName: "TurfOrg", images: [image] },
-  twitter: { card: "summary_large_image", title, description, images: [image] },
-  appleWebApp: null,
-  icons: null,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { logoUrl } = await getPlatformBranding();
+  return {
+    title: { default: title, template: "%s · TurfOrg" },
+    description,
+    openGraph: { title, description, siteName: "TurfOrg", images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+    appleWebApp: null,
+    icons: logoUrl ? tabIcons("platform") : DEFAULT_TAB_ICONS,
+  };
+}
 
 export default function SaasLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -15,19 +15,20 @@ import { PortalLink as Link, TurfPortalScope } from "@/components/portal/turf-po
 import { getTurfPortalHome, getTurfPortalSlug } from "@/services/turf-portal-request";
 import { turfPortalPath } from "@/lib/turf-portal-path";
 import { socialMetadata, venueDescription } from "@/lib/seo";
+import { tabIcons } from "@/lib/app-icons";
 
 /** The browser / status bar takes the header colour (the sidebar token is dark in every theme). */
 export const viewport: Viewport = { themeColor: "#110d0c" };
 
 export async function generateMetadata(): Promise<Metadata> {
   const slug = await getTurfPortalSlug();
-  if (!slug) return {};
   const { venue } = await getPublicWebsite(slug);
   const description = venueDescription(venue.name, venue.address);
   return {
     title: { default: venue.name, template: `%s · ${venue.name}` },
     description,
-    alternates: { canonical: turfPortalPath(slug) },
+    ...(slug && { alternates: { canonical: turfPortalPath(slug) } }),
+    icons: tabIcons(slug ? { turf: slug } : undefined),
     ...socialMetadata({ title: venue.name, description, siteName: venue.name }),
     appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: venue.name },
   };
