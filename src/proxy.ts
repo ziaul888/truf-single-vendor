@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  CUSTOMER_PORTAL_HOME, CUSTOMER_PORTAL_HOME_HEADER, isLocalHost, isTurfPortalPage, isTurfPortalSlug,
+  CUSTOMER_PORTAL_HOME, CUSTOMER_PORTAL_HOME_HEADER, isLocalHost, isTurfPortalPage,
   PLATFORM_ADMIN_HOST, SAAS_PRODUCTION_ORIGIN, TURF_OWNER_HOSTS, TURF_PORTAL_HEADER,
   turfPortalPath, turfPortalSlugForHost, turfPortalSlugForPath,
 } from "@/lib/turf-portal-path";
+import { getDefaultTurf } from "@/services/turf-portal-request";
 
 const ADMIN_PREFIX = "/dashboard";
 const OWNER_ENTRY = "/admin";
@@ -20,22 +21,6 @@ function passToTurfPortal(req: NextRequest, slug: string) {
   requestHeaders.set(TURF_PORTAL_HEADER, slug);
   requestHeaders.delete(CUSTOMER_PORTAL_HOME_HEADER);
   return NextResponse.next({ request: { headers: requestHeaders } });
-}
-
-async function getDefaultTurf() {
-  try {
-    const api = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
-    const response = await fetch(new URL("/api/v1/turfs/default", api), {
-      cache: "no-store",
-      signal: AbortSignal.timeout(2000),
-    });
-    if (!response.ok) return undefined;
-    const { data, success } = await response.json();
-    const slug = data?.slug;
-    return success && typeof slug === "string" && isTurfPortalSlug(slug) ? slug : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 /**

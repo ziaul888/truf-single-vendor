@@ -15,17 +15,23 @@ export interface PublicWebsite extends WebsiteSettings {
   venue: PublicVenue;
 }
 
+export async function getPublicTurfWebsite(slug: string, signal?: AbortSignal): Promise<PublicWebsite | null> {
+  const res = await fetch(`${API_TARGET}/api/v1${turfPortalApiPrefix(slug)}/website`, { cache: "no-store", signal });
+  if (res.status === 404) return null;
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error("Couldn’t load this turf website.");
+  return json.data;
+}
+
 /**
  * GET /website: the content plus the public venue profile, in one request. Cached here for 60 s
  * (turf-api caches it for 60 s too), so an admin's edit can take up to a minute to show on the portal.
  */
 export async function getPublicWebsite(slug?: string): Promise<PublicWebsite> {
   if (slug) {
-    const res = await fetch(`${API_TARGET}/api/v1${turfPortalApiPrefix(slug)}/website`, { cache: "no-store" });
-    if (res.status === 404) notFound();
-    const json = await res.json();
-    if (!res.ok || !json.success) throw new Error("Couldn’t load this turf website.");
-    return json.data;
+    const website = await getPublicTurfWebsite(slug);
+    if (!website) notFound();
+    return website;
   }
   try {
     const res = await fetch(`${API_TARGET}/api/v1/website`, { next: CACHE });

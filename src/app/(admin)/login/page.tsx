@@ -2,16 +2,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowUpRight, LayoutDashboard } from "lucide-react";
-import { LoginBrand } from "@/components/features/login/login-branding";
+import { LoginBrand, TurfLoginBrand } from "@/components/features/login/login-branding";
 import { LoginForm } from "@/components/features/login/login-form";
 import styles from "./login.module.css";
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: {
+  searchParams: Promise<{ turf?: string | string[] }>;
+}) {
+  const { turf } = await searchParams;
+
   return (
     <main className={`${styles.page} pitch bg-sidebar text-foreground grid min-h-dvh place-items-center px-4 sm:px-8`}>
       <div className="bg-card grid w-full max-w-lg overflow-hidden rounded-3xl border shadow-2xl shadow-black/25 lg:max-w-6xl lg:grid-cols-[minmax(25rem,0.85fr)_minmax(0,1.15fr)]">
         <section aria-labelledby="owner-login-heading" className="min-w-0 px-5 py-8 sm:px-10 sm:py-10 lg:px-12 lg:py-12">
-          <LoginBrand />
+          <Suspense fallback={<LoginBrand />}>
+            <TurfLoginBrand turf={turf} />
+          </Suspense>
 
           <div className="mt-9 mb-7 sm:mt-10 sm:mb-8">
             <h1 id="owner-login-heading" className="text-3xl font-bold tracking-[-0.045em] sm:text-4xl">

@@ -20,6 +20,7 @@ const ROLE_LABEL = { admin: "Admin", manager: "Manager", owner: "Admin" } as con
 export function SidebarUserMenu({ audience = "staff" }: { audience?: DashboardAudience }) {
   const { data: me } = useMe(audience);
   const { logout, loggingOut } = useLogout(audience);
+  const turfSlug = me && "tenant" in me ? me.tenant.slug : undefined;
 
   const name = me?.name ?? "…";
   const email = me?.email ?? "";
@@ -89,7 +90,7 @@ export function SidebarUserMenu({ audience = "staff" }: { audience?: DashboardAu
           <DropdownMenuItem
             className="text-destructive focus:text-destructive gap-2"
             disabled={loggingOut}
-            onSelect={() => logout()}
+            onSelect={() => logout(turfSlug)}
           >
             {loggingOut ? (
               <Loader2 className="h-4 w-4 animate-spin" />

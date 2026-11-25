@@ -9,14 +9,14 @@ export function useLogout(audience: DashboardAudience = "staff") {
   const queryClient = useQueryClient();
   const [loggingOut, setLoggingOut] = useState(false);
 
-  async function logout() {
+  async function logout(turfSlug?: string) {
     setLoggingOut(true);
     // Logout always succeeds on the API; a network failure still sends the user to /login.
     const endpoint =
       audience === "owner" ? "/api/v1/owner/auth/logout" : "/api/v1/admin/auth/logout";
     await fetch(endpoint, { method: "POST" }).catch(() => undefined);
     queryClient.clear();
-    router.push("/login");
+    router.push(turfSlug ? `/login?turf=${encodeURIComponent(turfSlug)}` : "/login");
     router.refresh();
   }
 
