@@ -143,7 +143,7 @@ export function SignedOut({ title = "Your bookings", from = "/my-bookings" }: { 
       </div>
       <h1 className="mt-6 text-3xl font-extrabold tracking-tight">{title}</h1>
       <p className="mt-2 text-muted-foreground">
-        Sign in with your mobile number to see every booking you&apos;ve made, or open the link in your confirmation email.
+        Sign in with your phone or email to see your bookings, or open the link in your confirmation email.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link href={`/sign-in?from=${encodeURIComponent(from)}`}

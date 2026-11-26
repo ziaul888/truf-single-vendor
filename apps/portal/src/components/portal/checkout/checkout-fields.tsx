@@ -30,7 +30,7 @@ export function Field({
 export function SignInNotice({ href }: { href: string }) {
   return (
     <div role="status" className="mt-4 rounded-lg border bg-muted/40 p-4 text-sm">
-      <p>Sign in with your phone number to pay at the venue or by bKash / Nagad. Card payment works without signing in.</p>
+      <p>Sign in to pay at the venue or by bKash / Nagad. Card payment works without signing in.</p>
       <Link
         href={href}
         className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90"

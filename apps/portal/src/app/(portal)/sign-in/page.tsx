@@ -11,7 +11,7 @@ export default async function SignInPage() {
     <div className="mx-auto max-w-md px-4 py-16 sm:px-6">
       <h1 className="text-center text-3xl font-extrabold tracking-tight">Sign in</h1>
       <p className="mt-2 text-center text-sm text-muted-foreground">
-        {slug ? "Verify your mobile number to reserve slots and view your bookings at this turf." : "Use your mobile number to see all your bookings. No password needed."}
+        {slug ? "Sign in to reserve slots and view your bookings at this turf." : "Sign in with a one-time code sent to your email or phone."}
       </p>
       <div className="mt-8">
         {/* useSearchParams (?from=) needs a Suspense boundary */}

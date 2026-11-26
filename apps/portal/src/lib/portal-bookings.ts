@@ -105,6 +105,25 @@ export const sendSignInCode = (phone: string, slug?: string) =>
 export const verifySignInCode = (phone: string, code: string, slug?: string) =>
   call<CustomerSession>("/customer/auth/verify", { method: "POST", body: JSON.stringify({ phone, code }) }, slug);
 
+export const verifyPhoneLink = (phone: string, code: string, slug?: string) =>
+  call<CustomerSession>("/customer/auth/verify", {
+    method: "POST", body: JSON.stringify({ phone, code, linkPhone: true }),
+  }, slug);
+
+type CustomerEmailCodePurpose = "sign-in" | "link";
+const emailAuthPath = (purpose: CustomerEmailCodePurpose) =>
+  purpose === "link" ? "/customer/auth/email/link" : "/customer/auth/email";
+
+export const sendEmailCode = (purpose: CustomerEmailCodePurpose, email: string, slug?: string) =>
+  call<{ sent: true }>(`${emailAuthPath(purpose)}/send-code`, {
+    method: "POST", body: JSON.stringify({ email }),
+  }, slug);
+
+export const verifyEmailCode = (purpose: CustomerEmailCodePurpose, email: string, code: string, slug?: string) =>
+  call<CustomerSession>(`${emailAuthPath(purpose)}/verify`, {
+    method: "POST", body: JSON.stringify({ email, code }),
+  }, slug);
+
 /** Creates the customer record for a new number, or updates name and email ("" keeps the stored email). */
 export const saveCustomerProfile = (profile: { name: string; email: string }, slug?: string) =>
   call<CustomerSession>("/customer/auth/profile", { method: "POST", body: JSON.stringify(profile) }, slug);

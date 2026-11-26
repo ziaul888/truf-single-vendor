@@ -10,6 +10,7 @@ import { Loader2, Lock, Wallet } from "lucide-react";
 import { PortalApiError, startCheckout, markLeavingForPayment, toAppPath } from "@/lib/portal-bookings";
 import type { CheckoutMethod } from "@/types/booking";
 import { customerSessionKey, useCustomerSession } from "@/components/portal/account/use-customer-session";
+import { LinkPhoneForm } from "@/components/portal/account/link-phone-form";
 import { checkoutFormSchema, CHECKOUT_FIELDS, EMAIL_REQUIRED_MESSAGE, type CheckoutFormValues } from "./checkout-schema";
 import { Field, PaymentChoice, SignInNotice } from "./checkout-fields";
 import { formatSlotsParam, slotStartMinute, slotStartTime } from "@/lib/slot-format";
@@ -56,7 +57,7 @@ export function CheckoutForm({
 
   useEffect(() => {
     if (!session) return;
-    setValue("customerPhone", session.phone, { shouldValidate: true });
+    if (session.phone) setValue("customerPhone", session.phone, { shouldValidate: true });
     if (session.name && !watch("customerName")) setValue("customerName", session.name);
     if (session.email && !watch("customerEmail")) setValue("customerEmail", session.email);
   }, [session, setValue, watch]);
@@ -131,7 +132,7 @@ export function CheckoutForm({
     if (err.code === "SIGN_IN_REQUIRED") {
       // The session ended meanwhile: drop it so the sign-in notice shows.
       queryClient.setQueryData(customerSessionKey(slug), null);
-      setFormError({ message: "Please sign in with your phone number to pay at the venue or by bKash / Nagad.", slotTaken: false });
+      setFormError({ message: "Please sign in to pay at the venue or by bKash / Nagad.", slotTaken: false });
     } else if (err.code === "TOO_MANY_OPEN_BOOKINGS") {
       setFormError({
         message: slug ? "You already have 3 unpaid bookings. Pay or cancel one before booking again." : "You already have 3 unpaid bookings waiting. Pay or cancel one of them first, or pay by card.",
@@ -157,6 +158,14 @@ export function CheckoutForm({
     : undefined;
   // Booking money needs a wallet to send it to; turf-api hides cash otherwise, this guards a stale page.
   const noDepositWallet = bookingMoneyOn && !depositWallet;
+
+  if (session && !session.phone) {
+    return (
+      <div className="mt-8 rounded-2xl border bg-card p-4 sm:p-6">
+        <LinkPhoneForm />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8 space-y-6 rounded-2xl border bg-card p-4 sm:p-6">

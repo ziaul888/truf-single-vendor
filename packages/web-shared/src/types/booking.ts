@@ -302,12 +302,14 @@ export interface DashboardStats {
 
 /** name, email and customerId are null for a number that has never booked. */
 export interface CustomerSession {
-  phone: string;
+  phone: string | null;
   customerId: string | null;
   name: string | null;
   email: string | null;
   /** True when the number has no customer record yet — ask for name and email. */
   needsProfile: boolean;
+  verifiedEmail?: string;
+  signInMethod?: "email";
 }
 
 /** A signed-in customer's booking: the public booking plus its signed link. */

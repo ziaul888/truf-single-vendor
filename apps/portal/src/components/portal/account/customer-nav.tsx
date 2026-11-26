@@ -23,7 +23,7 @@ export function CustomerNav() {
     );
   }
 
-  const label = session.name?.split(" ")[0] ?? session.phone;
+  const label = session.name?.split(" ")[0] ?? session.phone ?? "Account";
   return (
     <div className="flex items-center">
       <Link href="/account" title="My profile"

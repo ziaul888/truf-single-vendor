@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { useCustomerSession, useCustomerSignOut } from "./use-customer-session";
 import { CustomerProfileForm } from "./customer-profile-form";
 import { AccountBookingsCard } from "./account-bookings-card";
+import { SignInEmail } from "./sign-in-email";
+import { LinkPhoneForm } from "./link-phone-form";
 import { SignedOut } from "./my-bookings-view";
 import { AccountSkeleton } from "@/components/portal/loading/account-skeletons";
 
@@ -34,7 +36,7 @@ export function AccountView() {
         </span>
         <div className="min-w-0">
           <h1 className="truncate text-3xl font-extrabold tracking-tight">{s.name ?? "Your profile"}</h1>
-          <p className="text-sm text-muted-foreground">{s.phone}</p>
+          <p className="text-sm text-muted-foreground wrap-anywhere">{s.phone ?? s.verifiedEmail}</p>
         </div>
       </div>
 
@@ -45,6 +47,7 @@ export function AccountView() {
             <p className="mt-1 text-sm text-accent">Add your name and email so we can send your booking confirmations.</p>
           )}
 
+          {s.phone ? (
           <div className="mt-4 rounded-xl bg-muted/40 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mobile number</p>
             <p className="mt-1 flex items-center gap-2 font-medium">
@@ -55,9 +58,15 @@ export function AccountView() {
             </p>
             <p className="mt-1 text-xs text-muted-foreground">Your sign-in number. To use another one, sign out and sign in with it.</p>
           </div>
+          ) : (
+            <div className="mt-4 rounded-xl border p-4">
+              <LinkPhoneForm />
+            </div>
+          )}
 
           <div className="mt-4">
             <CustomerProfileForm
+              key={s.customerId}
               initial={{ name: s.name ?? undefined, email: s.email ?? undefined }}
               submitLabel={s.needsProfile ? "Save details" : "Save changes"}
               onSaved={() => toast.success("Profile saved")}
@@ -66,6 +75,7 @@ export function AccountView() {
         </section>
 
         <div className="space-y-6">
+          <SignInEmail session={s} />
           <AccountBookingsCard />
           <section className="rounded-2xl border bg-card p-6">
             <h2 className="font-bold">Sign out</h2>
