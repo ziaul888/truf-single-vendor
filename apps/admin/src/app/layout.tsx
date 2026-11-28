@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { siteUrl } from "@/lib/site-url";
 import { DEFAULT_TAB_ICONS } from "@/lib/app-icons";
+import { PRODUCT_NAME } from "@/lib/product-name";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -13,7 +14,8 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
-  title: "TurfOrg",
+  title: PRODUCT_NAME,
+  applicationName: PRODUCT_NAME,
   alternates: { canonical: "./" },
   icons: DEFAULT_TAB_ICONS,
 };

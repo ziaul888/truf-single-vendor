@@ -1,5 +1,5 @@
 {
-  "name": "turforg",
+  "name": "turfops",
   "private": true,
   "packageManager": "yarn@1.22.22",
   "workspaces": [

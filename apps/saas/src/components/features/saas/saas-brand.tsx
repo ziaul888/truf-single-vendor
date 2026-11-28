@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Layers3 } from "lucide-react";
 import { FallbackImage } from "@/components/fallback-image";
 import { usePlatformBranding } from "@/hooks/usePublicPlatformBranding";
+import { PRODUCT_NAME } from "@/lib/product-name";
 import { cn } from "@/lib/utils";
 
 export function SaasBrand({ homeHref, logoOnly = false }: { homeHref: string; logoOnly?: boolean }) {
@@ -12,7 +13,7 @@ export function SaasBrand({ homeHref, logoOnly = false }: { homeHref: string; lo
   const defaultMark = logoOnly ? <span className="saas-brand-mark">{icon}</span> : icon;
 
   return (
-    <Link href={homeHref} className="saas-brand" aria-label="TurfOrg home">
+    <Link href={homeHref} className="saas-brand" aria-label={`${PRODUCT_NAME} home`}>
       <span
         aria-hidden
         className={cn(
@@ -35,8 +36,7 @@ export function SaasBrand({ homeHref, logoOnly = false }: { homeHref: string; lo
       </span>
       {!logoOnly && (
         <span>
-          Turf<span className="text-primary">Org</span>
-          <span className="text-primary">.</span>
+          turf<span className="text-primary">Ops.</span>
         </span>
       )}
     </Link>

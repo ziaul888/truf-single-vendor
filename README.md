@@ -1,4 +1,4 @@
-# 🏟️ Turf Admin Panel
+# turfOps
 
 Turf Management System - Admin Panel built with Next.js 16, TypeScript, and Tailwind CSS.
 

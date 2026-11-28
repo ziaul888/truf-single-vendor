@@ -23,6 +23,7 @@ import {
   Play,
 } from "lucide-react";
 import { SaasScreenshotImage } from "@/components/saas-screenshot-image";
+import { PRODUCT_NAME } from "@/lib/product-name";
 
 const slides = [
   { label: "Booking site", title: "Booking website", icon: MonitorSmartphone },
@@ -31,21 +32,21 @@ const slides = [
     title: "Owner dashboard",
     icon: LayoutDashboard,
     src: dashboardPreview,
-    alt: "TurfOrg owner dashboard with sales, upcoming bookings, and ground availability",
+    alt: `${PRODUCT_NAME} owner dashboard with sales, upcoming bookings, and ground availability`,
   },
   {
     label: "Calendar",
     title: "Booking calendar",
     icon: CalendarDays,
     src: "/saas/booking-calendar.webp",
-    alt: "TurfOrg booking calendar with a month of bookings and available slots",
+    alt: `${PRODUCT_NAME} booking calendar with a month of bookings and available slots`,
   },
   {
     label: "Reports",
     title: "Sales reports",
     icon: BarChart3,
     src: "/saas/sales-reports.webp",
-    alt: "TurfOrg reports with a sales trend chart, booking totals, and completion rate",
+    alt: `${PRODUCT_NAME} reports with a sales trend chart, booking totals, and completion rate`,
   },
 ] as const;
 

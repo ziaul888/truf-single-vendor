@@ -1,5 +1,6 @@
 import { getPublicVenue } from "@/services/website-settings";
 import { appIcons } from "@/lib/app-icons";
+import { PRODUCT_NAME } from "@/lib/product-name";
 
 /**
  * The staff app, installable from the dashboard. Its own id and start page, so staff can keep it on
@@ -10,7 +11,7 @@ export async function GET() {
   const manifest = {
     id: "/dashboard",
     name: `${venue.name} Admin`,
-    short_name: "Turf Admin",
+    short_name: `${PRODUCT_NAME} Admin`,
     description: "Bookings, slots and payments for the venue.",
     start_url: "/dashboard",
     scope: "/",

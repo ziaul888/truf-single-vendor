@@ -1,5 +1,5 @@
 import { getPublicVenue } from "@/services/website-settings";
-import { getTurfLoginBranding, TURFORG_BRAND } from "@/services/turf-login-branding";
+import { getTurfLoginBranding, PRODUCT_BRAND } from "@/services/turf-login-branding";
 import { getPlatformBranding } from "@/services/platform-branding";
 import { renderAppIcon } from "@/services/render-app-icon";
 
@@ -10,7 +10,7 @@ async function iconBrand(params: URLSearchParams) {
     return { name: platform.title, logoUrl: platform.logoUrl };
   }
   const turf = params.get("turf");
-  if (turf) return (await getTurfLoginBranding(turf))?.venue ?? TURFORG_BRAND;
+  if (turf) return (await getTurfLoginBranding(turf))?.venue ?? PRODUCT_BRAND;
   return getPublicVenue();
 }
 

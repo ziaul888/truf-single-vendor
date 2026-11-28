@@ -6,7 +6,7 @@ import { ArrowUpRight, LayoutDashboard } from "lucide-react";
 import { LoginBrand, TurfLoginBrand } from "@/components/features/login/login-branding";
 import { LoginForm } from "@/components/features/login/login-form";
 import { DEFAULT_TAB_ICONS, tabIcons } from "@/lib/app-icons";
-import { getTurfLoginBranding, TURFORG_BRAND } from "@/services/turf-login-branding";
+import { getTurfLoginBranding, PRODUCT_BRAND } from "@/services/turf-login-branding";
 import styles from "./login.module.css";
 
 export async function generateMetadata({ searchParams }: {
@@ -15,7 +15,7 @@ export async function generateMetadata({ searchParams }: {
   const { turf } = await searchParams;
   const brand = await getTurfLoginBranding(turf);
   return {
-    title: `Owner sign in · ${brand?.venue.name ?? TURFORG_BRAND.name}`,
+    title: `Owner sign in · ${brand?.venue.name ?? PRODUCT_BRAND.name}`,
     icons: brand ? tabIcons({ turf: brand.slug }, "/admin-icon") : DEFAULT_TAB_ICONS,
   };
 }

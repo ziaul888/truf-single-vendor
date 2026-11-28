@@ -20,6 +20,7 @@ import { SaasPricing } from "./saas-pricing";
 import { SaasBrand } from "./saas-brand";
 import { SaasProductCarousel } from "./saas-product-carousel";
 import { SaasScreenshotImage } from "@/components/saas-screenshot-image";
+import { PRODUCT_NAME } from "@/lib/product-name";
 import type { SaasScreenshots } from "@/lib/saas-screenshots";
 import type { BillingInterval } from "@/types/platform-billing";
 
@@ -186,7 +187,7 @@ export function SaasLanding({ homeHref, ownerHref, screenshots, initialInterval 
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <Button asChild size="lg" className="saas-button h-12 px-6 text-base">
                   <Link href={applyHref}>
-                    Get started with TurfOrg <ArrowRight aria-hidden />
+                    Get started with {PRODUCT_NAME} <ArrowRight aria-hidden />
                   </Link>
                 </Button>
                 <Button
@@ -394,7 +395,7 @@ export function SaasLanding({ homeHref, ownerHref, screenshots, initialInterval 
                 <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
                   <Button asChild size="lg" className="saas-button h-12 px-6 text-base">
                     <Link href={applyHref}>
-                      Get started with TurfOrg <ArrowRight aria-hidden />
+                      Get started with {PRODUCT_NAME} <ArrowRight aria-hidden />
                     </Link>
                   </Button>
                   <Link href={ownerHref} className="saas-band-link">

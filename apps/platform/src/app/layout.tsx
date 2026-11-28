@@ -3,13 +3,15 @@ import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { siteUrl } from "@/lib/site-url";
+import { PRODUCT_NAME } from "@/lib/product-name";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
-  title: "TurfOrg",
+  title: PRODUCT_NAME,
+  applicationName: PRODUCT_NAME,
   robots: { index: false, follow: false },
 };
 
