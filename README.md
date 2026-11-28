@@ -74,6 +74,23 @@ packages/
   web-shared/        Shared UI, branding and API types
 ```
 
+## Email notifications
+
+Set `RESEND_API_KEY` and `EMAIL_FROM` in `turf-api/.env` for local development
+or in the Render service environment for a deployment. Resend is selected when
+its key is present. Restart the API after changing the settings.
+
+- For a local test without a custom domain, use `EMAIL_FROM=onboarding@resend.dev`.
+  In staff **Settings → Notifications**, send a test to `delivered@resend.dev`
+  to simulate delivery. To complete a real customer sign-in with an OTP, enter
+  the email address associated with your Resend account on the portal sign-in page.
+  [Resend test addresses](https://resend.com/docs/dashboard/emails/send-test-emails)
+  [Resend test sender limits](https://resend.com/docs/knowledge-base/403-error-resend-dev-domain)
+- For live customer emails and sign-in codes, verify a domain you control in
+  Resend and set `EMAIL_FROM` to an address on that domain. The portal can be
+  hosted at `turforg.vercel.app` while email uses the verified sending domain.
+  [Resend domain verification](https://resend.com/docs/dashboard/domains/introduction)
+
 ## Independent deployment
 
 Build one app with `yarn workspace @turforg/<app> build`, where `<app>` is

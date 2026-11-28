@@ -43,7 +43,7 @@ export function StaffEmailsSection({ form }: { form: UseFormReturn<Notifications
             key={s.name}
             control={form.control}
             name={s.name}
-            render={({ field }) => <SettingToggle label={s.label} desc={s.desc} checked={field.value} onChange={field.onChange} />}
+            render={({ field }) => <SettingToggle label={s.label} desc={s.desc} checked={field.value ?? false} onChange={field.onChange} />}
           />
         ))}
       </div>

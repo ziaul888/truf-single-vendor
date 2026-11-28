@@ -10,6 +10,7 @@ import { Loader2, Mail, Smartphone } from "lucide-react";
 import { useTurfPortal } from "@/components/portal/turf-portal-scope";
 import { turfPortalPath } from "@/lib/turf-portal-path";
 import {
+  PortalApiError,
   sendEmailCode,
   sendSignInCode,
   verifyEmailCode,
@@ -23,6 +24,7 @@ import { CODE_BUTTON, CODE_INPUT, VerificationCodeForm, codeError } from "./veri
 
 type SignInMethod = "phone" | "email";
 type SignInStep = "address" | "code" | "profile";
+type SignInSendError = { message: string; canSwitchToPhone: boolean };
 
 const phoneAddress = z
   .string()
@@ -169,9 +171,15 @@ function SignInAddressForm({
     resolver: zodResolver(z.object({ address: byEmail ? emailAddress : phoneAddress })),
     defaultValues: { address: "" },
   });
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SignInSendError | null>(null);
   const busy = form.formState.isSubmitting;
   const fieldError = form.formState.errors.address;
+
+  function changeMethod(next: SignInMethod) {
+    form.resetField("address");
+    setError(null);
+    onMethodChange(next);
+  }
 
   return (
     <form
@@ -182,7 +190,12 @@ function SignInAddressForm({
         try {
           await onSend(address);
         } catch (err) {
-          setError(codeError(err));
+          const code = err instanceof PortalApiError ? err.code : undefined;
+          const emailUnavailable = code === "EMAIL_SIGN_IN_UNAVAILABLE";
+          setError({
+            message: emailUnavailable ? "Email sign-in is temporarily unavailable." : codeError(err),
+            canSwitchToPhone: byEmail && (emailUnavailable || code === "EMAIL_CODE_DELIVERY_FAILED"),
+          });
         }
       })}
     >
@@ -200,11 +213,7 @@ function SignInAddressForm({
               name="sign-in-method"
               value={value}
               checked={method === value}
-              onChange={() => {
-                form.reset({ address: "" });
-                setError(null);
-                onMethodChange(value);
-              }}
+              onChange={() => changeMethod(value)}
               className="peer sr-only"
             />
             <span className="peer-checked:border-primary peer-checked:bg-primary/10 peer-focus-visible:ring-ring flex min-h-11 items-center justify-center gap-2 rounded-lg border px-2 text-sm font-semibold peer-focus-visible:ring-2 motion-safe:transition-colors">
@@ -246,13 +255,27 @@ function SignInAddressForm({
       </div>
       {error && (
         <p role="alert" className="text-destructive text-sm">
-          {error}
+          {error.message}
         </p>
       )}
       <button type="submit" disabled={busy} className={CODE_BUTTON}>
         {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
         {busy ? "Sending…" : "Send code"}
       </button>
+      {error?.canSwitchToPhone && (
+        <button
+          type="button"
+          disabled={busy}
+          className="text-accent min-h-11 w-full text-center text-sm font-semibold hover:underline"
+          onClick={(event) => {
+            const input = event.currentTarget.form?.elements.namedItem("address");
+            changeMethod("phone");
+            if (input instanceof HTMLInputElement) requestAnimationFrame(() => input.focus());
+          }}
+        >
+          Sign in with a linked phone number
+        </button>
+      )}
     </form>
   );
 }

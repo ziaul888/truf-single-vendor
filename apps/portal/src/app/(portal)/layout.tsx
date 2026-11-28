@@ -15,6 +15,7 @@ import { getTurfPortalHome, getTurfPortalSlug } from "@/services/turf-portal-req
 import { turfPortalPath } from "@/lib/turf-portal-path";
 import { socialMetadata, venueDescription } from "@/lib/seo";
 import { tabIcons } from "@/lib/app-icons";
+import { cn } from "@/lib/utils";
 
 /** The browser / status bar takes the header colour (the sidebar token is dark in every theme). */
 export const viewport: Viewport = { themeColor: "#110d0c" };
@@ -41,10 +42,14 @@ export default async function PortalLayout({ children }: { children: React.React
   const slug = await getTurfPortalSlug();
   const { venue, social } = await getPublicWebsite(slug);
   const [bookHref, homePath] = await Promise.all([bookingHref(slug), getTurfPortalHome(slug)]);
-  // A fixed mobile action bar takes the place of the portal tabs on small screens.
   return (
     <TurfPortalScope slug={slug} timezone={slug ? venue.locale.timezone : undefined} homePath={homePath}>
-      <FootballClickFeedback className="flex min-h-screen flex-col bg-background text-foreground max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))] has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden">
+      <FootballClickFeedback className={cn(
+        "flex min-h-screen flex-col bg-background text-foreground [--portal-tabs-height:3.5rem]",
+        "max-md:has-[[data-home-search-cta]]:not-has-[[data-mobile-cta]]:pb-16",
+        "max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))]",
+        "has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden has-[[data-mobile-cta]]:[&_[data-home-search-cta]]:hidden",
+      )}>
         <PortalHeader venue={venue} bookHref={bookHref} />
         <main className="flex-1">{children}</main>
         <PortalFooter venue={venue} social={social} />

@@ -96,7 +96,7 @@ export default function NotificationsSettingsPage() {
         {audience === "owner" && <p className="text-muted-foreground text-sm">Save your email preferences for when turf notifications are available.</p>}
 
         <fieldset disabled={!canEdit} className="space-y-5">
-          <EmailSenderSection form={form} email={settings.email} />
+          <EmailSenderSection form={form} email={settings.email} showDeliveryStatus={audience === "staff"} />
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <CustomerEmailsSection form={form} />
             <StaffEmailsSection form={form} />
@@ -109,7 +109,7 @@ export default function NotificationsSettingsPage() {
         )}
       </form>
 
-      {audience === "staff" && <><TestEmailBox /><EmailLogTable /></>}
+      {audience === "staff" && <><TestEmailBox configured={settings.email.configured} /><EmailLogTable /></>}
     </div>
   );
 }

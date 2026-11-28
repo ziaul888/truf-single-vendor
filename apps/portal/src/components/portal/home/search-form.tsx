@@ -9,9 +9,9 @@ import { useRouter } from "next/navigation";
  * still submits as an ordinary form.
  */
 export function SearchForm({
-  action, className, children,
+  id, action, className, children,
 }: {
-  action: string; className?: string; children: React.ReactNode;
+  id: string; action: string; className?: string; children: React.ReactNode;
 }) {
   const router = useRouter();
 
@@ -26,7 +26,7 @@ export function SearchForm({
   }
 
   return (
-    <form action={action} onSubmit={handleSubmit} className={className}>
+    <form id={id} action={action} onSubmit={handleSubmit} className={className}>
       {children}
     </form>
   );

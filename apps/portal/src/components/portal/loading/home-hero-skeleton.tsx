@@ -25,7 +25,7 @@ function BookingCardSkeleton() {
         </div>
         <SkeletonLine className="h-7 w-20" />
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-12 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-10 sm:gap-3 md:grid-cols-12">
         {["col-span-2 sm:col-span-4", "sm:col-span-3", "sm:col-span-3"].map((span, i) => (
           <div key={i} className={`rounded-xl border bg-card px-3 py-2 ${span}`}>
             <SkeletonLine className="h-[16.5px] w-12" />
@@ -33,7 +33,7 @@ function BookingCardSkeleton() {
             <SkeletonLine className="mt-0.5 h-6 w-full sm:h-5" />
           </div>
         ))}
-        <SkeletonBlock className="col-span-2 h-12" />
+        <SkeletonBlock className="col-span-2 hidden h-12 md:block" />
       </div>
     </div>
   );

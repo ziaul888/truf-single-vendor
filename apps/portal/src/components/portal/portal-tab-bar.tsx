@@ -33,12 +33,12 @@ export function PortalTabBar({ bookHref }: { bookHref: string }) {
 
   return (
     <div data-portal-tabs className="md:hidden">
-      <div aria-hidden className="h-[calc(3.5rem+env(safe-area-inset-bottom))] bg-sidebar" />
+      <div aria-hidden className="h-[calc(var(--portal-tabs-height)+1px+env(safe-area-inset-bottom))] bg-sidebar" />
       <nav
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-30 select-none border-t border-white/10 bg-sidebar/95 pb-[env(safe-area-inset-bottom)] text-sidebar-foreground backdrop-blur"
       >
-        <ul className="grid h-14 grid-cols-4">
+        <ul className="grid h-(--portal-tabs-height) grid-cols-4">
           {tabs.map(({ href, label, Icon, active, bookingAction }) => (
             <li key={label}>
               <Link

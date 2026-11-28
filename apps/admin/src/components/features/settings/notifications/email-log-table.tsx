@@ -34,7 +34,7 @@ function LogRow({ entry }: { entry: EmailLogEntry }) {
       <TableCell className="max-w-[240px] truncate text-sm" title={entry.subject}>{entry.subject}</TableCell>
       <TableCell>
         {entry.ok ? (
-          <Badge variant="outline" className="border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400">Sent</Badge>
+          <Badge variant="outline" className="border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400">Accepted</Badge>
         ) : (
           <div className="space-y-0.5">
             <Badge variant="outline" className="border-destructive/50 text-destructive">Failed</Badge>

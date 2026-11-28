@@ -47,6 +47,8 @@ export interface PaymentStatus {
 export interface NotificationSettings extends Audited {
   email: {
     configured: boolean;
+    /** Omitted by older API versions. */
+    provider?: "resend" | "sendgrid" | null;
     fromEmail: string;
     /** null follows the venue (see effective*). */
     fromName: string | null;

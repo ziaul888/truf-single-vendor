@@ -32,7 +32,7 @@ export function CustomerEmailsSection({ form }: { form: UseFormReturn<Notificati
         control={form.control}
         name="customer.refundIssued"
         render={({ field }) => (
-          <SettingToggle label="Refund issued" desc="Tells the customer a refund is on its way" checked={field.value} onChange={field.onChange} />
+          <SettingToggle label="Refund issued" desc="Tells the customer a refund is on its way" checked={field.value ?? false} onChange={field.onChange} />
         )}
       />
       <Controller
@@ -42,7 +42,7 @@ export function CustomerEmailsSection({ form }: { form: UseFormReturn<Notificati
           <SettingToggle
             label="Slot blocked"
             desc="When staff block a booked slot (also in slot settings as “Notify customer on slot blocked”)"
-            checked={field.value}
+            checked={field.value ?? false}
             onChange={field.onChange}
           />
         )}

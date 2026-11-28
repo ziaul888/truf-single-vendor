@@ -9,8 +9,11 @@ import { PortalDatePicker } from "@/components/portal/portal-date-picker";
 import { HeroMedia } from "./hero-media";
 import { SearchForm } from "./search-form";
 import styles from "./home-motion.module.css";
+import searchStyles from "./hero-search.module.css";
 import type { Ground } from "@/types/api";
 import type { WebsiteSettings } from "@/validations/website-settings";
+
+const BOOKING_SEARCH_ID = "portal-booking-search";
 
 /**
  * The website's hero photo with a booking card floating at its bottom. With one ground,
@@ -41,6 +44,12 @@ export async function HeroSection({ hero, venueName, slug, timezone }: {
         <div className={cn("relative w-full px-4 pb-4 sm:px-6 sm:pb-10 lg:px-8", styles.bookingCard)}>
           <BookingCard grounds={grounds} single={single} venueName={venueName} slug={slug} timezone={timezone} />
         </div>
+      </div>
+      <div
+        data-home-search-cta
+        className="fixed inset-x-0 bottom-[calc(var(--portal-tabs-height)+1px+env(safe-area-inset-bottom))] z-30 flex h-16 items-center border-t bg-card px-4 shadow-[0_-4px_12px_rgb(0_0_0_/_0.12)] md:hidden"
+      >
+        <FindSlotsButton form={BOOKING_SEARCH_ID} className="mx-auto w-full max-w-xl" />
       </div>
     </section>
   );
@@ -90,24 +99,31 @@ function BookingCard({ grounds, single, venueName, slug, timezone }: {
   const { title, subtitle, price, from } = cardSummary(grounds, single, venueName);
   return (
     <SearchForm
+      id={BOOKING_SEARCH_ID}
       action={turfPortalPath(slug, single ? `/grounds/${single.id}` : "/grounds")}
-      className="mx-auto max-w-3xl rounded-3xl border border-sidebar-foreground/20 bg-card/85 p-4 shadow-2xl backdrop-blur-xl sm:p-5"
+      className={cn(
+        "mx-auto max-w-3xl rounded-3xl border border-sidebar-foreground/30 p-4 shadow-2xl inset-shadow-[0_1px_0_rgb(255_255_255_/_0.18)] sm:p-5",
+        searchStyles.panel,
+      )}
     >
       <div className="mb-3 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-xl font-extrabold tracking-tight sm:text-2xl">{title}</h1>
-          {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="truncate text-xs text-foreground/90">{subtitle}</p>}
         </div>
         {price && (
           <p className="shrink-0 text-right">
-            {from && <span className="block text-[11px] text-muted-foreground">From</span>}
+            {from && <span className="block text-[11px] text-foreground/90">From</span>}
             <span className="text-xl font-extrabold text-primary">{price}</span>
-            <span className="text-xs text-muted-foreground">/hr</span>
+            <span className="text-xs text-foreground/90">/hr</span>
           </p>
         )}
       </div>
 
-      <div className={`grid gap-2 sm:gap-3 ${single ? "grid-cols-1 sm:grid-cols-[1fr_auto]" : "grid-cols-2 sm:grid-cols-12"}`}>
+      <div className={cn(
+        "grid gap-2 sm:gap-3",
+        single ? "grid-cols-1 md:grid-cols-[1fr_auto]" : "grid-cols-2 sm:grid-cols-10 md:grid-cols-12",
+      )}>
         <PortalDatePicker
           label="Booking date"
           caption="Date"
@@ -117,17 +133,25 @@ function BookingCard({ grounds, single, venueName, slug, timezone }: {
           defaultValue={today}
         />
         {!single && <SportAndFormat />}
-        <button
-          type="submit"
-          data-football-kick
-          className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 ${
-            single ? "sm:px-8" : "col-span-2"
-          }`}
-        >
-          <Search className="h-4 w-4" /> Find slots
-        </button>
+        <FindSlotsButton className={cn("hidden md:inline-flex", single ? "px-8" : "col-span-2")} />
       </div>
     </SearchForm>
+  );
+}
+
+function FindSlotsButton({ form, className }: { form?: string; className: string }) {
+  return (
+    <button
+      type="submit"
+      form={form}
+      data-football-kick
+      className={cn(
+        "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        className,
+      )}
+    >
+      <Search className="size-4" aria-hidden /> Find slots
+    </button>
   );
 }
 
