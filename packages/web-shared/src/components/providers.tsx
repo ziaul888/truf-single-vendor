@@ -5,7 +5,13 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import { useState } from "react";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  themeStorageKey,
+}: {
+  children: React.ReactNode;
+  themeStorageKey?: string;
+}) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -22,6 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
         attribute="class"
+        storageKey={themeStorageKey}
         defaultTheme="light"
         enableSystem
         disableTransitionOnChange

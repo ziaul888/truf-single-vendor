@@ -9,6 +9,7 @@ import { MobileMenu } from "@/components/portal/mobile-menu";
 import { AdminDashboardLink } from "@/components/portal/admin-dashboard-link";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
 import { PortalTabBar } from "@/components/portal/portal-tab-bar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { FootballClickFeedback } from "@/components/portal/football-click-feedback";
 import { PortalLink as Link, TurfPortalScope } from "@/components/portal/turf-portal-scope";
 import { getTurfPortalHome, getTurfPortalSlug } from "@/services/turf-portal-request";
@@ -34,10 +35,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/**
- * The portal follows the same theme as the admin (light / dark / pitch, from the theme toggle),
- * so every Tailwind token below resolves to the active theme in globals.css.
- */
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const slug = await getTurfPortalSlug();
   const { venue, social } = await getPublicWebsite(slug);
@@ -89,6 +86,7 @@ function PortalHeader({ venue, bookHref }: { venue: PublicVenue; bookHref: strin
             </a>
           )}
           <AdminDashboardLink />
+          <span className="hidden md:contents"><ThemeToggle /></span>
           {/* Phones reach the account and booking from the tab bar, leaving the venue name room */}
           <span className="hidden md:contents"><CustomerNav /></span>
           <Link

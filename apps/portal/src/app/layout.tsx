@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={inter.className}>
-        <Providers>
+        <Providers themeStorageKey="portal-theme">
           {children}
           {/* Full screen on a phone, toasts clear the status bar. */}
           <Toaster richColors position="top-right" mobileOffset={{ top: "calc(env(safe-area-inset-top) + 12px)" }} />

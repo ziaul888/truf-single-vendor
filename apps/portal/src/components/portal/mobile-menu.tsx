@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { useRouter } from "next/navigation";
 import { HelpCircle, LayoutDashboard, LogOut, MapPin, Menu, Phone } from "lucide-react";
+import { ThemeRadioGroup } from "@/components/theme-toggle";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCustomerSession, useCustomerSignOut } from "@/components/portal/account/use-customer-session";
 import { useIsAdmin } from "@/components/portal/account/use-admin-hint";
@@ -34,21 +35,26 @@ export function MobileMenu({ phone, bookHref }: { phone: string; bookHref: strin
       >
         <SheetTitle className="px-6 pb-2 pt-5 pr-16 text-base">Menu</SheetTitle>
         <SheetDescription className="sr-only">Booking website navigation</SheetDescription>
-        <nav className="flex min-h-0 flex-col overflow-y-auto px-3">
-          {LINKS.map(({ href, label, Icon }) => (
-            <Link key={href} href={href} onClick={close}
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium hover:bg-white/5 hover:text-accent">
-              <Icon className="h-5 w-5 text-accent" />{label}
-            </Link>
-          ))}
-          {isAdmin && (
-            <a href="/dashboard" onClick={close}
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium hover:bg-white/5 hover:text-accent">
-              <LayoutDashboard className="h-5 w-5 text-accent" />Dashboard
-            </a>
-          )}
-          <SignOutItem onDone={close} />
-        </nav>
+        <div className="min-h-0 overflow-y-auto px-3 pb-3">
+          <nav className="flex flex-col">
+            {LINKS.map(({ href, label, Icon }) => (
+              <Link key={href} href={href} onClick={close}
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium hover:bg-white/5 hover:text-accent">
+                <Icon className="h-5 w-5 text-accent" />{label}
+              </Link>
+            ))}
+            {isAdmin && (
+              <a href="/dashboard" onClick={close}
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium hover:bg-white/5 hover:text-accent">
+                <LayoutDashboard className="h-5 w-5 text-accent" />Dashboard
+              </a>
+            )}
+            <SignOutItem onDone={close} />
+          </nav>
+          <div className="mt-3 border-t border-white/10 pt-3">
+            <ThemeRadioGroup />
+          </div>
+        </div>
         <div className="mt-auto shrink-0 space-y-3 border-t border-white/10 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           {phone && (
             <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-sm opacity-85 hover:text-accent">
