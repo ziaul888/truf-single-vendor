@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { FallbackImage } from "@/components/fallback-image";
 import { DashboardBackLink, DashboardPageHeader } from "@/components/features/dashboard/page-header";
 import { useParams } from "next/navigation";
 import { useSlots } from "@/hooks/useSlots";
@@ -90,9 +90,17 @@ export default function GroundDetailPage() {
   }
 
   const g = ground.data;
-  // The first photo is the cover; without photos, the sport's gradient.
+  const cover = g.photos[0];
   const gradient = SPORT_GRADIENT[g.sport] ?? SPORT_GRADIENT.other;
   const emoji = SPORT_EMOJI[g.sport] ?? SPORT_EMOJI.other;
+  const placeholder = (
+    <div
+      aria-hidden
+      className={cn("flex h-full w-full items-center justify-center bg-linear-to-br text-7xl", gradient)}
+    >
+      {emoji}
+    </div>
+  );
   const size = [g.format?.replace("x", "×"), g.dimensions].filter(Boolean).join(" · ");
 
   const availableCount = slots.data?.filter((s) => s.status === "available").length ?? 0;
@@ -140,25 +148,17 @@ export default function GroundDetailPage() {
 
       {/* Hero / cover */}
       <div className="relative h-44 w-full overflow-hidden rounded-xl sm:h-64">
-        {g.photos[0] ? (
-          <Image
-            src={g.photos[0]}
+        {cover ? (
+          <FallbackImage
+            src={cover}
             alt={g.name}
             fill
             sizes="(max-width:1024px) 100vw, 1024px"
             className="object-cover"
             priority
+            fallback={placeholder}
           />
-        ) : (
-          <div
-            className={cn(
-              "flex h-full w-full items-center justify-center bg-gradient-to-br text-7xl",
-              gradient
-            )}
-          >
-            {emoji}
-          </div>
-        )}
+        ) : placeholder}
         <span className="absolute left-4 top-4 rounded-full bg-background/85 px-3 py-1 text-xs font-semibold capitalize backdrop-blur-sm">
           {emoji} {g.sport}
         </span>

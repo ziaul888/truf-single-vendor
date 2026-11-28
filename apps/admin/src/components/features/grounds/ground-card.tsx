@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { FallbackImage } from "@/components/fallback-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -56,10 +56,22 @@ interface GroundCardProps {
   canEdit: boolean;
 }
 
-// The first photo is the cover; grounds without photos use the sport's gradient.
+// The first photo is the cover; missing photos use the sport's gradient.
 export function GroundCard({ ground, onToggleStatus, isPending, canEdit }: GroundCardProps) {
   const gradient = SPORT_GRADIENT[ground.sport] ?? SPORT_GRADIENT.other;
   const emoji = SPORT_EMOJI[ground.sport] ?? SPORT_EMOJI.other;
+  const cover = ground.photos[0];
+  const placeholder = (
+    <div
+      aria-hidden
+      className={cn(
+        "flex h-full w-full items-center justify-center bg-linear-to-br text-6xl transition-transform duration-500 group-hover:scale-105",
+        gradient
+      )}
+    >
+      {emoji}
+    </div>
+  );
 
   return (
     <Card
@@ -70,24 +82,16 @@ export function GroundCard({ ground, onToggleStatus, isPending, canEdit }: Groun
     >
       {/* Photo / gradient with overlay */}
       <div className="relative h-52 w-full overflow-hidden">
-        {ground.photos[0] ? (
-          <Image
-            src={ground.photos[0]}
+        {cover ? (
+          <FallbackImage
+            src={cover}
             alt={ground.name}
             fill
             sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
+            fallback={placeholder}
           />
-        ) : (
-          <div
-            className={cn(
-              "flex h-full w-full items-center justify-center bg-linear-to-br text-6xl transition-transform duration-500 group-hover:scale-105",
-              gradient
-            )}
-          >
-            {emoji}
-          </div>
-        )}
+        ) : placeholder}
         {/* Bottom gradient for legibility */}
         <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
 
