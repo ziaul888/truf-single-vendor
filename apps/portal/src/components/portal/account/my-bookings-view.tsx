@@ -13,6 +13,7 @@ import { listMyBookings, toAppPath } from "@/lib/portal-bookings";
 import type { CustomerBooking } from "@/types/booking";
 import { isUnderReview } from "@/components/portal/confirmation/confirmation-state";
 import { customerBookingsKey, useCustomerSession, useCustomerSignOut } from "./use-customer-session";
+import { CustomerSignInLink } from "./customer-sign-in-dialog";
 
 type Scope = "upcoming" | "past";
 const PAGE_SIZE = 10;
@@ -134,7 +135,7 @@ function BookingRow({ booking: b }: { booking: CustomerBooking }) {
   );
 }
 
-/** Signed out: sign in with the phone (coming back to `from`), or use the email link. */
+/** Signed out: offer sign-in for bookings or account details. */
 export function SignedOut({ title = "Your bookings", from = "/my-bookings" }: { title?: string; from?: string }) {
   return (
     <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-6 lg:px-8">
@@ -146,10 +147,10 @@ export function SignedOut({ title = "Your bookings", from = "/my-bookings" }: { 
         Sign in with your phone or email to see your bookings, or open the link in your confirmation email.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link href={`/sign-in?from=${encodeURIComponent(from)}`}
+        <CustomerSignInLink href={`/sign-in?from=${encodeURIComponent(from)}`}
           className="inline-flex h-11 items-center rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground hover:opacity-90">
           Sign in with phone
-        </Link>
+        </CustomerSignInLink>
         <Link href="/grounds" className="inline-flex h-11 items-center rounded-lg border px-5 text-sm font-semibold hover:bg-muted">
           Browse grounds
         </Link>

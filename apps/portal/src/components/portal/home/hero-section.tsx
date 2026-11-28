@@ -102,20 +102,20 @@ function BookingCard({ grounds, single, venueName, slug, timezone }: {
       id={BOOKING_SEARCH_ID}
       action={turfPortalPath(slug, single ? `/grounds/${single.id}` : "/grounds")}
       className={cn(
-        "mx-auto max-w-3xl rounded-3xl border border-sidebar-foreground/30 p-4 shadow-2xl inset-shadow-[0_1px_0_rgb(255_255_255_/_0.18)] sm:p-5",
+        "mx-auto max-w-3xl rounded-3xl border border-sidebar-foreground/30 p-4 text-sidebar-foreground shadow-2xl inset-shadow-[0_1px_0_rgb(255_255_255_/_0.18)] sm:p-5",
         searchStyles.panel,
       )}
     >
       <div className="mb-3 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-xl font-extrabold tracking-tight sm:text-2xl">{title}</h1>
-          {subtitle && <p className="truncate text-xs text-foreground/90">{subtitle}</p>}
+          {subtitle && <p className="truncate text-xs text-sidebar-foreground/90">{subtitle}</p>}
         </div>
         {price && (
           <p className="shrink-0 text-right">
-            {from && <span className="block text-[11px] text-foreground/90">From</span>}
+            {from && <span className="block text-[11px] text-sidebar-foreground/90">From</span>}
             <span className="text-xl font-extrabold text-primary">{price}</span>
-            <span className="text-xs text-foreground/90">/hr</span>
+            <span className="text-xs text-sidebar-foreground/90">/hr</span>
           </p>
         )}
       </div>
@@ -127,7 +127,7 @@ function BookingCard({ grounds, single, venueName, slug, timezone }: {
         <PortalDatePicker
           label="Booking date"
           caption="Date"
-          className={cn("min-h-14 w-full rounded-xl border bg-card px-3 py-2", !single && "col-span-2 sm:col-span-4")}
+          className={cn("min-h-14 w-full rounded-xl border bg-card px-3 py-2 text-card-foreground", !single && "col-span-2 sm:col-span-4")}
           min={today}
           max={addDays(today, 6)}
           defaultValue={today}
@@ -188,7 +188,7 @@ function Field({
   icon: typeof CircleDot; label: string; children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card px-3 py-2 sm:col-span-3">
+    <div className="rounded-xl border bg-card px-3 py-2 text-card-foreground sm:col-span-3">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
       <div className="mt-0.5 flex items-center gap-2">
         <Icon className="h-4 w-4 shrink-0 text-primary" />

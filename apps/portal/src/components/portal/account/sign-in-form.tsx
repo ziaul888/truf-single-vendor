@@ -1,14 +1,12 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Mail, Smartphone } from "lucide-react";
 import { useTurfPortal } from "@/components/portal/turf-portal-scope";
-import { turfPortalPath } from "@/lib/turf-portal-path";
 import {
   PortalApiError,
   sendEmailCode,
@@ -16,7 +14,6 @@ import {
   verifyEmailCode,
   verifySignInCode,
 } from "@/lib/portal-bookings";
-import { safeRedirectPath } from "@/lib/safe-redirect";
 import type { CustomerSession } from "@/types/booking";
 import { customerSessionKey } from "./use-customer-session";
 import { ProfileStep } from "./profile-step";
@@ -32,21 +29,8 @@ const phoneAddress = z
   .refine((value) => value.replace(/\D/g, "").length >= 10, "Enter your mobile number");
 const emailAddress = z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address"));
 
-/** Returns the customer to the requested page in the same turf. */
-export function SignInForm() {
-  const router = useRouter();
-  const portal = useTurfPortal();
-  const slug = portal?.slug;
-  const target = safeRedirectPath(useSearchParams().get("from"), "/my-bookings");
-  const home = portal?.homePath ?? "/";
-  const sameTurf = target === home || target.startsWith(home + "/");
-  const from =
-    target === "/"
-      ? home
-      : turfPortalPath(
-          slug,
-          slug && target.startsWith("/turf/") && !sameTurf ? "/my-bookings" : target
-        );
+export function SignInForm({ onDone }: { onDone: () => void }) {
+  const slug = useTurfPortal()?.slug;
   const cache = useQueryClient();
   const [method, setMethod] = useState<SignInMethod>("phone");
   const [recipient, setRecipient] = useState("");
@@ -68,18 +52,13 @@ export function SignInForm() {
   function completeSignIn(session: CustomerSession) {
     cache.setQueryData(customerSessionKey(slug), session);
     if (session.needsProfile) setNeedsProfile(true);
-    else finish();
-  }
-
-  function finish() {
-    router.replace(from);
-    router.refresh();
+    else onDone();
   }
 
   return (
     <SignInPanel step={step}>
       {step === "profile" ? (
-        <ProfileStep email={byEmail ? recipient : undefined} onDone={finish} />
+        <ProfileStep email={byEmail ? recipient : undefined} onDone={onDone} />
       ) : step === "code" ? (
         <VerificationCodeForm
           email={byEmail}
@@ -145,12 +124,10 @@ function SignInPanel({ step, children }: { step: SignInStep; children: ReactNode
   }, []);
 
   return (
-    <div className="bg-card rounded-2xl border p-5 text-left sm:p-6">
-      <div ref={panelRef} className="overflow-clip [overflow-clip-margin:4px]">
-        <div ref={contentRef} className="flow-root">
-          <div key={step} className="motion-safe:animate-[page-enter_200ms_ease-out_backwards]">
-            {children}
-          </div>
+    <div ref={panelRef} className="overflow-clip [overflow-clip-margin:4px]">
+      <div ref={contentRef} className="flow-root">
+        <div key={step} className="motion-safe:animate-[page-enter_200ms_ease-out_backwards]">
+          {children}
         </div>
       </div>
     </div>

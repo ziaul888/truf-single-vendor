@@ -1,19 +1,9 @@
 .panel {
-  background-color: var(--card);
-}
-
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .panel {
-    background-color: color-mix(in oklch, var(--card) 66%, transparent);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
-    backdrop-filter: blur(16px) saturate(150%);
-  }
+  background-color: transparent;
 }
 
 @media (prefers-reduced-transparency: reduce) {
   .panel {
-    background-color: var(--card);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+    background-color: var(--sidebar);
   }
 }

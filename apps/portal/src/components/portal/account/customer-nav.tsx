@@ -3,6 +3,7 @@
 import { PortalLink as Link } from "@/components/portal/turf-portal-scope";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, UserRound } from "lucide-react";
+import { CustomerSignInLink } from "./customer-sign-in-dialog";
 import { useCustomerSession, useCustomerSignOut } from "./use-customer-session";
 
 /** Header account link: "Sign in", or the customer's name with Sign out. */
@@ -15,11 +16,11 @@ export function CustomerNav() {
   if (isPending) return <span className="hidden w-16 sm:block" aria-hidden />;
   if (!session) {
     return (
-      <Link href={`/sign-in?from=${encodeURIComponent(pathname)}`}
+      <CustomerSignInLink href={`/sign-in?from=${encodeURIComponent(pathname)}`}
         className="inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold hover:text-accent">
         <UserRound className="h-4 w-4" />
         <span className="hidden sm:inline">Sign in</span>
-      </Link>
+      </CustomerSignInLink>
     );
   }
 

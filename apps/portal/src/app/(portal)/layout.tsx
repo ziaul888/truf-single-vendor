@@ -8,6 +8,7 @@ import { VenueMark } from "@/components/portal/venue-mark";
 import { MobileMenu } from "@/components/portal/mobile-menu";
 import { AdminDashboardLink } from "@/components/portal/admin-dashboard-link";
 import { CustomerNav } from "@/components/portal/account/customer-nav";
+import { CustomerSignInProvider } from "@/components/portal/account/customer-sign-in-dialog";
 import { PortalTabBar } from "@/components/portal/portal-tab-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FootballClickFeedback } from "@/components/portal/football-click-feedback";
@@ -47,10 +48,12 @@ export default async function PortalLayout({ children }: { children: React.React
         "max-lg:has-[[data-mobile-cta]]:pb-[calc(5rem+env(safe-area-inset-bottom))]",
         "has-[[data-mobile-cta]]:[&_[data-portal-tabs]]:hidden has-[[data-mobile-cta]]:[&_[data-home-search-cta]]:hidden",
       )}>
-        <PortalHeader venue={venue} bookHref={bookHref} />
-        <main className="flex-1">{children}</main>
-        <PortalFooter venue={venue} social={social} />
-        <PortalTabBar bookHref={bookHref} />
+        <CustomerSignInProvider>
+          <PortalHeader venue={venue} bookHref={bookHref} />
+          <main id="portal-main" tabIndex={-1} className="flex-1">{children}</main>
+          <PortalFooter venue={venue} social={social} />
+          <PortalTabBar bookHref={bookHref} />
+        </CustomerSignInProvider>
       </FootballClickFeedback>
     </TurfPortalScope>
   );

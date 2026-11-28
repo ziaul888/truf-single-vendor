@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Lock, Wallet } from "lucide-react";
+import { Loader2, Lock, Smartphone, Wallet } from "lucide-react";
 import { PortalApiError, startCheckout, markLeavingForPayment, toAppPath } from "@/lib/portal-bookings";
 import type { CheckoutMethod } from "@/types/booking";
 import { customerSessionKey, useCustomerSession } from "@/components/portal/account/use-customer-session";
+import { CustomerSignInLink } from "@/components/portal/account/customer-sign-in-dialog";
 import { LinkPhoneForm } from "@/components/portal/account/link-phone-form";
 import { checkoutFormSchema, CHECKOUT_FIELDS, EMAIL_REQUIRED_MESSAGE, type CheckoutFormValues } from "./checkout-schema";
-import { Field, PaymentChoice, SignInNotice } from "./checkout-fields";
+import { Field, PaymentChoice } from "./checkout-fields";
 import { formatSlotsParam, slotStartMinute, slotStartTime } from "@/lib/slot-format";
 import { bookingSlotLimit } from "@/lib/booking-limits";
 import type { PublicSlot } from "@/types/slot";
@@ -23,6 +24,9 @@ import { cashDepositAmount } from "@/lib/cash-deposit";
 import type { WalletMethod } from "@/types/booking";
 
 interface FormError { message: string; slotTaken: boolean; myBookings?: boolean }
+
+const CHECKOUT_ACTION_CLASS =
+  "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-center text-sm font-bold text-primary-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50";
 
 export function CheckoutForm({
   groundId, date, slots, disabled, initialMethod = "card",
@@ -215,7 +219,12 @@ export function CheckoutForm({
         )}
         {/* Signed out, cash and wallets ask to sign in first, before any TrxID is typed (it would be lost on the way). */}
         {needsSignIn
-          ? !sessionPending && <SignInNotice href={signInHref} />
+          ? !sessionPending && (
+              <p role="status" className="mt-4 rounded-lg border bg-muted/40 p-4 text-sm">
+                Sign in to use this payment method.
+                {cardEnabled && " You can pay by card without signing in."}
+              </p>
+            )
           : noDepositWallet
             ? <p role="alert" className="mt-4 text-sm text-destructive">Booking money can&apos;t be paid right now. Please choose another payment method or call the venue.</p>
             : payWallet && !exceedsSlotLimit && (
@@ -259,17 +268,30 @@ export function CheckoutForm({
         </div>
       )}
 
-      <button
-        type="submit"
-        data-football-kick
-        disabled={disabled || busy || !canPay || needsSignIn || exceedsSlotLimit || noDepositWallet}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+      <div
+        data-mobile-cta
+        className="max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:border-t max-lg:bg-card max-lg:px-4 max-lg:pt-3 max-lg:pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
       >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-        {options.data && !canPay
-          ? "Online booking unavailable"
-          : needsSignIn && !sessionPending ? "Sign in above to continue" : submitLabel(method, total, busy, bookingMoneyOn ? bookingMoney?.deposit : undefined)}
-      </button>
+        {needsSignIn && !sessionPending ? (
+          <CustomerSignInLink href={signInHref} className={CHECKOUT_ACTION_CLASS}>
+            <Smartphone className="h-4 w-4 shrink-0" aria-hidden /> Sign in with phone
+          </CustomerSignInLink>
+        ) : (
+          <button
+            type="submit"
+            data-football-kick
+            disabled={disabled || busy || !canPay || needsSignIn || exceedsSlotLimit || noDepositWallet}
+            className={CHECKOUT_ACTION_CLASS}
+          >
+            {busy || needsSignIn
+              ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+              : <Lock className="h-4 w-4 shrink-0" aria-hidden />}
+            {options.data && !canPay
+              ? "Online booking unavailable"
+              : needsSignIn ? "Checking sign-in…" : submitLabel(method, total, busy, bookingMoneyOn ? bookingMoney?.deposit : undefined)}
+          </button>
+        )}
+      </div>
     </form>
   );
 }
